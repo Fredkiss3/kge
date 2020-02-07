@@ -7,7 +7,7 @@ It is built on top of the [pyglet](https://pyglet.org) library for rendering, an
 
 If you have any issue you can add an issue to the repository. I will be very pleased to help.
 
-### Prerequisites 
+### Prerequisities 
   - Python >= 3.7
   - pyglet >= 1.4.0
   - pybox2d [See How to install it here](https://github.com/pybox2d/pybox2d/blob/master/INSTALL.md)

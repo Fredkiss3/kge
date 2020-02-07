@@ -14,13 +14,11 @@ If you have any issue you can add an issue to the repository. I will be very ple
   - pyglet_ffmpeg2
  
 ### Functionnalities availables :
-  - Rendering
-      - Simple Shapes (squares, circles, triangles)
-      - Sprites
-  - Physics Engine : 
-      - Colliders
-      - RigidBody
-  - Audio Engine
+System | Components
+------------ | -------------
+  Rendering | Simple Shapes (squares, circles, triangles)  Sprites
+  Physics Engine | Colliders (BoxColliders, CircleColiders, PolygonColliders, TrianlgeColliders, EdgeColliders), RigidBody
+  Audio Engine | 
   
 ### TODO
   - Animation System :

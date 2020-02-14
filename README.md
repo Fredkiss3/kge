@@ -1,7 +1,7 @@
 # KISS GAME ENGINE
 ### A 2D Game Engine Written in Python, running in Python and For Python Game Developpers. 
 
-Its intend is to provide python game developpers with an easy API to learn to build thier own 2D games and provide the possibility to  write little games to very big games.
+Its intend is to provide python game developpers with an easy API to learn to build their own 2D games and provide the possibility to  write little games to very big games.
 
 It is built on top of the [pyglet](https://pyglet.org) library for rendering, and a python version of a great physics engine named [Box2D](https://github.com/pybox2d/pybox2d). So you can expect it to be of top quality.
 

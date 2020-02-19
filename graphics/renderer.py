@@ -71,7 +71,8 @@ class Renderer(System):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         # Schedule render update to the time step
-        pyglet.clock.schedule_interval(self.render, 1 / 10_000)
+        pyglet.clock.schedule_interval(self.render, 1/100)
+        # pyglet.clock.schedule_interval(self.rebatch, 1)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.engine.event_loop.has_exit = True
@@ -79,15 +80,15 @@ class Renderer(System):
     def close(self):
         self._dispatch(events.Quit(), immediate=True)
         self.window.close()
-        # Have not to
         return pyglet.event.EVENT_HANDLED
 
     #
-    # def on_idle(self, event, dispatch):
-    #     """
-    #     Idle
-    #     """
-    #     # Do nothing...
+    def on_idle(self, event, dispatch):
+        """
+        Idle
+        """
+        # self.render(self.time_step)
+        # Do nothing...
 
     def draw(self):
         """
@@ -112,12 +113,18 @@ class Renderer(System):
         self._dispatch(events.Rendered())
         return pyglet.event.EVENT_HANDLED
 
+    def rebatch(self, dt: float):
+        """
+        Renew Batch -> Never Use this
+        """
+        self.batch = pyglet.graphics.Batch()
+
     def render(self, dt: float):
         """
         Render calculations
         """
         # print(f"Rendering {dt}")
-        self.batch = pyglet.graphics.Batch()
+        # self.batch = pyglet.graphics.Batch()
 
         scene = self.engine.current_scene
         if scene is not None:
@@ -127,10 +134,9 @@ class Renderer(System):
             )
 
             self.to_draw = []
-            for entity in scene.entity_layers():
-                # if ev.scene.main_camera.in_frame(entity):
-                if hasattr(entity, "sprite_renderer"): # type: SpriteRenderer
-                    entity.sprite_renderer.render(scene, self.batch, self.layers[entity.layer])
+            for entity in scene.entity_layers():  # type: Sprite
+                # Render only sprites
+                entity.sprite_renderer.render(scene)
 
             new_win_size = Vector(self.window.width, self.window.height)
             if self.window_size != new_win_size:
@@ -145,3 +151,11 @@ class WindowService(Service):
     @property
     def window(self) -> pyglet.window.Window:
         return self._system_instance.window
+
+    @property
+    def batch(self) -> pyglet.graphics.Batch:
+        return self._system_instance.batch
+
+    @property
+    def render_layers(self) -> List[pyglet.graphics.OrderedGroup]:
+        return self._system_instance.layers

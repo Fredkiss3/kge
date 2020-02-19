@@ -73,7 +73,8 @@ class EntityCollection(Collection):
         for kind in type(entity).mro():
             self._kinds[kind].add(entity)
 
-        if tag is None: tag = entity.tag
+        if tag is None:
+            tag = entity.tag
         self._tags[tag].add(entity)
 
     def get(self, *, kind: Type[T] = None, tag: str = None, **_) -> Iterator[T]:
@@ -96,7 +97,8 @@ class EntityCollection(Collection):
             container.get(type=MyObject, tag="red")
         """
         if kind is None and tag is None:
-            raise TypeError("get() takes at least one keyword-only argument. 'kind' or 'tag'.")
+            raise TypeError(
+                "get() takes at least one keyword-only argument. 'kind' or 'tag'.")
         kinds = self._all
         tags = self._all
         if kind is not None:
@@ -139,9 +141,11 @@ class BaseScene(EventMixin, EntityCollection):
         Load a new scene
         """
         if cls.engine is not None:
-            cls.engine.dispatch(events.ReplaceScene(new_scene=new_scene, kwargs=kwargs), immediate=True)
+            cls.engine.dispatch(events.ReplaceScene(
+                new_scene=new_scene, kwargs=kwargs), immediate=True)
         else:
-            raise AttributeError(f"The scene provided ('{new_scene}') has no engine associated with it")
+            raise AttributeError(
+                f"The scene provided ('{new_scene}') has no engine associated with it")
 
     @classmethod
     def pause(cls):
@@ -176,7 +180,8 @@ class BaseScene(EventMixin, EntityCollection):
         self.name = f"Scene {self.nbItems}"
 
         # Main Camera
-        self.main_camera = Camera(resolution=self.resolution, pixel_ratio=self.pixel_ratio, )
+        self.main_camera = Camera(
+            resolution=self.resolution, pixel_ratio=self.pixel_ratio, )
         self.background_color = BLACK  # type: Sequence[int]
 
         for k, v in kwargs.items():
@@ -206,7 +211,8 @@ class BaseScene(EventMixin, EntityCollection):
         :param layer_name: the name you want to call this layer
         """
         if not isinstance(layer_name, str) and not isinstance(layer_number, int):
-            raise TypeError("Layer name should be a string, Layer number should be an integer")
+            raise TypeError(
+                "Layer name should be a string, Layer number should be an integer")
 
         val = self.layers[layer_number]
         self.layers[layer_name] = val
@@ -277,7 +283,9 @@ class BaseScene(EventMixin, EntityCollection):
         but will be left public for other creative uses.
         """
         return sorted(
-            filter(lambda e: self.main_camera.in_frame(e), self),
+            filter(lambda e: hasattr(e, "sprite_renderer")  # and self.main_camera.in_frame(e)
+                   ,
+                   self),
             # self,
             key=lambda s: getattr(s, "layer", 0)
         )
@@ -288,12 +296,10 @@ Scene = BaseScene
 if __name__ == '__main__':
     import math
 
-
     # print(math.degrees(math.atan2(1, 1)))
 
     class Sprite(BaseEntity):
         pass
-
 
     scene1 = BaseScene()
     scene2 = BaseScene()
@@ -304,9 +310,11 @@ if __name__ == '__main__':
     ground = Sprite(name="Ground", tag="ground")
     key = Sprite(name="key", tag="key")
 
-    enemies = [(Sprite(name=f"enemy {i + 1}", tag="enemy", ), Vector(i + 5, 1)) for i in range(5)]
+    enemies = [
+        (Sprite(name=f"enemy {i + 1}", tag="enemy", ), Vector(i + 5, 1)) for i in range(5)]
 
-    scene1.addAll((player, (1, 1)), (ground, Vector(0, -7)), *enemies, (key, (2, 1)))
+    scene1.addAll((player, (1, 1)), (ground, Vector(0, -7)),
+                  *enemies, (key, (2, 1)))
 
     player.is_active = False
     # print(list(scene.get(kind=Enemy, tag="destroyer")))

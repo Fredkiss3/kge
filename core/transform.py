@@ -49,21 +49,23 @@ class Transform(BaseComponent):
 
     @position.setter
     def position(self, value: Union[
-        Tuple[float, float], Vector]):
+            Tuple[float, float], Vector]):
 
         if isinstance(value, tuple):
             vec = Vector(value[0], value[1])
         elif isinstance(value, Vector):
             vec = Vector(value)
         else:
-            raise TypeError("Position should be either an tuple of Numbers or a vector")
+            raise TypeError(
+                "Position should be either an tuple of Numbers or a vector")
 
         offset = vec - self._position
         self._position = vec
         self._t.position = vec
 
-        for child in self.children:  # type: Transform
-            child.position += offset
+        # FIXME : SHOULD CHANGE THIS
+        # for child in self.children:  # type: Transform
+        #     child.position += offset
 
     @property
     def angle(self):

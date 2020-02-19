@@ -48,23 +48,23 @@ class Engine(LoggerMixin, EventMixin):
 
     def __init__(self, first_scene: Type[BaseScene], *,
                  basic_systems=(
-                         # todo
-                         Updater,
-                         PhysicsManager,
-                         # todo
-                         FixedUpdater,
-                         EventDispatcher,
-                         Renderer,
-                         InputManager,
-                         AssetLoader,
-                         AudioManager,
-                         EntityManager,
-                 ),
-                 basic_services=(
-                         Physics, EntityManagerService, Audio, InputService,
-                         WindowService,
-                 ),
-                 systems=(), scene_kwargs=None, window_title: str = None, **kwargs):
+        # todo
+        Updater,
+        PhysicsManager,
+        # todo
+        FixedUpdater,
+        EventDispatcher,
+        Renderer,
+        InputManager,
+        AssetLoader,
+        AudioManager,
+        EntityManager,
+    ),
+        basic_services=(
+        Physics, EntityManagerService, Audio, InputService,
+        WindowService,
+    ),
+            systems=(), scene_kwargs=None, window_title: str = None, **kwargs):
         super(Engine, self).__init__()
 
         # The engine configuration
@@ -89,7 +89,8 @@ class Engine(LoggerMixin, EventMixin):
         # if you want to register new events to the engine directly,
         # Add it with 'register' method
         # This array holds theses events
-        self._event_extensions: DefaultDict[Union[Type, _ellipsis], List[Callable[[Any], None]]] = defaultdict(list)
+        self._event_extensions: DefaultDict[Union[Type, _ellipsis], List[Callable[[
+            Any], None]]] = defaultdict(list)
 
         # Systems
         self._systems_classes = list(chain(basic_systems, systems))
@@ -108,7 +109,8 @@ class Engine(LoggerMixin, EventMixin):
         self.async_loop = None  # type: Optional[asyncio.AbstractEventLoop]
 
         # Executor for multi threading
-        self._executor = futures.ThreadPoolExecutor()  # type: futures.thread.ThreadPoolExecutor
+        # type: futures.thread.ThreadPoolExecutor
+        self._executor = futures.ThreadPoolExecutor()
         self._jobs = deque()
 
     @property
@@ -164,7 +166,8 @@ class Engine(LoggerMixin, EventMixin):
         # Then provide services
         for service in self._services_classes:
             if service.system_class in kinds:
-                ServiceProvider.provide(service=service(instance=kinds[service.system_class]))
+                ServiceProvider.provide(service=service(
+                    instance=kinds[service.system_class]))
 
     def init(self):
         """
@@ -269,7 +272,6 @@ class Engine(LoggerMixin, EventMixin):
         for future in futures.as_completed(self._jobs):
             self._jobs.remove(future)
 
-
     def loop_once(self, dt):
         """
         Loop once
@@ -287,7 +289,8 @@ class Engine(LoggerMixin, EventMixin):
             self._last_idle_time = now
 
             # dispatch events (they are sorted in reverse order)
-            self.dispatch(events.Idle(time_delta * self.time_scale), immediate=True)
+            self.dispatch(events.Idle(
+                time_delta * self.time_scale), immediate=True)
 
             # get last events added to the queue
             self._event_queue.extend(self._next_event_queue)
@@ -353,12 +356,14 @@ class Engine(LoggerMixin, EventMixin):
         event.time_scale = self.time_scale
 
         # launch registered event handlers in async Mode
-        extensions = chain(self._event_extensions[type(event)], self._event_extensions[...])
+        extensions = chain(self._event_extensions[type(
+            event)], self._event_extensions[...])
         for callback in extensions:
             # tasks.append(self.async_loop.create_task(self.run_func_in_async_mode(callback, event)))
             self._jobs.append(self._executor.submit(callback, event))
 
-        self._jobs.append(self._executor.submit(self.__fire_event__, event, self.dispatch))
+        self._jobs.append(self._executor.submit(
+            self.__fire_event__, event, self.dispatch))
 
         # dispatch events on subsystems
         for system in self.systems:
@@ -366,9 +371,14 @@ class Engine(LoggerMixin, EventMixin):
             # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS
             if isinstance(event, AssetLoaded):
                 system.__fire_event__(event, self.dispatch)
+                continue
+            # if isinstance(system, Renderer):
+            #     system.__fire_event__(event, self.dispatch)
+            #     continue
 
             self._jobs.append(
-                self._executor.submit(system.__fire_event__, event, self.dispatch)
+                self._executor.submit(
+                    system.__fire_event__, event, self.dispatch)
             )
 
         # Required for if we dispatch with no current scene.
@@ -376,10 +386,12 @@ class Engine(LoggerMixin, EventMixin):
         # def fire_scene_event(event):
         if scene is not None:
             if event.onlyEntity is None:
-                self._jobs.append(self._executor.submit(scene.__fire_event__, event, self.dispatch))
+                self._jobs.append(self._executor.submit(
+                    scene.__fire_event__, event, self.dispatch))
 
                 if scene.main_camera is not None:
-                    self._jobs.append(self._executor.submit(scene.main_camera.__fire_event__, event, self.dispatch))
+                    self._jobs.append(self._executor.submit(
+                        scene.main_camera.__fire_event__, event, self.dispatch))
 
         # if type(event) is events.SceneStopped:
         #     # If event is quit then wait until each system has finished
@@ -472,9 +484,11 @@ class Engine(LoggerMixin, EventMixin):
         :return: None
         """
         if not isinstance(event_type, type) and event_type is not ...:
-            raise TypeError(f"{type(self)}.register requires event_type to be a type.")
+            raise TypeError(
+                f"{type(self)}.register requires event_type to be a type.")
         if not callable(callback):
-            raise TypeError(f"{type(self)}.register requires callback to be callable.")
+            raise TypeError(
+                f"{type(self)}.register requires callback to be callable.")
         self._event_extensions[event_type].append(callback)
 
     def flush_events(self):
@@ -494,7 +508,6 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG)
 
-
     class Sprite(BaseEntity):
 
         def on_update(self, time_delta: float, dispatch: Callable[[Event], None]):
@@ -503,11 +516,9 @@ if __name__ == '__main__':
         def on_init(self, init_event: events.Init, dispatch):
             print("Initialization")
 
-
     def setup(scene: Scene):
         player = Sprite(name="player")
         scene.add(player)
-
 
     engine = Engine(Scene, scene_kwargs={
         "set_up": setup

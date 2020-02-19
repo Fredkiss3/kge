@@ -1,6 +1,6 @@
 from typing import Union, Callable
 
-from dotted_dict import DottedDict
+from kge.utils.dotted_dict import DottedDict
 
 from kge.core.events import Event
 from kge.core.entity import BaseEntity
@@ -12,6 +12,7 @@ class Sprite(BaseEntity):
     """
     An entity that can be visualised
     """
+
     def __fire_event__(self, event: Event, dispatch: Callable[[Event], None]):
         super(Sprite, self).__fire_event__(event, dispatch)
         # Dispatch to sprite renderer also
@@ -43,5 +44,6 @@ class Sprite(BaseEntity):
     @image.setter
     def image(self, val: Union[Image, Shape]):
         if not isinstance(val, (Image, Shape)):
-            raise TypeError(f"image should be of type 'kge.Image' or 'kge.Shape'")
+            raise TypeError(
+                f"image should be of type 'kge.Image' or 'kge.Shape'")
         self.sprite_renderer.image = val

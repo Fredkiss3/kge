@@ -16,11 +16,13 @@ class Vector:
             self.x = arg1
             self.y = arg2
         else:
-            raise TypeError("Arguments of vectors should be either another Vector, or x and y values")
+            raise TypeError(
+                "Arguments of vectors should be either another Vector, or x and y values")
 
     def __eq__(self, other: "Vector"):
         if not isinstance(other, Vector):
-            raise NotImplementedError(f"Vector class does not support == operator with {type(other).__name__}")
+            raise NotImplementedError(
+                f"Vector class does not support == operator with {type(other).__name__}")
         return self.x == other[0] and self.y == other[1]
 
     @classmethod
@@ -205,7 +207,7 @@ class Vector:
         return Vector(self.x / other, self.y / other)
 
     def __rtruediv__(self, other: float):
-        return Vector(other / self.x, other / self.x)
+        return Vector(other / self.x, other / self.y)
 
     def __add__(self, other):
         return Vector(self.x + other[0], self.y + other[1])

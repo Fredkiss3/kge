@@ -63,14 +63,15 @@ class BaseEntity(EventMixin):
 
                     if event.scene.engine.running:
                         # Propagate event to components before self
-                            for key in list(self._components):
-                                component = self._components[key]
-                                if event.scene.engine.running:
-                                    component.__fire_event__(event, dispatch)
-                                else:
-                                    break
+                        for key in list(self._components):
+                            component = self._components[key]
+                            if event.scene.engine.running:
+                                component.__fire_event__(event, dispatch)
+                            else:
+                                break
                 except Exception:
-                    print(f"An Error Happened in {self} (Components : {self._components}) for event : {event}. ")
+                    print(
+                        f"An Error Happened in {self} (Components : {self._components}) for event : {event}. ")
                     traceback.print_exc()
 
     def on_add_component(self, ev: events.AddComponent, dispatch):
@@ -87,10 +88,9 @@ class BaseEntity(EventMixin):
         Remove a component from this entity
         NEVER TRY TO SUBCLASS THIS Method !!!
         """
-        cp = self.removeComponent(ev.kind) # type: List[Component]
+        cp = self.removeComponent(ev.kind)  # type: List[Component]
         manager = kge.ServiceProvider.getEntityManager()
         manager.dispatch_component_operation(self, cp, added=False)
-
 
     def on_scene_stopped(self, ev, dispatch):
         self._initialized = False
@@ -241,7 +241,8 @@ class BaseEntity(EventMixin):
         if isinstance(kind, type):
             return [component for component in self._components.values() if isinstance(component, kind)]
         else:
-            raise TypeError("kind argument should be a type or a subtype of 'kge.Component'")
+            raise TypeError(
+                "kind argument should be a type or a subtype of 'kge.Component'")
 
     def getComponent(self, kind: Union[Type[T], str]) -> Union[T, None]:
         """
@@ -306,20 +307,23 @@ class BaseEntity(EventMixin):
             except KeyError:
                 raise []
         else:
-            raise TypeError("kind must be a string or a subclass of 'kge.Component'")
+            raise TypeError(
+                "kind must be a string or a subclass of 'kge.Component'")
 
     def addComponent(self, key: str, component: T):
         """ Add a component """
 
         if isinstance(component, Component):
             if isinstance(component, Transform):
-                raise AttributeError("Cannot add transform manually to an entity")
+                raise AttributeError(
+                    "Cannot add transform manually to an entity")
             # set component entity
             component.entity = self
             self._components[key] = component
         else:
             # must be a subtype of Component
-            raise TypeError(f"{type(component)} is not a subtype of {Component}")
+            raise TypeError(
+                f"{type(component)} is not a subtype of {Component}")
 
     def __str__(self):
         return self.name
@@ -416,10 +420,8 @@ if __name__ == '__main__':
     class Player(BaseEntity):
         pass
 
-
     class PlayerMovement(Component):
         pass
-
 
     player = Player(name="Player", tag="player")
     # last_idle = time.monotonic()

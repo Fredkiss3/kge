@@ -15,7 +15,7 @@ from kge.core.service import Service
 from kge.core.system import System
 import Box2D as b2
 
-from kge.physics.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody
+from kge.physics.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, PhysicsUpdate
 
 
 class ContactListener(b2.b2ContactListener):
@@ -229,7 +229,8 @@ class PhysicsManager(System):
             cb = OverlapInfo(type=type, layer=lay)
 
             # Make a small box.
-            aabb = b2.b2AABB(lowerBound=center - Vector(radius, radius), upperBound=center + Vector(radius, radius))
+            aabb = b2.b2AABB(lowerBound=center - Vector(radius, radius),
+                             upperBound=center + Vector(radius, radius))
 
             # Query the world for overlapping shapes.
             cls.world.QueryAABB(cb, aabb)
@@ -284,7 +285,8 @@ class PhysicsManager(System):
         PhysicsManager.contact_listener = ContactListener(self)
         PhysicsManager.destruction_listener = DestructionListener(self)
         PhysicsManager.engine = self.engine
-        self._dispatch = self.engine.dispatch  # type: Union[Callable[[Event], None], None]
+        # type: Union[Callable[[Event], None], None]
+        self._dispatch = self.engine.dispatch
         self.accumulated_time = 0
         self.last_tick = None
         self.start_time = None
@@ -293,7 +295,7 @@ class PhysicsManager(System):
         # TODO : Implement layers in order to ignore collisions within different layers
         self.layers_to_ignore = {}
 
-    def on_idle(self, idle_event: events.Idle, dispatch: Callable[[Event], None]):
+    def on_physics_update(self, idle_event: PhysicsUpdate, dispatch: Callable[[Event], None]):
         """
         FIXME : SHOULD HAPPEN IN PhysicsUpdate Event
         """
@@ -310,7 +312,8 @@ class PhysicsManager(System):
                 # self.logger.info(self.accumulated_time)
 
                 while self.accumulated_time >= self.time_step:
-                    PhysicsManager.world.Step(FIXED_DELTA_TIME * idle_event.time_scale, 10, 10)
+                    PhysicsManager.world.Step(
+                        FIXED_DELTA_TIME * idle_event.time_scale, 10, 10)
                     PhysicsManager.world.ClearForces()
 
                     # send fixed update call
@@ -414,7 +417,8 @@ class PhysicsManager(System):
         collider_a = contact.fixtureA.userData
         collider_b = contact.fixtureB.userData
 
-        self.logger.debug(f"Contact {'began' if began else 'ended'} ! with, '{collider_a}'  and '{collider_b}'")
+        self.logger.debug(
+            f"Contact {'began' if began else 'ended'} ! with, '{collider_a}'  and '{collider_b}'")
 
         if isinstance(collider_a, Collider) and isinstance(collider_b, Collider):
             # Deactivate contact if one of the colliders is not active
@@ -447,7 +451,6 @@ class PhysicsManager(System):
         else:
             # contact.enabled = False
             pass
-
 
     def on_entity_destroyed(self, ev: events.EntityDestroyed, dispatch: Callable[[Event, bool], None]):
         rb = ev.entity.getComponent(kind=RigidBody)  # type: RigidBody

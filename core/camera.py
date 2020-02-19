@@ -131,29 +131,22 @@ class Camera(Entity):
         :param entity: the entity to check
         :return: True of the entity is in camera sight
         """
-        offsetL = self.frame_left - entity.size.width
-        offsetR = self.frame_right + entity.size.width
-        offsetTop = self.frame_top + entity.size.height
-        offsetBottom = self.frame_bottom + entity.size.height
+        # FIXME : should be responsive to zoom also
+        # Minimum distances before the collision occurs
+        min_dist_x = entity.size.width / 2 + self.half_width
+        min_dist_y = entity.size.height / 2 + self.half_height
 
-        return True
+        # vector from the entity to the camera
+        distVec = entity.position - self.position
 
-        # FIXME : THIS DOES NOT WORK QUITE WELL
-        return (
-                # Check if the boundaries are in frame
-                (
-                        entity.left > offsetL
-                        and entity.right < offsetR
-                        and entity.top < offsetTop
-                        and entity.bottom > offsetBottom
-                )
-                # Or just check if entity is in frame
-                or
-                (
-                        self.frame_left < entity.position.x < self.frame_right
-                        and self.frame_bottom < entity.position.y < self.frame_top
-                )
-        )
+        # depth of the collision
+        xDepth = min_dist_x - abs(distVec.x)
+        yDepth = min_dist_y - abs(distVec.y)
+
+        if xDepth > 0 and yDepth > 0:
+            return True
+
+        return False
 
     def screen_to_world_point(self, point: Vector) -> Vector:
         """
@@ -201,7 +194,6 @@ class Camera(Entity):
 if __name__ == '__main__':
     from kge.core.entity import Entity
 
-
     class Player(Entity):
 
         @property
@@ -210,7 +202,6 @@ if __name__ == '__main__':
                 width=2, height=2
             )
 
-
     class Terrain(Entity):
 
         @property
@@ -218,7 +209,6 @@ if __name__ == '__main__':
             return DottedDict(
                 width=20, height=20
             )
-
 
     cam = Camera(resolution=Vector(640, 640))
 

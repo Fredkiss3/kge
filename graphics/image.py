@@ -13,8 +13,9 @@ class Image(Asset):
     Asset for image
     TODO : IMPLEMENT 'file_missing' function
     """
+
     def background_parse(self, data):
-        img = pyglet.image.load(self.name, )#file=io.BytesIO(data))
+        img = pyglet.image.load(self.name, )  # file=io.BytesIO(data))
 
         # Center the anchor of the image
         img.anchor_x = img.width // 2
@@ -23,7 +24,7 @@ class Image(Asset):
 
     def file_missing(self):
         # todo : Create a square placeholder image
-        return NotImplementedError("Not Implemented yet")
+        raise NotImplementedError("Not Implemented yet")
 
         # img = pyglet.image.ImageData.create_texture(cls=pyglet.image.Texture, rectangle=True)
         #

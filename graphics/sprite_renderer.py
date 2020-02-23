@@ -1,12 +1,13 @@
 import random
-from typing import Union, Sequence, Tuple
+from typing import Union, Sequence, Tuple, Optional
 
 import math
 import pyglet
 from pyglet.gl import *
 
 import kge
-from kge.resources import events
+from kge.core import events
+from kge.resources.events import AssetLoaded
 from kge.utils.vector import Vector
 from kge.core.component import BaseComponent
 from kge.graphics.image import Image
@@ -111,15 +112,27 @@ class Circle(Shape):
         super().__init__(color)
         self.center = Vector(0, 0)
         self.radius = radius
-        self.mode = GL_TRIANGLE_FAN
-        self.num_points = 20
+        self.mode = GL_TRIANGLE_STRIP
+        self.num_points = 21
 
 
 class OutlinedCircle(Circle):
-    def __init__(self, color: Sequence[int]):
-        super().__init__(color)
-        self.mode = GL_LINE_STRIP
+    def __init__(self, color: Sequence[int], radius=1 / 2):
+        super().__init__(color, radius)
+        self.mode = GL_LINES
 
+
+import decimal
+
+
+def float_range(start, stop, step):
+    while start < stop:
+        yield float(start)
+        start += decimal.Decimal(str(step))
+
+
+# if __name__ == '__main__':
+#     print(len(list(float_range(0, 2*math.pi, 0.1))))
 
 class SpriteRenderer(BaseComponent):
     """
@@ -142,11 +155,11 @@ class SpriteRenderer(BaseComponent):
         self.shape = Square((r, g, b, a))
 
         # Vertex List (if shape)
-        self._vlist = None  # type: pyglet.graphics.vertexdomain.VertexList
+        self._vlist = None  # type: Optional[pyglet.graphics.vertexdomain.VertexList]
 
         # size of the sprite
         self._w, self._h = DEFAULT_SPRITE_RESOLUTION[0] * abs(self.entity.transform.scale.x), \
-            DEFAULT_SPRITE_RESOLUTION[1] * abs(self.entity.transform.scale.y)
+                           DEFAULT_SPRITE_RESOLUTION[1] * abs(self.entity.transform.scale.y)
 
     def draw_shape(self, camera: "kge.Camera"):
         # FIXME : SHOULD UPDATE VERTEX LIST IF IT HAS BEEN CREATED
@@ -160,16 +173,31 @@ class SpriteRenderer(BaseComponent):
                 )
 
         elif isinstance(self.shape, Circle):
+            # if not isinstance(self.shape, OutlinedCircle):
+            #     # for( float ang=0; ang <= 2*PI; ang += 0.1)
+            #     # {
+            #     #
+            #     # // draw the vertices required.
+            #     # glVertex3f(cos(ang)*rad, sin(ang)*rad, 0);
+            #     #
+            #     # }
+            #     # angle = 0
+            #     for angle in float_range(0, 2*math.pi, 0.1):
+            #         vertices.extend((
+            #                 math.cos(angle) * self.shape.radius,
+            #                 math.sin(angle) * self.shape.radius,
+            #             ))
+            #         # angle += 0.1
+
             # FIXME : CHANGE THIS TO EFFECTIVELY DRAW CIRCLES
             deg = 360 / self.shape.num_points
-            deg = math.radians(deg)
+            rad = math.radians(deg)
             for i in range(self.shape.num_points):
-                n = deg * i
+                n = rad * i
+                pos = camera.world_to_screen_point(self.entity.position)
                 vertices.extend((
-                    int(self.shape.radius * camera.pixel_ratio * math.cos(n)) + camera.world_to_screen_point(
-                        self.entity.position).x,
-                    int(self.shape.radius * camera.pixel_ratio * math.sin(n)) + camera.world_to_screen_point(
-                        self.entity.position).y
+                    int(camera.unit_to_pixels(self.shape.radius) * math.cos(n)) + pos.x,
+                    int(camera.unit_to_pixels(self.shape.radius) * math.sin(n)) + pos.y
                 ))
         else:
             return
@@ -180,7 +208,8 @@ class SpriteRenderer(BaseComponent):
             win = kge.ServiceProvider.getWindow()
             batch = win.batch
             layers = win.render_layers
-            self._vlist = batch.add(self.shape.num_points, self.shape.mode, layers[self.entity.layer], ("v2d/stream", tuple(vertices)),
+            self._vlist = batch.add(self.shape.num_points, self.shape.mode, layers[self.entity.layer],
+                                    ("v2d/stream", tuple(vertices)),
                                     ("c4Bn/dynamic",
                                      self.shape.color * self.shape.num_points))  # type: pyglet.graphics.vertexdomain.VertexList
         else:
@@ -196,7 +225,39 @@ class SpriteRenderer(BaseComponent):
         # TODO
         pass
 
-    def on_asset_loaded(self, ev: events.AssetLoaded, dispatch):
+    def on_disable_entity(self, ev: events.DisableEntity, dispatch):
+        """
+        Disable sprite if not visible
+        """
+        if self._vlist is not None:
+            self._vlist.delete()
+            self._vlist = None
+        if self._sprite is not None:
+            if self._sprite.visible:
+                self._sprite.visible = False
+            # self._sprite = None
+
+    def on_enable_entity(self, ev: events.EnableEntity, dispatch):
+        if self._sprite is not None:
+            if not self._sprite.visible:
+                self._sprite.visible = True
+        # else:
+        #     try:
+        #         if self.
+
+    def on_destroy_entity(self, ev: events.DestroyEntity, dispatch):
+        """
+        Delete sprite if entity is being deleted
+        """
+        if self._vlist is not None:
+            self._vlist.delete()
+            self._vlist = None
+        if self._sprite is not None:
+            if self._sprite.visible:
+                self._sprite.visible = False
+            self._sprite = None
+
+    def on_asset_loaded(self, ev: AssetLoaded, dispatch):
         """
         If Image has been loaded for this entity then, create the sprite for it
         """
@@ -221,7 +282,8 @@ class SpriteRenderer(BaseComponent):
                             # print(self._vlist,
                             #       f"for {self.entity}", "Is being Deleted !")
                             self._vlist.delete()
-                        pass
+                            self._vlist = None
+                            pass
                     except Exception as e:
                         import traceback
                         # print(f"Error : {e}")
@@ -268,7 +330,7 @@ class SpriteRenderer(BaseComponent):
         else:
             self.shape = val
 
-    def render(self, scene: "kge.Scene",):
+    def render(self, scene: "kge.Scene", ):
         """
         Render the sprite
         """
@@ -283,27 +345,29 @@ class SpriteRenderer(BaseComponent):
                 "Sprite renderer components should be attached to Sprites ('kge.Sprite')")
         else:
 
-            if not camera.in_frame(self.entity):
-                # If not in camera sight then the sprite should be invisible
-                if self._sprite is not None:
-                    self._sprite.visible = False
-                else:
-                    # If vertex list is not in camera sight then we should delete it
-                    if self._vlist is not None:
-                        self._vlist.delete()
-                        self._vlist = None
+            # if not camera.in_frame(self.entity):
+            #     # self.entity.is_active = False
+            #
+            #     # If not in camera sight then the sprite should be invisible
+            #     if self._sprite is not None and self._sprite.visible:
+            #         self._sprite.visible = False
+            #     else:
+            #         # If vertex list is not in camera sight then we should delete it
+            #         if self._vlist is not None:
+            #             self._vlist.delete()
+            #             self._vlist = None
+            # else:
+            if self._sprite is None:
+                self.draw_shape(camera)
             else:
-                if self._sprite is None:
-                    self.draw_shape(camera)
-                else:
-                    # if self._sprite.batch is None:
-                    #     self._sprite.batch = batch
-                    #     self._sprite.group = group
-                    self._sprite.visible = True
-                    self._sprite.update(pos.x, pos.y, self.entity.transform.angle,
-                                        scale_x=self.entity.transform.scale.x * camera.zoom,
-                                        scale_y=self.entity.transform.scale.y * camera.zoom,
-                                        )
-            # except Exception as e:
-            #     print(f"An Error '{e}' Happened on entity {self.entity}")
-            #     # If image has not finished loading yet
+                # if self._sprite.batch is None:
+                #     self._sprite.batch = batch
+                #     self._sprite.group = group
+                self._sprite.visible = True
+                self._sprite.update(pos.x, pos.y, self.entity.transform.angle,
+                                    scale_x=self.entity.transform.scale.x * camera.zoom,
+                                    scale_y=self.entity.transform.scale.y * camera.zoom,
+                                    )
+        # except Exception as e:
+        #     print(f"An Error '{e}' Happened on entity {self.entity}")
+        #     # If image has not finished loading yet

@@ -300,7 +300,6 @@ class PhysicsManager(System):
         FIXME : SHOULD HAPPEN IN PhysicsUpdate Event
         """
         if not self.pause:
-
             if PhysicsManager.world:
                 # Only a fixed number of frames per second
                 if self.last_tick is None:

@@ -24,6 +24,6 @@ class Input(metaclass=InputMeta, abstract=True):
     """
     Inherit from Input to make a simple input.
 
-    Add abstract=True in the class line to make a input type.
+    Add abstract=True in the class line to make an input type.
     """
 

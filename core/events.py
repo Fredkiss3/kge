@@ -14,6 +14,7 @@ class Event:
     scene: 'kge.Scene' = None
     onlyEntity: Union['kge.Entity', None] = None
     time_scale: float = 1.0
+    onlySystems: bool = False
 
 
 """

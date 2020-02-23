@@ -1,5 +1,7 @@
 from typing import Type, Union, List
 
+import pyglet
+
 import kge
 from kge.core import events
 from kge.core.service import Service
@@ -10,6 +12,26 @@ class EntityManager(System):
     """
     The system that manages entities
     """
+
+    def set_entities(self, dt):
+        """
+        Disable entities if not in camera sight
+        """
+        scene = self.engine.current_scene
+        for e in scene.all:
+            if not scene.main_camera.in_frame(e):
+                if e.is_active:
+                    e.is_active = False
+            else:
+                if not e.is_active:
+                    e.is_active = True
+
+
+    def __enter__(self):
+        pyglet.clock.schedule_interval(self.set_entities, 1 / 60)
+
+    # def on_scene_started(self, event: events.SceneStarted, dispatch):
+    #     print(event.scene.all)
 
     def destroy(self, e: "kge.Entity"):
         if not e.destoyed:

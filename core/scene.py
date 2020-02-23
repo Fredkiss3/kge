@@ -1,7 +1,7 @@
 from collections.abc import Collection
 from collections import defaultdict
 from copy import deepcopy
-from typing import Iterator, Type, Callable, Sequence, Tuple, Union, TypeVar
+from typing import Iterator, Type, Callable, Sequence, Tuple, Union, TypeVar, Set
 
 import kge
 from kge import ServiceProvider
@@ -42,6 +42,13 @@ class EntityCollection(Collection):
         :return:
         """
         return self._kinds
+
+    @property
+    def all(self) -> Set[BaseEntity]:
+        """
+        Get all entities
+        """
+        return self._all
 
     @property
     def tags(self):
@@ -283,7 +290,7 @@ class BaseScene(EventMixin, EntityCollection):
         but will be left public for other creative uses.
         """
         return sorted(
-            filter(lambda e: hasattr(e, "sprite_renderer")  # and self.main_camera.in_frame(e)
+            filter(lambda e: hasattr(e, "sprite_renderer") # and self.main_camera.in_frame(e)
                    ,
                    self),
             # self,

@@ -395,10 +395,10 @@ class BaseEntity(EventMixin):
         """
         self._is_active = False
 
-        killer = kge.ServiceProvider.getEntityManager()
+        manager = kge.ServiceProvider.getEntityManager()
 
-        if killer:
-            killer.disable(self)
+        if manager:
+            manager.disable(self)
             # self.destoyed = True
 
     def _activate(self):
@@ -406,10 +406,10 @@ class BaseEntity(EventMixin):
         Activate
         """
         self._is_active = True
-        killer = kge.ServiceProvider.getEntityManager()
+        manager = kge.ServiceProvider.getEntityManager()
 
-        if killer:
-            killer.enable(self)
+        if manager:
+            manager.enable(self)
             # self.destoyed = True
 
 

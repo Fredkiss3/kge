@@ -6,7 +6,8 @@ from pyglet.gl import *
 import kge
 from kge.utils.vector import Vector
 from kge.core import events
-from kge.core.constants import DEFAULT_RESOLUTION, WINDOW_POSITION, IS_FULLSCREEN, IS_RESIZABLE, DEFAULT_FPS, BLACK, RED
+from kge.core.constants import DEFAULT_RESOLUTION, WINDOW_POSITION, IS_FULLSCREEN, IS_RESIZABLE, DEFAULT_FPS, BLACK, \
+    RED, BLUE
 from kge.core.service import Service
 from kge.core.system import System
 from kge.graphics.sprite_renderer import SpriteRenderer
@@ -32,7 +33,7 @@ class Renderer(System):
 
         # Scene Variables
         self._camera_zoom = 0
-        self._bgc = tuple(unit / 255 for unit in BLACK)
+        self._bgc = tuple(unit / 255 for unit in BLACK[:3])
 
         # batch
         self.batch = None  # type: Union[pyglet.graphics.Batch, None]
@@ -43,12 +44,12 @@ class Renderer(System):
         # layers
         self.layers = [pyglet.graphics.OrderedGroup(i) for i in range(20)]
         self.window_size = Vector.Zero()
-        self.to_draw = []  # Vertices to draw
+        # self.to_draw = []  # Vertices to draw
 
     def __enter__(self):
         self.window = pyglet.window.Window(
             # todo: allow vsync or not ?
-            vsync=False,
+            vsync=True,
             width=self.resolution[0],
             height=self.resolution[1],
             resizable=self._is_resizable,
@@ -71,7 +72,7 @@ class Renderer(System):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         # Schedule render update to the time step
-        pyglet.clock.schedule_interval(self.render, 1/100)
+        pyglet.clock.schedule_interval(self.render, 1 / 100)
         # pyglet.clock.schedule_interval(self.rebatch, 1)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -94,11 +95,6 @@ class Renderer(System):
         """
         Draw the window
         """
-        # Scale the window by zoom
-        if self._camera_zoom != self.engine.current_scene.main_camera.zoom:
-            self._camera_zoom = self.engine.current_scene.main_camera.zoom
-            pass
-
         # Clear the screen
         self.window.clear()
         glClearColor(*self._bgc, 1)
@@ -110,7 +106,7 @@ class Renderer(System):
             self.fps_display.draw()
 
         # Dispatch scene rendered
-        self._dispatch(events.Rendered())
+        # self._dispatch(events.Rendered())
         return pyglet.event.EVENT_HANDLED
 
     def rebatch(self, dt: float):
@@ -123,18 +119,15 @@ class Renderer(System):
         """
         Render calculations
         """
-        # print(f"Rendering {dt}")
-        # self.batch = pyglet.graphics.Batch()
-
         scene = self.engine.current_scene
         if scene is not None:
-            # set camera zoom and scene color
+            # set scene color
             self._bgc = tuple(
                 unit / 255 for unit in scene.background_color[:3]
             )
 
-            self.to_draw = []
-            for entity in scene.entity_layers():  # type: Sprite
+            # self.to_draw = []
+            for entity in scene.entity_layers():  # type: kge.Sprite
                 # Render only sprites
                 entity.sprite_renderer.render(scene)
 

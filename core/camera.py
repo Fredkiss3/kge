@@ -131,7 +131,6 @@ class Camera(Entity):
         :param entity: the entity to check
         :return: True of the entity is in camera sight
         """
-        # FIXME : should be responsive to zoom also
         # Minimum distances before the collision occurs
         min_dist_x = entity.size.width / 2 + self.half_width
         min_dist_y = entity.size.height / 2 + self.half_height
@@ -141,7 +140,7 @@ class Camera(Entity):
 
         # depth of the collision
         xDepth = min_dist_x - abs(distVec.x)
-        yDepth = min_dist_y - abs(distVec.y)
+        yDepth = min_dist_y + abs(distVec.y)
 
         if xDepth > 0 and yDepth > 0:
             return True

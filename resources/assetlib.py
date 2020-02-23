@@ -11,6 +11,8 @@ import threading
 import weakref
 from typing import Union
 
+import pyglet
+
 import kge
 import kge.resources.vfs as vfs
 from kge.audio import events
@@ -167,6 +169,10 @@ class AssetLoader(System):
         for filename, callback in queue:
             self._hint(filename, callback)
 
+        # schedule idle event
+        # pyglet.clock.schedule_interval_soft(self.on_idle, 1/10)
+
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         # Reset the hint provider
         global _hint, _finished
@@ -193,16 +199,29 @@ class AssetLoader(System):
         self._ended += 1
         self._event_queue.append(asset)
 
-    def on_idle(self, event, dispatch):
-        while self._event_queue:
-            asset = self._event_queue.popleft()  # type: Asset
-            # Not for this entity
-            ev = events.AssetLoaded(
-                asset=asset,
-                total_loaded=self._ended,
-                total_queued=self._began - self._ended,
-            )
-            dispatch(ev)
+        # Schedule call for asset loaded
+        ev = events.AssetLoaded(
+            asset=asset,
+            total_loaded=self._ended,
+            total_queued=self._began - self._ended,
+        )
+        self._dispatch(ev)
+
+    #
+    # def on_idle(self,
+    #             time_delta
+    #             # event, dispatch
+    #             ):
+    #     while self._event_queue:
+    #         # print("Idle")
+    #         asset = self._event_queue.popleft()  # type: Asset
+    #         # Not for this entity
+    #         ev = events.AssetLoaded(
+    #             asset=asset,
+    #             total_loaded=self._ended,
+    #             total_queued=self._began - self._ended,
+    #         )
+    #         self._dispatch(ev)
 
 
 _backlog = []

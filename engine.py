@@ -57,7 +57,7 @@ class Engine(LoggerMixin, EventMixin):
         Renderer,
         InputManager,
         AssetLoader,
-        AudioManager,
+        # AudioManager,
         EntityManager,
     ),
         basic_services=(
@@ -112,6 +112,7 @@ class Engine(LoggerMixin, EventMixin):
         # type: futures.thread.ThreadPoolExecutor
         self._executor = futures.ThreadPoolExecutor()
         self._jobs = deque()
+        self.tasks = list()
 
     @property
     def current_scene(self):
@@ -246,13 +247,15 @@ class Engine(LoggerMixin, EventMixin):
         #     window.flip()
 
         pyglet.clock.schedule_interval(self.loop_once, 1 / 10_000)
-        pyglet.clock.schedule_interval(self.flush_jobs, 1 / 10_000)
+        # pyglet.clock.schedule_interval(self.flush_jobs, 1 / 10_000)
         pyglet.app.run()
 
         # Set the running state to False to stop small scripts for updating
         self.flush_events()
         self.running = False
 
+        print(f"Tasks : {len(self.tasks)}")
+        print(f"Waiting for {len(self._jobs)} Jobs to finish after {time.monotonic() - self._last_idle_time} seconds !")
         for future in futures.as_completed(self._jobs):
             try:
                 data = future.result()
@@ -284,13 +287,18 @@ class Engine(LoggerMixin, EventMixin):
 
         if self.running:
             # Get time_delta
-            now = time.monotonic()
-            time_delta = now - self._last_idle_time
-            self._last_idle_time = now
+            # now = time.monotonic()
+            # time_delta = now - self._last_idle_time
+            # self._last_idle_time = now
+            # if time.monotonic() - self._last_idle_time <=1:
+            #     print(
+            #         f"Waiting for {len(self._jobs)} Jobs started after {time.monotonic() - self._last_idle_time} seconds !")
 
             # dispatch events (they are sorted in reverse order)
-            self.dispatch(events.Idle(
-                time_delta * self.time_scale), immediate=True)
+            # idle = events.Idle(
+            #     time_delta * self.time_scale)
+            # idle.onlySystems = True
+            # self.dispatch(idle, immediate=True)
 
             # get last events added to the queue
             self._event_queue.extend(self._next_event_queue)
@@ -354,6 +362,7 @@ class Engine(LoggerMixin, EventMixin):
         scene = self.current_scene
         event.scene = scene
         event.time_scale = self.time_scale
+        self.tasks.append(event)
 
         # launch registered event handlers in async Mode
         extensions = chain(self._event_extensions[type(
@@ -370,12 +379,15 @@ class Engine(LoggerMixin, EventMixin):
             # if event is AssetLoaded event, then run it in the main thread
             # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS
             if isinstance(event, AssetLoaded):
-                system.__fire_event__(event, self.dispatch)
+                # Only dispatch this event to EventDispatcher
+                if isinstance(system, EventDispatcher):
+                    system.__fire_event__(event, self.dispatch)
                 continue
             # if isinstance(system, Renderer):
             #     system.__fire_event__(event, self.dispatch)
             #     continue
 
+            # print(event, system)
             self._jobs.append(
                 self._executor.submit(
                     system.__fire_event__, event, self.dispatch)

@@ -142,8 +142,7 @@ class Collider(BaseComponent):
         ))
 
         # our fixture is the last
-        self._fixture = body.fixtures[-1] # type: b2.b2Fixture
-
+        self._fixture = body.fixtures[-1]  # type: b2.b2Fixture
 
     ############################
     #         Events           #
@@ -205,7 +204,7 @@ class BoxCollider(Collider):
         """
         initialize the collider
 
-        :param box: a vector which describes the box of the collider in form of Vector(width, height)
+        :param box: a vector which describes the box of the collider in form of Vector(width, height) default is set to entity size
         :param offset: The position of the collider relative to the parent body
         """
         super().__init__(isSensor, offset, bounciness, friction, density)
@@ -388,7 +387,7 @@ class TriangleCollider(Collider):
             for v in vertices:
                 self._vertices.append(
                     (Vector(v.x * self.entity.transform.scale.x,
-                                                    v.y * self.entity.transform.scale.y))
+                            v.y * self.entity.transform.scale.y))
                 )
             super(TriangleCollider, self).on_init(ev, dispatch)
 
@@ -432,11 +431,13 @@ class EdgeCollider(Collider):
             vertices=[(*v,) for v in self._vertices]
         )
 
+
 class LoopCollider(Collider):
     """
     A component that handles collisions which occurs in a sequence of line segments that forms a circular list.
     TODO : TO TEST
     """
+
     def __init__(self,
                  vertices: List[Vector],
                  isSensor: bool = False,
@@ -465,7 +466,6 @@ class LoopCollider(Collider):
         return b2.b2LoopShape(
             vertices=[(*v,) for v in self._vertices]
         )
-
 
 
 if __name__ == '__main__':

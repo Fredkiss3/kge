@@ -183,6 +183,9 @@ class InputManager(System):
         self.key_handler = key_ev.KeyStateHandler()
         self.mouse_handler = mouse_ev.MouseStateHandler()
 
+        # schedule flush keys
+        pyglet.clock.schedule_interval(self.flush_keys, 1 / 10)
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.key_handler = None
         self.mouse_handler = None
@@ -216,7 +219,10 @@ class InputManager(System):
                 self.window_ref = window
                 self.logger.debug(f"Input Manager Window : {window}")
 
-    def on_idle(self, idle_event: events.Idle, dispatch):
+    def flush_keys(self,
+                   time_delta
+                   # idle_event: events.Idle, dispatch
+                   ):
         """
         This method is called on each frame in order to dispatch events
         """
@@ -230,8 +236,8 @@ class InputManager(System):
         # if joysticks:
         #     joystick = joysticks[0]
         #     joystick.open()
-            # joystick.push_handlers()
-            # print(joystick)
+        # joystick.push_handlers()
+        # print(joystick)
 
     def get_mouse_up(self, mouse: Type[MouseInput]):
         """
@@ -359,7 +365,7 @@ class InputManager(System):
         """
         try:
             self._dispatch(events.KeyDown(key=self.key_map[symbol],
-                                      mods=self.build_mods(mods)))
+                                          mods=self.build_mods(mods)))
         except KeyError:
             pass
         else:

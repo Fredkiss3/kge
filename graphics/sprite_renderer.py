@@ -112,27 +112,15 @@ class Circle(Shape):
         super().__init__(color)
         self.center = Vector(0, 0)
         self.radius = radius
-        self.mode = GL_TRIANGLE_STRIP
-        self.num_points = 21
+        self.mode = GL_TRIANGLE_FAN
+        self.num_points = 22
 
 
 class OutlinedCircle(Circle):
     def __init__(self, color: Sequence[int], radius=1 / 2):
         super().__init__(color, radius)
-        self.mode = GL_LINES
+        self.mode = GL_LINE_LOOP
 
-
-import decimal
-
-
-def float_range(start, stop, step):
-    while start < stop:
-        yield float(start)
-        start += decimal.Decimal(str(step))
-
-
-# if __name__ == '__main__':
-#     print(len(list(float_range(0, 2*math.pi, 0.1))))
 
 class SpriteRenderer(BaseComponent):
     """
@@ -173,23 +161,6 @@ class SpriteRenderer(BaseComponent):
                 )
 
         elif isinstance(self.shape, Circle):
-            # if not isinstance(self.shape, OutlinedCircle):
-            #     # for( float ang=0; ang <= 2*PI; ang += 0.1)
-            #     # {
-            #     #
-            #     # // draw the vertices required.
-            #     # glVertex3f(cos(ang)*rad, sin(ang)*rad, 0);
-            #     #
-            #     # }
-            #     # angle = 0
-            #     for angle in float_range(0, 2*math.pi, 0.1):
-            #         vertices.extend((
-            #                 math.cos(angle) * self.shape.radius,
-            #                 math.sin(angle) * self.shape.radius,
-            #             ))
-            #         # angle += 0.1
-
-            # FIXME : CHANGE THIS TO EFFECTIVELY DRAW CIRCLES
             deg = 360 / self.shape.num_points
             rad = math.radians(deg)
             for i in range(self.shape.num_points):
@@ -199,6 +170,11 @@ class SpriteRenderer(BaseComponent):
                     int(camera.unit_to_pixels(self.shape.radius) * math.cos(n)) + pos.x,
                     int(camera.unit_to_pixels(self.shape.radius) * math.sin(n)) + pos.y
                 ))
+            self._vlist = pyglet.graphics.vertex_list(self.shape.num_points,
+                                                      ("v2d/stream", tuple(vertices)),
+                                                      ("c4Bn/dynamic",
+                                                       self.shape.color * self.shape.num_points))
+            return self._vlist, self.shape.mode
         else:
             return
 
@@ -257,6 +233,24 @@ class SpriteRenderer(BaseComponent):
                 self._sprite.visible = False
             self._sprite = None
 
+    def on_scene_stopped(self, ev, dispatch):
+        super(SpriteRenderer, self).on_scene_stopped(ev, dispatch)
+        if self._vlist is not None:
+            self._vlist.delete()
+            self._vlist = None
+        if self._sprite is not None:
+            self._sprite.delete()
+            self._sprite = None
+
+    @property
+    def visible(self) -> bool:
+        if self._vlist != None:
+            return True
+        elif self._sprite != None:
+            return self._sprite.visible
+
+        return False
+
     def on_asset_loaded(self, ev: AssetLoaded, dispatch):
         """
         If Image has been loaded for this entity then, create the sprite for it
@@ -310,15 +304,6 @@ class SpriteRenderer(BaseComponent):
     def image(self):
         return self._image
 
-    def on_init(self, ev, _):
-        pass
-        # Removed !
-        # try:
-        #     self._sprite = pyglet.sprite.Sprite(self._image.load(), subpixel=True)
-        # except Exception as e:
-        #     # If image has not been loaded yet
-        #     print(f"An Error '{e}' Happened on entity {self.entity}")
-
     @image.setter
     def image(self, val):
         if not isinstance(val, (Image, Shape)):
@@ -345,29 +330,21 @@ class SpriteRenderer(BaseComponent):
                 "Sprite renderer components should be attached to Sprites ('kge.Sprite')")
         else:
 
-            # if not camera.in_frame(self.entity):
-            #     # self.entity.is_active = False
-            #
-            #     # If not in camera sight then the sprite should be invisible
-            #     if self._sprite is not None and self._sprite.visible:
-            #         self._sprite.visible = False
-            #     else:
-            #         # If vertex list is not in camera sight then we should delete it
-            #         if self._vlist is not None:
-            #             self._vlist.delete()
-            #             self._vlist = None
-            # else:
-            if self._sprite is None:
-                self.draw_shape(camera)
+            if not camera.in_frame(self.entity):
+                # If not in camera sight then the sprite should be invisible
+                if self._sprite is not None and self._sprite.visible:
+                    self._sprite.visible = False
+                else:
+                    # If vertex list is not in camera sight then we should delete it
+                    if self._vlist is not None:
+                        self._vlist.delete()
+                        self._vlist = None
             else:
-                # if self._sprite.batch is None:
-                #     self._sprite.batch = batch
-                #     self._sprite.group = group
-                self._sprite.visible = True
-                self._sprite.update(pos.x, pos.y, self.entity.transform.angle,
-                                    scale_x=self.entity.transform.scale.x * camera.zoom,
-                                    scale_y=self.entity.transform.scale.y * camera.zoom,
-                                    )
-        # except Exception as e:
-        #     print(f"An Error '{e}' Happened on entity {self.entity}")
-        #     # If image has not finished loading yet
+                if self._sprite is None:
+                    return self.draw_shape(camera)
+                else:
+                    self._sprite.visible = True
+                    self._sprite.update(pos.x, pos.y, -self.entity.transform.angle,
+                                        scale_x=self.entity.transform.scale.x * camera.zoom,
+                                        scale_y=self.entity.transform.scale.y * camera.zoom,
+                                        )

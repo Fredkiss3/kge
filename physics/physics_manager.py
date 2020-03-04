@@ -1,21 +1,27 @@
 import time
 from collections import deque
-from typing import Callable, Union, Deque, Optional
+from itertools import chain
+from typing import Callable, Union, Deque, Optional, List, Tuple
 
 import math
 
+import pyglet
+
 import kge
+from kge.core.component_system import ComponentSystem
+from kge.core.entity import BaseEntity
 from kge.utils.vector import Vector
 from kge.physics.colliders import Collider
-from kge.physics.rigid_body import RigidBody
+from kge.physics.rigid_body import RigidBody, RigidBodyType
 from kge.core import events
 from kge.core.constants import FIXED_DELTA_TIME
 from kge.core.events import Event
 from kge.core.service import Service
-from kge.core.system import System
+# from kge.core.system import System
 import Box2D as b2
 
-from kge.physics.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, PhysicsUpdate
+from kge.physics.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, \
+    PhysicsUpdate, CollisionBegin, CollisionEnd
 
 
 class ContactListener(b2.b2ContactListener):
@@ -47,6 +53,9 @@ class ContactListener(b2.b2ContactListener):
         :return:
         """
         self.system.handle_contact(contact, False)
+
+    def PostSolve(self, contact, impulse):
+        self.system.post_solve(contact)
 
 
 class DestructionListener(b2.b2DestructionListener):
@@ -187,7 +196,7 @@ class RayCastInfo(b2.b2RayCastCallback):
             return 1.0
 
 
-class PhysicsManager(System):
+class PhysicsManager(ComponentSystem):
     """
     The system that handles movements, collision detection and can perform overlaps for region query and ray casts
     """
@@ -271,7 +280,8 @@ class PhysicsManager(System):
             dest = origin + direction * distance
 
             # Send the ray
-            cls.world.RayCast(cb, origin, (dest.x, dest.y))
+            if cls.world is not None:
+                cls.world.RayCast(cb, origin, (dest.x, dest.y))
 
             return cb
         else:
@@ -285,41 +295,50 @@ class PhysicsManager(System):
         PhysicsManager.contact_listener = ContactListener(self)
         PhysicsManager.destruction_listener = DestructionListener(self)
         PhysicsManager.engine = self.engine
-        # type: Union[Callable[[Event], None], None]
-        self._dispatch = self.engine.dispatch
-        self.accumulated_time = 0
-        self.last_tick = None
-        self.start_time = None
         self.time_step = FIXED_DELTA_TIME
+
+        # only rigid bodies and colliders supported
+        self.components_supported = [RigidBody, Collider]
+
+        # bodies to destroy
+        self.garbage_bodies = [] # type: List[b2.b2Body]
+        # bodies to create
+        self.new_bodies = [] # type: List[Tuple[RigidBody, BaseEntity]]
 
         # TODO : Implement layers in order to ignore collisions within different layers
         self.layers_to_ignore = {}
 
-    def on_physics_update(self, idle_event: PhysicsUpdate, dispatch: Callable[[Event], None]):
+    def on_physics_update(self, event: PhysicsUpdate, dispatch: Callable[[Event], None]):
         """
-        FIXME : SHOULD HAPPEN IN PhysicsUpdate Event
+        Update physics
         """
         if not self.pause:
             if PhysicsManager.world:
-                # Only a fixed number of frames per second
-                if self.last_tick is None:
-                    self.last_tick = time.monotonic()
-                this_tick = time.monotonic()
-                self.accumulated_time += this_tick - self.last_tick
-                self.last_tick = this_tick
+                try:
+                    # Destroy garbage bodies
+                    # FIXME : If bugging verifiy
+                    for body in self.garbage_bodies:
+                        body.active = False
+                    self.garbage_bodies.clear()
 
-                # self.logger.info(self.accumulated_time)
+                    # Create new bodies
+                    for rb, e in self.new_bodies:
+                        self.create_body(rb, e)
+                    self.new_bodies.clear()
 
-                while self.accumulated_time >= self.time_step:
                     PhysicsManager.world.Step(
-                        FIXED_DELTA_TIME * idle_event.time_scale, 10, 10)
+                        FIXED_DELTA_TIME * event.time_scale, 10, 10)
                     PhysicsManager.world.ClearForces()
 
-                    # send fixed update call
-                    # self._dispatch(FixedUpdate(
-                    #     fixed_delta_time=FIXED_DELTA_TIME * idle_event.time_scale
-                    # ), immediate=True)
-                    self.accumulated_time += -self.time_step
+                    # Launch Physics Update on rigid bodies
+                    rigid_bodies = self.active_components()  #filter(lambda c: isinstance(c, RigidBody) and c.body_type != RigidBodyType.STATIC,self.active_components())
+                    # rigid_bodies = filter(lambda c: isinstance(c, RigidBody) and c.body_type != RigidBodyType.STATIC,self.active_components())
+                    for rb in rigid_bodies:  # type: RigidBody
+                        rb.__fire_event__(event, dispatch)
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    print(e)
 
     def on_disable_entity(self, event: events.DisableEntity, dispatch: Callable[[Event], None]):
         """
@@ -342,6 +361,7 @@ class PhysicsManager(System):
         rb = event.entity.getComponent(RigidBody)
         if rb is not None:
             rb.active = True
+            rb.is_active = True
 
             ev = events.EntityEnabled(
                 entity=event.entity
@@ -363,9 +383,50 @@ class PhysicsManager(System):
     def on_scene_stopped(self, ev: events.SceneStopped, dispatch: Callable[[Event], None]):
         PhysicsManager.world = b2.b2World(gravity=(0, -10), doSleep=True)
 
+    def create_body(self, rb: RigidBody, e: BaseEntity):
+        """
+        Create the real body
+        """
+        try:
+            body = PhysicsManager.world.CreateBody(
+                b2.b2BodyDef(
+                    position=e.position,
+                    angle=math.radians(e.transform.angle),
+                    type=rb.b_type,
+                    active=rb.active,
+                    allowSleep=True,
+                    awake=True,
+                    fixedRotation=rb.fixed_rotation,
+                    userData=rb,
+                    gravityScale=rb.gravity_scale,
+                    bullet=True,
+                )
+            )  # type: b2.b2Body
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.logger.error(e)
+        else:
+            # Set mass, velocity and inertia of the body
+            body.mass = rb.mass
+            body.linearVelocity = rb.velocity
+            body.angularVelocity = rb.angular_velocity
+            body.linearDamping = rb.drag
+            body.inertia = rb.inertia
+            body.angle = math.radians(rb.angle)
+
+            # the body has been created
+            event = BodyCreated(
+                entity=e,
+                body=body
+            )
+            event.onlyEntity = e
+            self._dispatch(event)
+
     def on_create_body(self, ev: CreateBody, dispatch: Callable[[Event], None]):
         """
         Create a body
+        FIXME : SHOULD NOT HAPPEN WHEN WORLD IS STEPPING
         """
         rb = ev.body_component
         e = ev.entity
@@ -373,36 +434,25 @@ class PhysicsManager(System):
         if rb.is_ghost:
             manager = kge.ServiceProvider.getEntityManager()
             manager.add_component(e, rb, "_body")
-            # ev.entity.addComponent("_body", rb)
+            # ev.entity.addComponent("_body", rb)c
 
-        body = PhysicsManager.world.CreateBody(
-            b2.b2BodyDef(
-                position=e.position,
-                angle=math.radians(e.transform.angle),
-                type=rb.body_type,
-                active=rb.active,
-                allowSleep=True,
-                awake=True,
-                fixedRotation=rb.fixed_rotation,
-                userData=rb,
-                gravityScale=rb.gravity_scale,
-                bullet=True,
-            )
-        )  # type: b2.b2Body
+        # rb.entity = ev.entity
+        self.new_bodies.append((rb, ev.entity))
 
-        # Set mass, velocity and inertia of the body
-        body.mass = rb.mass
-        body.linearVelocity = rb.velocity
-        body.angularVelocity = rb.angular_velocity
-        body.inertia = rb.inertia
 
-        # the body has been created
-        event = BodyCreated(
-            entity=ev.entity,
-            body=body
-        )
-        event.onlyEntity = ev.entity
-        dispatch(event)
+    def on_body_created(self, event: BodyCreated, dispatch):
+        # get the concerned components
+        concerned = chain(event.entity.getComponents(kind=RigidBody), event.entity.getComponents(kind=Collider))
+        for c in concerned:  # type: Union[RigidBody, Collider]
+            c.__fire_event__(event, dispatch)
+
+    def on_body_destroyed(self, event: BodyDestroyed, dispatch):
+        # get the concerned components
+        concerned = chain(event.entity.getComponents(kind=RigidBody), event.entity.getComponents(kind=Collider))
+
+        for c in concerned:  # type: Union[RigidBody, Collider]
+            c.__fire_event__(event, dispatch)
+            self._components.remove(c)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         PhysicsManager.world = None
@@ -412,44 +462,70 @@ class PhysicsManager(System):
         Handle a contact, it will generate collisions only
         if two colliders have made contact. And it will generate collisions enter & exit events
         only on colliders which are sensors.
+        FIXME : DO NOT DESTROY ANY BODY OBJECT IN THE CALLBACK
         """
         collider_a = contact.fixtureA.userData
         collider_b = contact.fixtureB.userData
 
-        self.logger.debug(
-            f"Contact {'began' if began else 'ended'} ! with, '{collider_a}'  and '{collider_b}'")
+        rb_a = contact.fixtureA.body.userData  # type: RigidBody
+        rb_b = contact.fixtureB.body.userData  # type: RigidBody
 
-        if isinstance(collider_a, Collider) and isinstance(collider_b, Collider):
-            # Deactivate contact if one of the colliders is not active
-            if collider_a.isSensor or collider_b.isSensor:
-                if self._dispatch:
-                    if began:
-                        if collider_b.isSensor:
+        if isinstance(rb_a, RigidBody) and isinstance(rb_b, RigidBody):
+            if rb_a.is_active and rb_b.is_active:
+                # enable collision only for active rigid bodies
+                if isinstance(collider_a, Collider) and isinstance(collider_b, Collider):
+                    if collider_a.isSensor or collider_b.isSensor:
+                        if self._dispatch:
+                            if began:
+                                if collider_b.isSensor:
+                                    # generate collision for b
+                                    c_ev_a = CollisionEnter(collider=collider_a)
+                                    c_ev_a.onlyEntity = collider_b.entity
+                                    self._dispatch(c_ev_a)
+
+                                if collider_a.isSensor:
+                                    # generate collision for a
+                                    c_ev_b = CollisionEnter(collider=collider_b)
+                                    c_ev_b.onlyEntity = collider_a.entity
+                                    self._dispatch(c_ev_b)
+                            else:
+                                # generate collision for b
+                                if collider_b.isSensor:
+                                    c_ev_a = CollisionExit(collider=collider_a)
+                                    c_ev_a.onlyEntity = collider_b.entity
+                                    self._dispatch(c_ev_a)
+
+                                # generate collision for a
+                                if collider_a.isSensor:
+                                    c_ev_b = CollisionExit(collider=collider_b)
+                                    c_ev_b.onlyEntity = collider_a.entity
+                                    self._dispatch(c_ev_b)
+
+                    # if neither of objects are sensors then
+                    elif not (collider_a.isSensor and collider_b.isSensor):
+                        if began:
                             # generate collision for b
-                            c_ev_a = CollisionEnter(collider=collider_a)
+                            c_ev_a = CollisionBegin(collider=collider_a)
                             c_ev_a.onlyEntity = collider_b.entity
                             self._dispatch(c_ev_a)
 
-                        if collider_a.isSensor:
                             # generate collision for a
-                            c_ev_b = CollisionEnter(collider=collider_b)
+                            c_ev_b = CollisionBegin(collider=collider_b)
                             c_ev_b.onlyEntity = collider_a.entity
                             self._dispatch(c_ev_b)
-                    else:
-                        # generate collision for b
-                        if collider_b.isSensor:
-                            c_ev_a = CollisionExit(collider=collider_a)
+                        else:
+                            # generate collision for b
+                            c_ev_a = CollisionEnd(collider=collider_a)
                             c_ev_a.onlyEntity = collider_b.entity
                             self._dispatch(c_ev_a)
 
-                        # generate collision for a
-                        if collider_a.isSensor:
-                            c_ev_b = CollisionExit(collider=collider_b)
+                            # generate collision for a
+                            c_ev_b = CollisionEnd(collider=collider_b)
                             c_ev_b.onlyEntity = collider_a.entity
                             self._dispatch(c_ev_b)
-        else:
-            # contact.enabled = False
-            pass
+            else:
+                # contact.enabled = False
+                pass
 
     def on_entity_destroyed(self, ev: events.EntityDestroyed, dispatch: Callable[[Event, bool], None]):
         rb = ev.entity.getComponent(kind=RigidBody)  # type: RigidBody
@@ -469,14 +545,34 @@ class PhysicsManager(System):
     def on_destroy_body(self, ev: DestroyBody, dispatch):
         """
         Destroy a body
+        FIXME : SHOULD NOT DESTROY BODY ON COLLISION
         """
         if ev.body_component.body is not None:
-            PhysicsManager.world.DestroyBody(ev.body_component.body)
+            while PhysicsManager.world.locked:
+                continue
+
+            # try:
+            # self.logger.debug(f"Destroying {ev.body_component} of {ev.entity}")
+            ev.body_component.is_active = False
+            colliders = ev.entity.getComponents(kind=Collider)
+            for col in colliders:
+                col.is_active = False
+            # FIXME : SHOULD DESTROY LATER
+            self.garbage_bodies.append(ev.body_component.body)
+            # set user data to none in order to free it
+            ev.body_component.body.userData = None
+            # pyglet.clock.schedule_once(lambda dt: PhysicsManager.world.DestroyBody(ev.body_component.body), 1)
+            # ev.body_component.body.active = False
+            # PhysicsManager.world.DestroyBody(ev.body_component.body)
+            # except Exception as e:
+            #     import traceback
+            #     traceback.print_exc()
+            #     print(e)
+            # else:
             event = BodyDestroyed(
                 body=ev.body_component.body,
                 entity=ev.entity
             )
-
             event.onlyEntity = ev.entity
             dispatch(event)
 
@@ -484,7 +580,7 @@ class PhysicsManager(System):
         """
         Did a fixture get destroyed ?
         """
-        self.logger.debug(f"GoodBye... {fixture.userData}")
+        self.logger.info(f"GoodBye... {fixture.userData}")
 
     def pre_solve(self, contact: b2.b2Contact):
         """
@@ -495,10 +591,17 @@ class PhysicsManager(System):
 
         if isinstance(collider_a, Collider) and isinstance(collider_b, Collider):
             # disable contact if one of the colliders is not active
-            if not collider_a.active or not collider_b.active:
+            if not collider_a.is_active or not collider_b.is_active:
                 contact.enabled = False
         else:
             contact.enabled = False
+
+    def post_solve(self, contact: b2.b2Contact):
+        """
+        Not called for sensors
+        """
+
+        pass
 
 
 class Physics(Service):
@@ -512,6 +615,21 @@ class Physics(Service):
     def overlap_circle(self, center: Vector, radius: float, layer: Union[int, str, None] = None,
                        type=OverlapInfo.ONE) -> OverlapInfo:
         return self._system_instance.overlap_circle(center, radius, layer, type)
+
+    @property
+    def world(self):
+        return self._system_instance.world
+
+    @property
+    def gravity(self):
+        return Vector(self._system_instance.world.gravity[0], self._system_instance.world.gravity[1], )
+
+    @gravity.setter
+    def gravity(self, val: Vector):
+        if not isinstance(val, Vector):
+            raise TypeError("Gravity should be a Vector")
+
+        self._system_instance.world.gravity = val
 
 
 if __name__ == '__main__':

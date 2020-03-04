@@ -7,12 +7,13 @@ THIS GAME ENGINE USE A COMBINATION OF GAME ENGINES :
     - PYGLET : FOR RENDERING AND SOUND SYSTEM
     - LEPTON : FOR PARTICLE SYSTEM
     - PYBOX2D : FOR PHYSICS SYSTEM
-    - LIGHTVOLUME (?) : FOR LIGHTING SYSTEM
+    - LIGHTVOLUME : FOR LIGHTING SYSTEM
 
-inspired by PPB ENGINE created by pyper xxxx :
-Checkout her repository :  https://github.com/ppb/pursuedpybear/
+inspired by PPB ENGINE:
+Checkout the repository :  https://github.com/ppb/pursuedpybear/
 """
 
+import pyglet_ffmpeg2
 import logging
 from typing import Callable
 
@@ -20,6 +21,7 @@ from kge.core.service_provider import ServiceProvider
 from kge.core.scene import Scene
 from kge.core.entity import Entity
 from kge.core.component import Component
+from kge.core.behaviour import Behaviour
 from kge.physics.physics_manager import (
     RayCastInfo, OverlapInfo
 )
@@ -37,12 +39,14 @@ from kge.resources.assetlib import Asset
 from kge.audio.sound import Sound
 from kge.graphics.image import Image
 from kge.graphics.sprite import Sprite
+from kge.graphics.tilegrid import TileGrid
 from kge.graphics.sprite_renderer import (Circle, Triangle, Square, Shape, OutlinedCircle, OutLinedSquare,
                                           OutlinedTriangle)
 from kge.core.camera import Camera
 from kge.inputs import keys as Keys
 from kge.core.constants import *
 from kge.inputs import mouse as Mouse
+from kge.ui.text import Text
 
 from .engine import Engine
 
@@ -51,6 +55,7 @@ __all__ = [
     "Scene",
     "Entity",
     "Empty",
+    "Behaviour",
     "Component",
     "Camera",
 
@@ -95,6 +100,10 @@ __all__ = [
 
     # Sprite Entity
     "Sprite",
+    "TileGrid",
+
+    # UI elements
+    "Text",
 
     # Shapes
     "Circle",

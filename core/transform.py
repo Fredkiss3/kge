@@ -83,13 +83,13 @@ class Transform(BaseComponent):
         Set angle in degrees
         """
         if isinstance(value, (int, float)):
-            rotation = value - self.angle
+            # rotation = value - self.angle
 
             self._angle = math.radians(value)
             self._t.angle = math.radians(value)
 
-            for child in self.children:  # type: Transform
-                child.angle = math.radians(rotation)
+            # for child in self.children:  # type: Transform
+            #     child.angle = math.radians(rotation)
 
         else:
             raise TypeError("Angle should be an int or a float")

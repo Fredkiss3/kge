@@ -1,7 +1,7 @@
 import io
 
 import pyglet
-import pyglet_ffmpeg2
+from pyglet_ffmpeg2 import *
 from kge.resources.assetlib import Asset
 
 

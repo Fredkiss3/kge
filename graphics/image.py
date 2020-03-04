@@ -11,24 +11,26 @@ from kge.resources.assetlib import Asset
 class Image(Asset):
     """
     Asset for image
-    TODO : IMPLEMENT 'file_missing' function
+    TODO :
+        - Create image from region
     """
 
-    def background_parse(self, data):
-        img = pyglet.image.load(self.name, )  # file=io.BytesIO(data))
+    def region(self):
+        img = self.load().get_region()
+        return NotImplementedError("Not implemented yet")
+
+    def background_parse(self, data) -> pyglet.image.AbstractImage:
+        img = pyglet.image.load(self.name, file=io.BytesIO(data))
 
         # Center the anchor of the image
         img.anchor_x = img.width // 2
         img.anchor_y = img.height // 2
         return img
 
-    def file_missing(self):
-        # todo : Create a square placeholder image
-        raise NotImplementedError("Not Implemented yet")
+    def file_missing(self) -> pyglet.image.AbstractImage:
+        img = pyglet.image.create(64, 64, pyglet.image.CheckerImagePattern())
 
-        # img = pyglet.image.ImageData.create_texture(cls=pyglet.image.Texture, rectangle=True)
-        #
-        # # Center the anchor of the image
-        # img.anchor_x = img.width // 2
-        # img.anchor_y = img.height // 2
-        # return img
+        # Center the anchor of the image
+        img.anchor_x = img.width // 2
+        img.anchor_y = img.height // 2
+        return img

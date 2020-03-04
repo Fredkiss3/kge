@@ -21,8 +21,7 @@ class Vector:
 
     def __eq__(self, other: "Vector"):
         if not isinstance(other, Vector):
-            raise NotImplementedError(
-                f"Vector class does not support == operator with {type(other).__name__}")
+            return False
         return self.x == other[0] and self.y == other[1]
 
     @classmethod
@@ -150,18 +149,19 @@ class Vector:
         """
         return Vector(self.x + (other[0] - self.x) * p, self.y + (other[1] - self.y) * p)
 
-    def move_towards(self, dest: "Vector", speed: float):
+    @classmethod
+    def move_towards(cls, origin: "Vector", dest: "Vector", speed: float):
         """
         Move towards another vector at a given speed
         speed is a normal value
         """
-        v = dest - self
+        v = dest - origin
         magnitude = v.length
 
         if magnitude <= speed or magnitude == 0:
             new_position = dest
         else:
-            new_position = Vector(self + v / magnitude * speed)
+            new_position = Vector(origin + v / magnitude * speed)
 
         return Vector(new_position)
 
@@ -270,6 +270,8 @@ if __name__ == '__main__':
     D = Vector(1, 0)
     print(abs(A))
 
+    print(A == B)
+
     print(A / 2)
     print(*A)
     print(A.normalized())
@@ -287,6 +289,6 @@ if __name__ == '__main__':
     print(A - B)
     print(B - A)
 
-    print(A.move_towards(B, math.sqrt(2)))
+    # print(A.move_towards(B, math.sqrt(2)))
 
     print(tuple(A))

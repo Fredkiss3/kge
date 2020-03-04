@@ -61,7 +61,7 @@ class RigidBody(BaseComponent):
             raise ValueError(
                 "Body type must be one of 'RigidBodyType.STATIC', 'RigidBodyType.DYNAMIC', 'RigidBodyType.KINEMATIC' ")
 
-        # reference to the real body
+        # private attributes
         self._body = None  # type: Union[b2.b2Body, None]
         self._mass = 1
         self._velocity = Vector(0, 0)
@@ -73,6 +73,12 @@ class RigidBody(BaseComponent):
         self._sleeping = False
         self._angle = 0
         self._position = Vector.Zero()
+        self._drag = 0
+
+        try:
+            self._physics_system = kge.ServiceProvider.getPhysics()
+        except:
+            self._physics_system = None
 
         # public
         self.is_ghost = False
@@ -85,11 +91,16 @@ class RigidBody(BaseComponent):
     def fixed_rotation(self, val: bool):
         if not isinstance(val, bool):
             raise TypeError("Fixed rotation attribute should be a bool")
+        elif self.type != RigidBodyType.DYNAMIC:
+            raise AttributeError("Fixed rotation attribute is only available on Dynamic rigid bodies")
 
         self._fixed_rotation = val
 
         if self._body is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.fixedRotation = val
+            pass
 
     @property
     def entity(self) -> BaseEntity:
@@ -118,7 +129,10 @@ class RigidBody(BaseComponent):
         self._velocity = val
 
         if self._body is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.linearVelocity = (*val,)
+            pass
 
     @property
     def mass(self) -> float:
@@ -134,7 +148,10 @@ class RigidBody(BaseComponent):
         self._mass = val
 
         if self._body is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.mass = val
+            pass
 
     @property
     def active(self) -> bool:
@@ -150,7 +167,10 @@ class RigidBody(BaseComponent):
         self._active = val
 
         if self._body is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.active = val
+            pass
 
     @property
     def gravity_scale(self):
@@ -166,7 +186,10 @@ class RigidBody(BaseComponent):
         self._gravity_scale = scale
 
         if self._body is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.gravityScale = scale
+            pass
 
     @property
     def inertia(self):
@@ -182,7 +205,10 @@ class RigidBody(BaseComponent):
         self._inertia = val
 
         if self._body is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.inertia = val
+            pass
 
     @property
     def angular_velocity(self):
@@ -197,21 +223,34 @@ class RigidBody(BaseComponent):
 
         self._angular_velocity = val
         if self._body is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.angularVelocity = val
+            pass
+
+    @property
+    def b_type(self):
+        return self._body_type
 
     @property
     def body_type(self):
-        return self._body_type
-
-    @body_type.setter
-    def body_type(self, b_type: int):
-        if b_type in [RigidBodyType.STATIC, RigidBodyType.DYNAMIC, RigidBodyType.KINEMATIC]:
-            self._body_type = b_type
-            if self._body is not None:
-                self._body.type = self._body_types[b_type]
+        if self.b_type == b2_dynamicBody:
+            return RigidBodyType.DYNAMIC
+        elif self.b_type == b2_kinematicBody:
+            return RigidBodyType.KINEMATIC
         else:
-            raise ValueError(
-                "Body type must be one of 'RigidBodyType.STATIC', 'RigidBodyType.DYNAMIC', 'RigidBodyType.KINEMATIC' ")
+            return RigidBodyType.STATIC
+
+
+    # @body_type.setter
+    # def body_type(self, b_type: int):
+    #     if b_type in [RigidBodyType.STATIC, RigidBodyType.DYNAMIC, RigidBodyType.KINEMATIC]:
+    #         self._body_type = self._body_types[b_type]
+    #         if self._body is not None:
+    #             self._body.type = self._body_types[b_type]
+    #     else:
+    #         raise ValueError(
+    #             "Body type must be one of 'RigidBodyType.STATIC', 'RigidBodyType.DYNAMIC', 'RigidBodyType.KINEMATIC' ")
 
     @property
     def body(self) -> b2.b2Body:
@@ -235,6 +274,7 @@ class RigidBody(BaseComponent):
         self._sleeping = val
         if self._body is not None:
             self._body.awake = val
+            pass
 
     @property
     def angle(self):
@@ -242,35 +282,75 @@ class RigidBody(BaseComponent):
 
     @angle.setter
     def angle(self, val: float):
-        if not isinstance(val, float):
-            raise TypeError("angle should be a float")
+        if not isinstance(val, (float, int)):
+            raise TypeError("angle should be a number")
 
         self._angle = val
         if self._body is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.angle = math.radians(val)
 
-    @property
-    def position(self):
-        return self._position
 
-    @position.setter
-    def position(self, val: Vector):
-        if not isinstance(val, Vector):
-            raise TypeError("angle should be a float")
+    # @property
+    # def position(self):
+    #     return self._position
 
-        self._position = val
+    # @position.setter
+    # def position(self, val: Vector):
+    #     if not isinstance(val, Vector):
+    #         raise TypeError("angle should be a float")
+    #
+    #     self._position = val
+    #     if self._body is not None:
+    #         self._body.position = (val.x, val.y)
+
+    def pre_physics_update(self):
         if self._body is not None:
-            self._body.position = (val.x, val.y)
+            physics =  kge.ServiceProvider.getPhysics()
+            while physics.world.locked:
+                continue
+
+            self._body.angle = math.radians(self._angle)
+            self._body.awake = self._sleeping
+            # self._body.angularVelocity = self._angular_velocity
+            self._body.inertia = self._inertia
+            self._body.gravityScale = self._gravity_scale
+            self._body.active = self._active
+            # self._body.mass = self._mass
+            # self._body.linearVelocity = (*self._velocity,)
+
+            if self.b_type == RigidBodyType.DYNAMIC:
+                self._body.fixedRotation = self._fixed_rotation
 
     def on_physics_update(self, event: PhysicsUpdate, dispatch: Callable[[Event], None]):
         """
         The rigid body change the entity transform
         """
-        if self._body:
+        if self._body is not None:
+            # self.pre_physics_update()
+
             self.entity.transform.position = Vector(self._body.position.x, self._body.position.y)
-            self.entity.transform.angle = math.degrees(self._body.angle)
             self._angle = math.degrees(self._body.angle)
             self._position = Vector(self._body.position.x, self._body.position.y)
+            self.entity.transform.angle = self._angle
+            # self._velocity = Vector(self._body.linearVelocity.x, self._body.linearVelocity.y)
+
+    @property
+    def drag(self):
+        """
+        The
+        """
+        return self._drag
+
+    @drag.setter
+    def drag(self, val: float):
+        if not isinstance(val, (float, int)):
+            raise TypeError("Drag should be a float !")
+
+        self._drag = val
+        if self._body is not None:
+            self._body.linearDamping = val
 
     def on_body_created(self, ev: BodyCreated, dispatch: Callable[[Event], None]):
         """
@@ -362,7 +442,6 @@ class RigidBody(BaseComponent):
         :param destination: destination
         :return:
         """
-        # FIXME : FIX THIS
         vel = (destination - self.entity.position) / FIXED_DELTA_TIME
         self.velocity = Vector(*vel)
 

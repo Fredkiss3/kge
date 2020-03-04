@@ -4,7 +4,7 @@ The event machinery
 
 import logging
 import re
-from typing import Callable
+from typing import Callable, Type
 
 from kge.core.events import Event
 
@@ -49,6 +49,12 @@ def {method}({e_name.lower()}_event: {e_name}, dispatch_function):
 
 
 class EventMixin:
+    def has_event(self, event_type: Type[Event]) -> bool:
+        name = camel_to_snake(event_type.__name__)
+        meth_name = 'on_' + name
+        meth = getattr(self, meth_name, None)
+        return meth != None
+
     def __fire_event__(self, event: Event, dispatch: Callable[[Event], None]) -> None:
         """
         Launch an event handler for this event
@@ -76,3 +82,8 @@ class EventMixin:
                     raise BadEventHandlerException(self, meth_name, event) from ex
                 else:
                     raise
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                elog.error(e)
+                raise

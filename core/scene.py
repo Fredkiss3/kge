@@ -248,6 +248,7 @@ class BaseScene(EventMixin, EntityCollection):
 
         # Set layer
         if isinstance(layer, (int, str)):
+            entity.is_active = True
             entity.layer = self.getLayer(layer)
         else:
             raise TypeError("Layer must be integers or string")
@@ -290,10 +291,26 @@ class BaseScene(EventMixin, EntityCollection):
         but will be left public for other creative uses.
         """
         return sorted(
-            filter(lambda e: hasattr(e, "sprite_renderer") # and self.main_camera.in_frame(e)
+            filter(lambda e: hasattr(e, "sprite_renderer")
+                   # and self.main_camera.in_frame(e)
                    ,
                    self),
-            # self,
+            key=lambda s: getattr(s, "layer", 0)
+        )
+
+    def clear(self):
+        """
+        Remove all entities from the scene
+        TODO
+        """
+        raise NotImplementedError("Not implemented yet !")
+
+    def simulated(self) -> Iterator:
+        """
+        Get entities that needs to receive events
+        """
+        return sorted(
+            filter(lambda e: not e.static, self),
             key=lambda s: getattr(s, "layer", 0)
         )
 
@@ -303,10 +320,12 @@ Scene = BaseScene
 if __name__ == '__main__':
     import math
 
+
     # print(math.degrees(math.atan2(1, 1)))
 
     class Sprite(BaseEntity):
         pass
+
 
     scene1 = BaseScene()
     scene2 = BaseScene()

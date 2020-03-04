@@ -5,6 +5,7 @@ import pyglet
 import kge
 from kge.core import events
 from kge.core.service import Service
+from kge.core.component import Component
 from kge.core.system import System
 
 
@@ -16,19 +17,22 @@ class EntityManager(System):
     def set_entities(self, dt):
         """
         Disable entities if not in camera sight
+        FIXME : Simulate only things that needs to be simulated
         """
         scene = self.engine.current_scene
-        for e in scene.all:
-            if not scene.main_camera.in_frame(e):
-                if e.is_active:
-                    e.is_active = False
-            else:
-                if not e.is_active:
-                    e.is_active = True
+        if scene:
+            for e in scene.all:
+                if not scene.main_camera.in_frame(e):
+                    if e.is_active:
+                        e.is_active = False
+                else:
+                    if not e.is_active:
+                        e.is_active = True
 
 
     def __enter__(self):
-        pyglet.clock.schedule_interval(self.set_entities, 1 / 60)
+        # pyglet.clock.schedule_interval(self.set_entities, 1 / 60)
+        pass
 
     # def on_scene_started(self, event: events.SceneStarted, dispatch):
     #     print(event.scene.all)
@@ -59,7 +63,7 @@ class EntityManager(System):
             self._dispatch(ev, immediate=True)
 
     def dispatch_component_operation(self, e: "kge.Entity", c: Union[
-        Type['kge.Component'], "kge.Component", List[Union[Type['kge.Component'], "kge.Component"]]],
+        Type['Component'], "Component", List[Union[Type['Component'], "Component"]]],
                                      added: bool):
         if self._dispatch:
             if added:
@@ -75,7 +79,7 @@ class EntityManager(System):
             ev.onlyEntity = e
             self._dispatch(ev, immediate=True)
 
-    def add_component(self, e: "kge.Entity", c: Union[Type["kge.Component"], "kge.Component"], key: str):
+    def add_component(self, e: "kge.Entity", c: Union[Type["Component"], "Component"], key: str):
         """
         Add a component to an entity
         """
@@ -88,7 +92,7 @@ class EntityManager(System):
             ev.onlyEntity = e
             self._dispatch(ev, immediate=True)
 
-    def remove_component(self, e: "kge.Entity", c: Union[Type["kge.Component"], "kge.Component", str]):
+    def remove_component(self, e: "kge.Entity", c: Union[Type["Component"], "Component", str]):
         """
         Remove a component to an entity
         """
@@ -115,12 +119,12 @@ class EntityManagerService(Service):
         self._system_instance.disable(e)
 
     def dispatch_component_operation(self, e: "kge.Entity", c: Union[
-        Type['kge.Component'], "kge.Component", List[Union[Type['kge.Component'], "kge.Component"]]],
+        Type['Component'], "Component", List[Union[Type['Component'], "Component"]]],
                                      added: bool):
         self._system_instance.dispatch_component_operation(e, c, added)
 
-    def add_component(self, e: "kge.Entity", c: Union[Type["kge.Component"], "kge.Component"], key: str):
+    def add_component(self, e: "kge.Entity", c: Union[Type["Component"], "Component"], key: str):
         self._system_instance.add_component(e, c, key)
 
-    def remove_component(self, e: "kge.Entity", kind: Union[Type["kge.Component"], "kge.Component", str]):
+    def remove_component(self, e: "kge.Entity", kind: Union[Type["Component"], "Component", str]):
         self._system_instance.remove_component(e, kind)

@@ -1,5 +1,7 @@
 from typing import Callable
 
+import pyglet
+
 from kge.audio.sound import Sound
 from kge.audio import events
 from kge.core.events import Event
@@ -25,10 +27,12 @@ class AudioManager(System):
         pass
 
     def play(self, snd: Sound, loop: bool = False):
-        self._dispatch(events.PlaySound(
-            sound=snd,
-            loop=loop
-        ), immediate=True)
+        # self._dispatch(events.PlaySound(
+        #     sound=snd,
+        #     loop=loop
+        # ), immediate=True)
+        sound = snd.load() # type: pyglet.media.Source
+        sound.play()
 
     def on_play_sound(self, event: events.PlaySound, dispatch: Callable[[Event], None]):
         pass

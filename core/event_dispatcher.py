@@ -1,10 +1,10 @@
-import asyncio
-import threading
-from concurrent import futures
+import time
 from typing import Callable
 
 from kge.core import events
+from kge.core.entity import Entity
 from kge.core.system import System
+from kge.physics.events import PhysicsUpdate
 from kge.resources.events import AssetLoaded
 
 
@@ -14,23 +14,13 @@ class EventDispatcher(System):
     """
 
     def __fire_event__(self, event: events.Event, dispatch: Callable[[events.Event], None]) -> None:
-        super(EventDispatcher, self).__fire_event__(event, dispatch)
-        # if threading.current_thread() is threading.main_thread():
-            # print("On Main THread !")
-        if event.scene:
-            # If event is 'AssetLoaded' then dispatch to all entities of the world
-            if isinstance(event, AssetLoaded):
-                for e in event.scene.all:
-                    if self.engine.running:
-                        # Instead of submitting jobs, which can take a huge amount of time to process
-                        # Just run the event handler
-                        e.__fire_event__(event, dispatch)
-                    else:
-                        # Break if the engine has finished running
-                        break
-            else:
-                if event.onlyEntity is None:
-                    for e in event.scene:
+        # start = time.monotonic()
+        if self.engine.running and not isinstance(event, (events.Update, events.FixedUpdate, PhysicsUpdate)):
+            if event.scene:
+                # If event is 'AssetLoaded' then dispatch to all entities of the world
+                if isinstance(event, AssetLoaded):
+                    all = list(event.scene.all)
+                    for e in all:
                         if self.engine.running:
                             # Instead of submitting jobs, which can take a huge amount of time to process
                             # Just run the event handler
@@ -39,4 +29,17 @@ class EventDispatcher(System):
                             # Break if the engine has finished running
                             break
                 else:
-                    event.onlyEntity.__fire_event__(event, dispatch)
+                    if event.onlyEntity is None:
+
+                        entities = filter(lambda e: e.has_event(type(event)), event.scene.simulated())
+
+                        for e in entities:
+                            if self.engine.running:
+                                e.__fire_event__(event, dispatch)
+                            else:
+                                # Break if the engine has finished running
+                                break
+                    else:
+                        event.onlyEntity.__fire_event__(event, dispatch)
+        # end = time.monotonic()
+        # print(f"Elapsed in {type(self).__name__} : {end - start} for {event}")

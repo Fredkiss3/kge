@@ -128,13 +128,12 @@ class Goal(Sprite):
             if player:
                 p = player[0]  # type: Player
                 p.score += 1
-                ev.collider.entity.is_active = False
                 ev.collider.entity.destroy()
+                # ev.collider.entity.is_active = False
 
-                # print(p, "Goals !")
+                print(p, "Goals !")
 
-                ev.scene.addAll((Ball(name="Ball", vel=Vector(10, random.choice([-1, 1]) )), Vector(0, 0)),
-                 )
+                ev.scene.addAll((Ball(name="Ball", vel=Vector(random.choice([-1, 1]) * 10, random.choice([-1, 1]) )), Vector(0, 0)),)
 
 def setup(scene: "Scene"):
     scene.main_camera.addComponent("controller", CameraController())

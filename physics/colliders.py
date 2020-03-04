@@ -29,9 +29,6 @@ class Collider(BaseComponent):
         if not isinstance(isSensor, bool):
             raise TypeError("Sensor should be a bool")
 
-        # is this collider activated ?
-        self._isActive = True
-
         # does this collider pass through objects ?
         self.isSensor = isSensor
 
@@ -99,17 +96,6 @@ class Collider(BaseComponent):
         if self._fixture is not None:
             self._fixture.density = val
 
-    @property
-    def active(self):
-        return self._isActive
-
-    @active.setter
-    def active(self, val: bool):
-        if not isinstance(val, bool):
-            raise TypeError("Active should be a bool")
-
-        self._isActive = val
-
     def __recreate(self):
         self._rb.body.CreateFixture(b2.b2FixtureDef(
             density=self.density,
@@ -131,6 +117,11 @@ class Collider(BaseComponent):
         """
         if body is None:
             body = self._rb.body
+
+        physics = kge.ServiceProvider.getPhysics()
+
+        while physics.world.locked:
+            continue
 
         body.CreateFixture(b2.b2FixtureDef(
             density=self.density,
@@ -178,13 +169,14 @@ class Collider(BaseComponent):
                 # our fixture is the last fixture
                 self.__create()
         else:
-            # create a ghost body
+            # create a ghost rigid body
             rb = RigidBody(body_type=RigidBodyType.STATIC)
             rb.is_ghost = True
             event = CreateBody(
                 entity=self.entity,
                 body_component=rb
             )
+
             event.onlyEntity = self.entity
             dispatch(event)
 

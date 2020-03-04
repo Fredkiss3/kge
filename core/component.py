@@ -18,7 +18,8 @@ class BaseComponent(EventMixin):
         if event.scene is not None:
             if event.scene.engine.running:
                 if self._initialized == False and not isinstance(event, events.SceneStopped):
-                    event = events.Init(scene=event.scene)
+                    # Initialize the component
+                    super(BaseComponent, self).__fire_event__(events.Init(scene=event.scene), dispatch)
                     self._initialized = True
 
                 # fire event
@@ -39,6 +40,9 @@ class BaseComponent(EventMixin):
 
         # Used to Initialize component
         self._initialized = False
+
+        # Used to tell if the component is active
+        self.is_active = True
 
     @property
     def children(self):

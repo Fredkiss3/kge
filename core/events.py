@@ -61,7 +61,7 @@ class LateUpdate(Event):
 
 
 @dataclass
-class MouseButtonPressed(Event):
+class MouseDown(Event):
     """
     Fired when a mouse button is pressed
     """
@@ -90,7 +90,7 @@ class MouseWheelDown(Event):
 
 
 @dataclass
-class MouseButtonReleased(Event):
+class MouseUp(Event):
     """
     Fired when a mouse button is released
     """

@@ -12,6 +12,7 @@ import pyglet
 from kge.audio.audio_manager import AudioManager, Audio
 from kge.clocks.updater import Updater
 from kge.core import events
+from kge.core.behavior_manager import BehaviourManager
 from kge.core.entity import BaseEntity
 from kge.core.event_dispatcher import EventDispatcher
 from kge.core.eventlib import EventMixin
@@ -48,23 +49,22 @@ class Engine(LoggerMixin, EventMixin):
 
     def __init__(self, first_scene: Type[BaseScene], *,
                  basic_systems=(
-        # todo
-        Updater,
-        PhysicsManager,
-        # todo
-        FixedUpdater,
-        EventDispatcher,
-        Renderer,
-        InputManager,
-        AssetLoader,
-        # AudioManager,
-        EntityManager,
-    ),
-        basic_services=(
-        Physics, EntityManagerService, Audio, InputService,
-        WindowService,
-    ),
-            systems=(), scene_kwargs=None, window_title: str = None, **kwargs):
+                         Updater,
+                         PhysicsManager,
+                         FixedUpdater,
+                         EventDispatcher,
+                         Renderer,
+                         InputManager,
+                         # AssetLoader,
+                         # AudioManager,
+                         EntityManager,
+                         # BehaviourManager,
+                 ),
+                 basic_services=(
+                         Physics, EntityManagerService, Audio, InputService,
+                         WindowService,
+                 ),
+                 systems=(), scene_kwargs=None, window_title: str = None, **kwargs):
         super(Engine, self).__init__()
 
         # The engine configuration
@@ -76,7 +76,6 @@ class Engine(LoggerMixin, EventMixin):
         self._scenes = []  # type: List[BaseScene]
         self.running = False
         self.entered = False
-        self._last_idle_time = None  # last time the engine did update
 
         # Window
         self.window_title = window_title
@@ -84,13 +83,7 @@ class Engine(LoggerMixin, EventMixin):
         # the current event queue for the frame, and the event queue for the next frame
         self._event_queue = deque()  # type: Deque[Event]
         self._next_event_queue = deque()  # type: Deque[Event]
-        self.event_loop = pyglet.app  # CustomEventLoop(self.loop_once) #
-
-        # if you want to register new events to the engine directly,
-        # Add it with 'register' method
-        # This array holds theses events
-        self._event_extensions: DefaultDict[Union[Type, _ellipsis], List[Callable[[
-            Any], None]]] = defaultdict(list)
+        self.event_loop = pyglet.app
 
         # Systems
         self._systems_classes = list(chain(basic_systems, systems))
@@ -102,17 +95,17 @@ class Engine(LoggerMixin, EventMixin):
         # time scale : in order to change the speed of our systems
         self.time_scale = 1.0
 
-        # locator
+        # for services
         self._services_classes = basic_services  # type: List[Type[Service]]
-        # thread loop and Async Loop
-        # self.thread_loop = threading.Thread(target=lambda: self.main_loop())
-        self.async_loop = None  # type: Optional[asyncio.AbstractEventLoop]
 
         # Executor for multi threading
-        # type: futures.thread.ThreadPoolExecutor
         self._executor = futures.ThreadPoolExecutor()
         self._jobs = deque()
-        self.tasks = list()
+
+        # independents threads
+        self._threads = deque() # type: Deque[System]
+        # system related jobs
+        self._sys_jobs = deque()
 
     @property
     def current_scene(self):
@@ -157,12 +150,13 @@ class Engine(LoggerMixin, EventMixin):
                 t = system
                 system = system(engine=self, **self.kwargs)  # type: System
                 kinds[t] = system
-            self.systems.append(system)
-            self._exit_stack.enter_context(system)
+            # appends system to independent threads
+            if system.require_thread:
+                self._threads.append(system)
+            else:
+                self.systems.append(system)
 
-            # removed !
-            # Start the system thread
-            # system.start()
+            self._exit_stack.enter_context(system)
 
         # Then provide services
         for service in self._services_classes:
@@ -177,9 +171,15 @@ class Engine(LoggerMixin, EventMixin):
         :return:
         """
         self.running = True
-        self._last_idle_time = time.monotonic()
         self.activate_scene({"scene_class": self.first_scene,
                              "kwargs": self.scene_kwargs})
+
+        for thread in self._threads:
+            self._sys_jobs.append(
+                self._executor.submit(
+                    thread.start
+                )
+            )
 
     def activate_scene(self, next_scene: dict):
         """
@@ -200,7 +200,7 @@ class Engine(LoggerMixin, EventMixin):
         args = next_scene.get("args", [])
         kwargs = next_scene.get("kwargs", {})
         scene = scene(*args, **kwargs)
-        scene.engine = self
+        BaseScene.engine = self
         self._scenes.append(scene)
         self.dispatch(events.SceneStarted(), immediate=True)
 
@@ -213,49 +213,24 @@ class Engine(LoggerMixin, EventMixin):
         if not self.entered:
             with self:
                 self.init()
-                # pyglet.clock.schedule_interval(lambda dt: self.loop_once(), 1 / 10_000)
-                # self.thread_loop.start()
-                # self.event_loop.run()
                 self.main_loop()
         else:
             self.init()
-            # pyglet.clock.schedule_interval(lambda dt: self.loop_once(), 1 / 10_000)
-            # self.thread_loop.start()
-            # self.event_loop.run()
             self.main_loop()
-
-        # while self.running:
-        #     continue
 
     def main_loop(self):
         """
         The main loop
         """
-        n = 0
-        self._last_idle_time = time.monotonic()
-        # while self.running:
-        n += 1
-
-        # CUSTOM EVENT LOOP TO PYGAME
-        # pyglet.clock.tick()
-
-        # self.logger.info(f"LOOPED {n} times")
-        # for window in pyglet.app.windows:
-        #     window.switch_to()
-        #     window.dispatch_events()
-        #     window.dispatch_event('on_draw')
-        #     window.flip()
-
         pyglet.clock.schedule_interval(self.loop_once, 1 / 10_000)
-        # pyglet.clock.schedule_interval(self.flush_jobs, 1 / 10_000)
+        pyglet.clock.schedule_interval(self.flush_jobs, 1 / 10)
         pyglet.app.run()
 
         # Set the running state to False to stop small scripts for updating
         self.flush_events()
         self.running = False
 
-        print(f"Tasks : {len(self.tasks)}")
-        print(f"Waiting for {len(self._jobs)} Jobs to finish after {time.monotonic() - self._last_idle_time} seconds !")
+        # self._jobs = self._jobs.extend(self._sys_jobs)
         for future in futures.as_completed(self._jobs):
             try:
                 data = future.result()
@@ -265,7 +240,7 @@ class Engine(LoggerMixin, EventMixin):
                 self._executor.shutdown(wait=False)
             else:
                 pass
-        # self._executor.shutdown()
+        self._executor.shutdown()
         self.logger.info("Finished Processes.")
 
     def flush_jobs(self, dt):
@@ -281,25 +256,12 @@ class Engine(LoggerMixin, EventMixin):
 
         :return: None
         """
+        print("Looping...")
         if not self.entered:
             raise ValueError("Cannot run before things have started",
                              self.entered)
 
         if self.running:
-            # Get time_delta
-            # now = time.monotonic()
-            # time_delta = now - self._last_idle_time
-            # self._last_idle_time = now
-            # if time.monotonic() - self._last_idle_time <=1:
-            #     print(
-            #         f"Waiting for {len(self._jobs)} Jobs started after {time.monotonic() - self._last_idle_time} seconds !")
-
-            # dispatch events (they are sorted in reverse order)
-            # idle = events.Idle(
-            #     time_delta * self.time_scale)
-            # idle.onlySystems = True
-            # self.dispatch(idle, immediate=True)
-
             # get last events added to the queue
             self._event_queue.extend(self._next_event_queue)
             self._next_event_queue = deque()
@@ -341,16 +303,6 @@ class Engine(LoggerMixin, EventMixin):
         else:
             self._next_event_queue.append(event)
 
-    # @staticmethod
-    # def run_func_in_async_mode(callback: Callable[[Any], None], *args):
-    #     """
-    #     Run callback in async mode
-    #     """
-    #     # Sleep in order to let other tasks get processed
-    #     await asyncio.sleep(0.0001)
-    #     # Launcb Callback with provided args
-    #     callback(*args)
-
     def dispatch_events(self):
         """
         Dispatch events to subsystems and entities
@@ -362,52 +314,49 @@ class Engine(LoggerMixin, EventMixin):
         scene = self.current_scene
         event.scene = scene
         event.time_scale = self.time_scale
-        self.tasks.append(event)
 
-        # launch registered event handlers in async Mode
-        extensions = chain(self._event_extensions[type(
-            event)], self._event_extensions[...])
-        for callback in extensions:
-            # tasks.append(self.async_loop.create_task(self.run_func_in_async_mode(callback, event)))
-            self._jobs.append(self._executor.submit(callback, event))
+        if scene is not None:
+            if event.onlyEntity is None:
+                if scene.has_event(type(event)):
+                    self._jobs.append(self._executor.submit(
+                        scene.__fire_event__, event, self.dispatch))
 
-        self._jobs.append(self._executor.submit(
-            self.__fire_event__, event, self.dispatch))
+                if scene.main_camera is not None:
+                    if scene.main_camera.has_event(type(event)):
+                        self._jobs.append(self._executor.submit(
+                            scene.main_camera.__fire_event__, event, self.dispatch))
+
+        # launch registered event handlers
+        if self.has_event(type(event)):
+            self._jobs.append(self._executor.submit(
+                self.__fire_event__, event, self.dispatch))
 
         # dispatch events on subsystems
+        filter(lambda s: not s.require_thread, self.systems)
+
         for system in self.systems:
-            # if event is AssetLoaded event, then run it in the main thread
             # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS
+            # if event is AssetLoaded event, then run it in the main thread
             if isinstance(event, AssetLoaded):
                 # Only dispatch this event to EventDispatcher
                 if isinstance(system, EventDispatcher):
                     system.__fire_event__(event, self.dispatch)
                 continue
+            elif isinstance(event, (events.Update, events.FixedUpdate, events.LateUpdate)):
+                if isinstance(system, BehaviourManager):
+                    self._jobs.append(
+                        self._executor.submit(
+                            system.__fire_event__, event, self.dispatch)
+                    )
+            else:
+                self._jobs.append(
+                    self._executor.submit(
+                        system.__fire_event__, event, self.dispatch)
+                )
+            # FIXME : TO TEST
             # if isinstance(system, Renderer):
             #     system.__fire_event__(event, self.dispatch)
             #     continue
-
-            # print(event, system)
-            self._jobs.append(
-                self._executor.submit(
-                    system.__fire_event__, event, self.dispatch)
-            )
-
-        # Required for if we dispatch with no current scene.
-        # Should only happen when the last scene stops via event.
-        # def fire_scene_event(event):
-        if scene is not None:
-            if event.onlyEntity is None:
-                self._jobs.append(self._executor.submit(
-                    scene.__fire_event__, event, self.dispatch))
-
-                if scene.main_camera is not None:
-                    self._jobs.append(self._executor.submit(
-                        scene.main_camera.__fire_event__, event, self.dispatch))
-
-        # if type(event) is events.SceneStopped:
-        #     # If event is quit then wait until each system has finished
-        #
 
     def on_time_dilation(self, ev: events.TimeDilation, dispatch: Callable[[Event], None]):
         """
@@ -459,7 +408,8 @@ class Engine(LoggerMixin, EventMixin):
         # Empty the event queue before changing scenes.
         self.flush_events()
         self.dispatch(events.SceneStopped(), immediate=True)
-        # self.dispatch_events()
+        self.dispatch_events()
+        print("Dispatch")
         if self._scenes:
             self._scenes.pop()
 
@@ -482,27 +432,6 @@ class Engine(LoggerMixin, EventMixin):
         self._scenes.append(scene)
         self.dispatch(events.SceneStarted(), immediate=True)
 
-    def register(self, event_type: Union[Type[Event], _ellipsis], callback: Callable[[Event], None]):
-        """
-        Register a callback to be applied to an event at time of dispatching.
-
-        Primarily to be used by subsystems.
-
-        The callback will receive the event. Your code should modify the event
-        in place. It does not need to return it.
-
-        :param event_type: The class of an event.
-        :param callback: A callable, must accept an event, and return no value.
-        :return: None
-        """
-        if not isinstance(event_type, type) and event_type is not ...:
-            raise TypeError(
-                f"{type(self)}.register requires event_type to be a type.")
-        if not callable(callback):
-            raise TypeError(
-                f"{type(self)}.register requires callback to be callable.")
-        self._event_extensions[event_type].append(callback)
-
     def flush_events(self):
         """
         Flush the event queue.
@@ -520,6 +449,7 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG)
 
+
     class Sprite(BaseEntity):
 
         def on_update(self, time_delta: float, dispatch: Callable[[Event], None]):
@@ -528,9 +458,11 @@ if __name__ == '__main__':
         def on_init(self, init_event: events.Init, dispatch):
             print("Initialization")
 
+
     def setup(scene: Scene):
         player = Sprite(name="player")
         scene.add(player)
+
 
     engine = Engine(Scene, scene_kwargs={
         "set_up": setup

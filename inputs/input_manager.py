@@ -184,7 +184,7 @@ class InputManager(System):
         self.mouse_handler = mouse_ev.MouseStateHandler()
 
         # schedule flush keys
-        pyglet.clock.schedule_interval(self.flush_keys, 1 / 10)
+        pyglet.clock.schedule_interval(self.flush_keys, 1 / 60)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.key_handler = None
@@ -331,7 +331,7 @@ class InputManager(System):
         # Get the button clicked
         mouse_btn = self.mouse_button_map.get(btn)
         if mouse_btn is not None:
-            self._dispatch(events.MouseButtonPressed(
+            self._dispatch(events.MouseDown(
                 button=mouse_btn,
                 position=scene_position,
                 screen_position=screen_position
@@ -350,7 +350,7 @@ class InputManager(System):
 
         mouse_btn = self.mouse_button_map.get(btn)
         if mouse_btn is not None:
-            self._dispatch(events.MouseButtonReleased(
+            self._dispatch(events.MouseUp(
                 button=mouse_btn,
                 position=scene_position,
                 screen_position=screen_position

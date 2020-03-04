@@ -10,6 +10,22 @@ from kge.core.events import Event
 User Managed events
 """
 
+@dataclass
+class CollisionBegin(Event):
+    """
+    Fired when two colliders begin to hit one another
+    """
+    collider: "kge.Collider"
+    scene: 'kge.Scene' = None
+
+@dataclass
+class CollisionEnd(Event):
+    """
+    Fired when two colliders end to hit one another
+    """
+    collider: "kge.Collider"
+    scene: 'kge.Scene' = None
+
 
 @dataclass
 class CollisionEnter(Event):

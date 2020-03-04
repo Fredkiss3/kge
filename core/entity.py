@@ -45,30 +45,24 @@ class BaseEntity(EventMixin):
     nbItems = 0
 
     def __fire_event__(self, event: Event, dispatch: Callable[[Event], None]):
-        """
-        Initialize the entity before everything
-
-        :param event:
-        :param dispatch:
-        :return:
-        """
         if event.scene is not None:
             if event.scene.engine.running:
                 if self._initialized == False and not isinstance(event, events.SceneStopped):
-                    event = events.Init(scene=event.scene)
+                    # Initialize the entity
+                    super(BaseEntity, self).__fire_event__(events.Init(scene=event.scene), dispatch)
                     self._initialized = True
 
                 try:
                     super(BaseEntity, self).__fire_event__(event, dispatch)
-
-                    if event.scene.engine.running:
-                        # Propagate event to components before self
-                        for key in list(self._components):
-                            component = self._components[key]
-                            if event.scene.engine.running:
-                                component.__fire_event__(event, dispatch)
-                            else:
-                                break
+                #
+                #     if event.scene.engine.running:
+                #         # Propagate event to components before self
+                #         for key in list(self._components):
+                #             component = self._components[key]
+                #             if event.scene.engine.running:
+                #                 component.__fire_event__(event, dispatch)
+                #             else:
+                #                 break
                 except Exception:
                     print(
                         f"An Error Happened in {self} (Components : {self._components}) for event : {event}. ")
@@ -80,8 +74,6 @@ class BaseEntity(EventMixin):
         NEVER TRY TO SUBCLASS THIS Method !!!
         """
         self.addComponent(key=ev.key, component=ev.component)
-        manager = kge.ServiceProvider.getEntityManager()
-        manager.dispatch_component_operation(self, ev.component, added=True)
 
     def on_remove_component(self, ev: events.RemoveComponent, dispatch):
         """
@@ -89,8 +81,6 @@ class BaseEntity(EventMixin):
         NEVER TRY TO SUBCLASS THIS Method !!!
         """
         cp = self.removeComponent(ev.kind)  # type: List[Component]
-        manager = kge.ServiceProvider.getEntityManager()
-        manager.dispatch_component_operation(self, cp, added=False)
 
     def on_scene_stopped(self, ev, dispatch):
         self._initialized = False
@@ -100,6 +90,9 @@ class BaseEntity(EventMixin):
             raise TypeError("name and tags should be strings")
 
         type(self).nbItems += 1
+
+        # if the object does not need to receive any kind of events
+        self.static = False
 
         # The components attached to the object
         self._components = {}  # type: Dict[str, Component]
@@ -297,12 +290,23 @@ class BaseEntity(EventMixin):
                   isinstance(component, kind)]
 
             for k, c in cp:
-                self._components.pop(k)
+                cp_ = self._components.pop(k)
+                cp_.is_active = False
 
+            cp = list(filter(lambda c: c[1], cp))  # type: List[T]
+
+            # Dispatch component removed event
+            manager = kge.ServiceProvider.getEntityManager()
+            manager.dispatch_component_operation(self, cp, added=False)
             return cp
         elif isinstance(kind, str):
             try:
                 cp = self._components.pop(kind)
+                cp.is_active = False
+
+                # Dispatch component removed event
+                manager = kge.ServiceProvider.getEntityManager()
+                manager.dispatch_component_operation(self, [cp], added=False)
                 return [cp]
             except KeyError:
                 raise []
@@ -317,9 +321,13 @@ class BaseEntity(EventMixin):
             if isinstance(component, Transform):
                 raise AttributeError(
                     "Cannot add transform manually to an entity")
-            # set component entity
+            # set component entity and activate it
             component.entity = self
+            component.is_active = True
             self._components[key] = component
+
+            manager = kge.ServiceProvider.getEntityManager()
+            manager.dispatch_component_operation(self, component, added=True)
         else:
             # must be a subtype of Component
             raise TypeError(
@@ -395,6 +403,10 @@ class BaseEntity(EventMixin):
         """
         self._is_active = False
 
+        # Deactivate also components
+        for cp in self._components.values():
+            cp.is_active = False
+
         manager = kge.ServiceProvider.getEntityManager()
 
         if manager:
@@ -406,6 +418,10 @@ class BaseEntity(EventMixin):
         Activate
         """
         self._is_active = True
+
+        # Activate also components
+        for cp in self._components.values():
+            cp.is_active = True
         manager = kge.ServiceProvider.getEntityManager()
 
         if manager:
@@ -420,8 +436,10 @@ if __name__ == '__main__':
     class Player(BaseEntity):
         pass
 
+
     class PlayerMovement(Component):
         pass
+
 
     player = Player(name="Player", tag="player")
     # last_idle = time.monotonic()

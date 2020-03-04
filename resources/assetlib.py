@@ -22,6 +22,8 @@ __all__ = 'AbstractAsset', 'Asset', 'AssetLoader',
 
 logger = logging.getLogger(__name__)
 
+import pyglet_ffmpeg2
+
 
 class AbstractAsset(abc.ABC):
     """

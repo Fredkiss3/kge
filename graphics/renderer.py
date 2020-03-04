@@ -1,5 +1,6 @@
+import threading
 import time
-from typing import Union, List
+from typing import Union, List, Callable
 
 import pyglet
 from pyglet.gl import *
@@ -44,12 +45,12 @@ class Renderer(System):
         # layers
         self.layers = [pyglet.graphics.OrderedGroup(i) for i in range(20)]
         self.window_size = Vector.Zero()
-        # self.to_draw = []  # Vertices to draw
+        self.to_draw = []  # Vertices to draw
 
     def __enter__(self):
         self.window = pyglet.window.Window(
             # todo: allow vsync or not ?
-            vsync=True,
+            vsync=False,
             width=self.resolution[0],
             height=self.resolution[1],
             resizable=self._is_resizable,
@@ -72,8 +73,7 @@ class Renderer(System):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         # Schedule render update to the time step
-        pyglet.clock.schedule_interval(self.render, 1 / 100)
-        # pyglet.clock.schedule_interval(self.rebatch, 1)
+        pyglet.clock.schedule(self.render)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.engine.event_loop.has_exit = True
@@ -82,14 +82,6 @@ class Renderer(System):
         self._dispatch(events.Quit(), immediate=True)
         self.window.close()
         return pyglet.event.EVENT_HANDLED
-
-    #
-    def on_idle(self, event, dispatch):
-        """
-        Idle
-        """
-        # self.render(self.time_step)
-        # Do nothing...
 
     def draw(self):
         """
@@ -101,19 +93,15 @@ class Renderer(System):
 
         self.batch.draw()
 
+        if self.to_draw:
+            for shape, mode in self.to_draw:
+                shape.draw(mode)
+
         # Display FPS
         if self.engine.current_scene.display_fps == True:
             self.fps_display.draw()
 
-        # Dispatch scene rendered
-        # self._dispatch(events.Rendered())
         return pyglet.event.EVENT_HANDLED
-
-    def rebatch(self, dt: float):
-        """
-        Renew Batch -> Never Use this
-        """
-        self.batch = pyglet.graphics.Batch()
 
     def render(self, dt: float):
         """
@@ -126,10 +114,15 @@ class Renderer(System):
                 unit / 255 for unit in scene.background_color[:3]
             )
 
-            # self.to_draw = []
-            for entity in scene.entity_layers():  # type: kge.Sprite
+            self.to_draw = []
+
+            elist = list(scene.entity_layers())
+
+            for entity in elist:  # type: Union[kge.Sprite]
                 # Render only sprites
-                entity.sprite_renderer.render(scene)
+                element = entity.sprite_renderer.render(scene)
+                if element is not None:
+                    self.to_draw.append(element)
 
             new_win_size = Vector(self.window.width, self.window.height)
             if self.window_size != new_win_size:

@@ -18,11 +18,13 @@ class Sprite(BaseEntity):
         # Dispatch to sprite renderer also
         self.sprite_renderer.__fire_event__(event, dispatch)
 
-    def __init__(self, name: str = None, tag: str = None):
+    def __init__(self, image: Union[Image, Shape] = None, name: str = None, tag: str = None, ):
         super().__init__(name, tag)
 
         # image and renderer
         self.sprite_renderer = SpriteRenderer(self)
+        if image is not None:
+            self.image = image
 
     def flipX(self):
         self.transform.scale.x = -self.transform.scale.x

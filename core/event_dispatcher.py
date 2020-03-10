@@ -29,17 +29,17 @@ class EventDispatcher(System):
                             # Break if the engine has finished running
                             break
                 else:
-                    if event.onlyEntity is None:
+                    if type(event).__name__ in event.scene.registered_events:
+                        if event.onlyEntity is None:
 
-                        entities = filter(lambda e: e.has_event(type(event)), event.scene.simulated())
+                            # entities = filter(lambda e: e.has_event(type(event)), event.scene)
+                            entities = event.scene.registered_entities(event)
 
-                        for e in entities:
-                            if self.engine.running:
-                                e.__fire_event__(event, dispatch)
-                            else:
-                                # Break if the engine has finished running
-                                break
-                    else:
-                        event.onlyEntity.__fire_event__(event, dispatch)
-        # end = time.monotonic()
-        # print(f"Elapsed in {type(self).__name__} : {end - start} for {event}")
+                            for e in entities:
+                                if self.engine.running:
+                                    e.__fire_event__(event, dispatch)
+                                else:
+                                    # Break if the engine has finished running
+                                    break
+                        else:
+                            event.onlyEntity.__fire_event__(event, dispatch)

@@ -46,6 +46,10 @@ class Collider(BaseComponent):
         self._friction = friction
 
     @property
+    def rigid_body_attached(self):
+        return self._rb
+
+    @property
     def offset(self):
         return Vector(self._offset)
 
@@ -143,9 +147,9 @@ class Collider(BaseComponent):
         if ev.entity == self.entity:
             rb = self.entity.getComponent(kind=RigidBody)  # type: RigidBody
             if rb is not None:
-                # create a fixture for this
                 self._rb = rb
 
+            # create a fixture for this body
             if self._fixture is None:
                 self.__create(body=ev.body)
 
@@ -153,7 +157,6 @@ class Collider(BaseComponent):
         if ev.entity == self.entity:
             manager = kge.ServiceProvider.getEntityManager()
             manager.remove_component(self.entity, kind=Collider)
-            # self.entity.removeComponent(kind=Collider)
 
     def on_init(self, ev: events.Init, dispatch: Callable[[Event], None]):
         """

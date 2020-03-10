@@ -59,7 +59,7 @@ class Updater(System):
             # Dispatch to behaviours
             self._dispatch(event)
 
-            entities = filter(lambda e: e.has_event(type(event)), event.scene.simulated())
+            entities = event.scene.registered_entities(event)
 
             for e in entities:
                 if self.engine.running:
@@ -77,5 +77,3 @@ class Updater(System):
                 # add the time elapsed in the loop
                 dt += time.monotonic() - start
                 self._dispatch(self.after_event.__call__(delta_time=dt, scene=event.scene))
-        # end = time.monotonic()
-        # print(f"Elapsed in {type(self).__name__} : {end - start}")

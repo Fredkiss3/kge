@@ -1,4 +1,4 @@
-from typing import Union, Sequence, Any, List
+from typing import Union, Sequence, Any, List, Tuple
 
 import math
 
@@ -8,16 +8,25 @@ class Vector:
     A class representing a vector
     """
 
-    def __init__(self, arg1: Union["Vector", float] = 0.0, arg2: float = 0.0):
+    def __init__(self, arg1: Union["Vector", float, Tuple[float, float], List[float]] = 0.0, arg2: float = 0.0):
         if isinstance(arg1, (Vector)):
             self.x = arg1.x
             self.y = arg1.y
+        elif isinstance(arg1, (tuple, list)):
+            if not len(arg1) == 2:
+                raise TypeError("Vector accepts only list of length 2")
+            else:
+                if isinstance(arg1[0], (int, float)) and isinstance(arg1[1], (int, float)):
+                    self.x, self.y = arg1
+                else:
+                    raise TypeError(
+                        "Arguments of vectors should be either another Vector, a List or a tuple of two numbers, or x and y values")
         elif isinstance(arg1, (int, float)) and isinstance(arg2, (int, float)):
             self.x = arg1
             self.y = arg2
         else:
             raise TypeError(
-                "Arguments of vectors should be either another Vector, or x and y values")
+                "Arguments of vectors should be either another Vector, a List or a tuple of two numbers, or x and y values")
 
     def __eq__(self, other: "Vector"):
         if not isinstance(other, Vector):

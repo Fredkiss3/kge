@@ -11,31 +11,8 @@ from kge.core.system import System
 
 class EntityManager(System):
     """
-    The system that manages entities
+    The system that help to dispatch entities' events to other systems
     """
-
-    def set_entities(self, dt):
-        """
-        Disable entities if not in camera sight
-        FIXME : Simulate only things that needs to be simulated
-        """
-        scene = self.engine.current_scene
-        if scene:
-            for e in scene.all:
-                if not scene.main_camera.in_frame(e):
-                    if e.is_active:
-                        e.is_active = False
-                else:
-                    if not e.is_active:
-                        e.is_active = True
-
-
-    def __enter__(self):
-        # pyglet.clock.schedule_interval(self.set_entities, 1 / 60)
-        pass
-
-    # def on_scene_started(self, event: events.SceneStarted, dispatch):
-    #     print(event.scene.all)
 
     def destroy(self, e: "kge.Entity"):
         if not e.destoyed:
@@ -65,6 +42,9 @@ class EntityManager(System):
     def dispatch_component_operation(self, e: "kge.Entity", c: Union[
         Type['Component'], "Component", List[Union[Type['Component'], "Component"]]],
                                      added: bool):
+        """
+        If component have been added, this dispatch "ComponentAdded" operation
+        """
         if self._dispatch:
             if added:
                 ev = events.ComponentAdded(

@@ -74,6 +74,7 @@ class RigidBody(BaseComponent):
         self._angle = 0
         self._position = Vector.Zero()
         self._drag = 0
+        self._angular_drag = 0
 
         try:
             self._physics_system = kge.ServiceProvider.getPhysics()
@@ -241,17 +242,6 @@ class RigidBody(BaseComponent):
         else:
             return RigidBodyType.STATIC
 
-
-    # @body_type.setter
-    # def body_type(self, b_type: int):
-    #     if b_type in [RigidBodyType.STATIC, RigidBodyType.DYNAMIC, RigidBodyType.KINEMATIC]:
-    #         self._body_type = self._body_types[b_type]
-    #         if self._body is not None:
-    #             self._body.type = self._body_types[b_type]
-    #     else:
-    #         raise ValueError(
-    #             "Body type must be one of 'RigidBodyType.STATIC', 'RigidBodyType.DYNAMIC', 'RigidBodyType.KINEMATIC' ")
-
     @property
     def body(self) -> b2.b2Body:
         return self._body
@@ -291,7 +281,7 @@ class RigidBody(BaseComponent):
                 continue
             self._body.angle = math.radians(val)
 
-
+    # TODO
     # @property
     # def position(self):
     #     return self._position
@@ -304,37 +294,6 @@ class RigidBody(BaseComponent):
     #     self._position = val
     #     if self._body is not None:
     #         self._body.position = (val.x, val.y)
-
-    def pre_physics_update(self):
-        if self._body is not None:
-            physics =  kge.ServiceProvider.getPhysics()
-            while physics.world.locked:
-                continue
-
-            self._body.angle = math.radians(self._angle)
-            self._body.awake = self._sleeping
-            # self._body.angularVelocity = self._angular_velocity
-            self._body.inertia = self._inertia
-            self._body.gravityScale = self._gravity_scale
-            self._body.active = self._active
-            # self._body.mass = self._mass
-            # self._body.linearVelocity = (*self._velocity,)
-
-            if self.b_type == RigidBodyType.DYNAMIC:
-                self._body.fixedRotation = self._fixed_rotation
-
-    def on_physics_update(self, event: PhysicsUpdate, dispatch: Callable[[Event], None]):
-        """
-        The rigid body change the entity transform
-        """
-        if self._body is not None:
-            # self.pre_physics_update()
-
-            self.entity.transform.position = Vector(self._body.position.x, self._body.position.y)
-            self._angle = math.degrees(self._body.angle)
-            self._position = Vector(self._body.position.x, self._body.position.y)
-            self.entity.transform.angle = self._angle
-            # self._velocity = Vector(self._body.linearVelocity.x, self._body.linearVelocity.y)
 
     @property
     def drag(self):
@@ -352,6 +311,32 @@ class RigidBody(BaseComponent):
         if self._body is not None:
             self._body.linearDamping = val
 
+    @property
+    def angular_drag(self):
+        """
+        The
+        """
+        return self._angular_drag
+
+    @angular_drag.setter
+    def angular_drag(self, val: float):
+        if not isinstance(val, (float, int)):
+            raise TypeError("Angular Drag should be a float !")
+
+        self._angular_drag = val
+        if self._body is not None:
+            self._body.angularDamping = val
+
+    def on_physics_update(self, event: PhysicsUpdate, dispatch: Callable[[Event], None]):
+        """
+        The rigid body change the entity transform
+        """
+        if self._body is not None:
+            self.entity.transform.position = Vector(self._body.position.x, self._body.position.y)
+            self._angle = math.degrees(self._body.angle)
+            self._position = Vector(self._body.position.x, self._body.position.y)
+            self.entity.transform.angle = self._angle
+
     def on_body_created(self, ev: BodyCreated, dispatch: Callable[[Event], None]):
         """
         if the real body has been created then
@@ -366,7 +351,6 @@ class RigidBody(BaseComponent):
             self._body = None
             manager = kge.ServiceProvider.getEntityManager()
             manager.remove_component(self.entity, kind=RigidBody)
-            # self.entity.removeComponent(kind=RigidBody)
 
     def on_init(self, ev: events.Init, dispatch: Callable[[Event], None]):
         """

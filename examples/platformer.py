@@ -124,7 +124,7 @@ class PlayerController(MoveMixin):
 
 class Player(Sprite):
     def __init__(self):
-        super().__init__("Player")
+        super().__init__(None, "Player")
         # self.image = OutLinedSquare(GREEN)  #
         self.image = Image("assets/player_stand.png")
         self.layer = 1
@@ -188,6 +188,8 @@ def setup(scene: Scene):
     # scene.add(DestructionLayer(), position=Vector(0, -7), layer="Foreground")
     scene.add(Bg(), position=Vector.Zero(), layer="Background")
     scene.add(FrameCounter(), position=Vector.Zero())
+
+    print(dir(CameraController()))
 
     # Add Ground tiles
     for i in range(-50, 50):

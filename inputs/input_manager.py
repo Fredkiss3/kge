@@ -23,7 +23,7 @@ class InputManager(System):
     A system that converts Pyglet events to Kge Events
     TODO :
         - HANDLE JOYSTICK EVENTS
-        - FOR AS MANY JOYS AS GIVEN
+        - FOR AS MANY JOYS AS POSSIBLE (SET A MAX JOYS)
         - JOYSTICK KEY HANDLER (JUST A DICT)
 
     """
@@ -184,7 +184,7 @@ class InputManager(System):
         self.mouse_handler = mouse_ev.MouseStateHandler()
 
         # schedule flush keys
-        pyglet.clock.schedule_interval(self.flush_keys, 1 / 60)
+        # pyglet.clock.schedule_interval(self.flush_keys, 1 / 60)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.key_handler = None
@@ -219,31 +219,31 @@ class InputManager(System):
                 self.window_ref = window
                 self.logger.debug(f"Input Manager Window : {window}")
 
-    def flush_keys(self,
-                   time_delta
-                   # idle_event: events.Idle, dispatch
-                   ):
-        """
-        This method is called on each frame in order to dispatch events
-        """
-        self.k_ups = []
-        self.mouse_ups = []
-        self.wheel_up = False
-        self.wheel_down = False
+    # def flush_keys(self,
+    #                time_delta
+    #                # idle_event: events.Idle, dispatch
+    #                ):
+    #     """
+    #     This method is called on each frame in order to dispatch events
+    #     """
+    #     self.k_ups = []
+    #     self.mouse_ups = []
+    #     self.wheel_up = False
+    #     self.wheel_down = False
+    #
+    #     # TODO
+    #     # joysticks = pyglet.input.get_joysticks()
+    #     # if joysticks:
+    #     #     joystick = joysticks[0]
+    #     #     joystick.open()
+    #     # joystick.push_handlers()
+    #     # print(joystick)
 
-        # TODO
-        # joysticks = pyglet.input.get_joysticks()
-        # if joysticks:
-        #     joystick = joysticks[0]
-        #     joystick.open()
-        # joystick.push_handlers()
-        # print(joystick)
-
-    def get_mouse_up(self, mouse: Type[MouseInput]):
-        """
-        Get Mouse Up
-        """
-        return mouse in self.mouse_ups
+    # def get_mouse_up(self, mouse: Type[MouseInput]):
+    #     """
+    #     Get Mouse Up
+    #     """
+    #     return mouse in self.mouse_ups
 
     def mouse_wheel(self, x, y, up, down, scene: "kge.Scene"):
         """
@@ -277,20 +277,11 @@ class InputManager(System):
         key_ = list(self.key_map.keys())[list(self.key_map.values()).index(key)]
         return self.key_handler[key_]
 
-    def get_key_up(self, key: Type[KeyCode]):
-        """
-        Get Key Up
-        """
-        return key in self.k_ups
-
-    def quit(self):
-        """
-        Quit Engine
-        :param event: event
-        :param scene: the scene in which this event occur
-        :return:
-        """
-        self._dispatch(events.Quit())
+    # def get_key_up(self, key: Type[KeyCode]):
+    #     """
+    #     Get Key Up
+    #     """
+    #     return key in self.k_ups
 
     def mouse_motion(self, x, y, dx, dy, scene: "kge.Scene"):
         """
@@ -377,7 +368,7 @@ class InputManager(System):
         :return:
         """
         try:
-            self.k_ups.append(self.key_map[symbol])
+            # self.k_ups.append(self.key_map[symbol])
             self._dispatch(events.KeyUp(key=self.key_map[symbol],
                                         mods=self.build_mods(mods)))
         except KeyError:

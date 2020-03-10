@@ -22,7 +22,8 @@ class BaseEntity(EventMixin):
     An entity is a game object that can be used in the game engine
 
     In order to add a behavior to an entity (like moving the player for example),
-    we must use event handlers.
+    we must use event handlers and behaviours.
+    look for
     Their signatures are :
 
     def on_{event_name}(self, event_type, dispatch_function):
@@ -30,6 +31,7 @@ class BaseEntity(EventMixin):
 
     Where :
         - event_name is the name of the event in snake_case
+        - event_type is the event, you should use that, it contains a lot of important parameters
         - dispatch_function is a function to call in order to send messages, in practice, you won't use it so much
 
     Example of an event handler :
@@ -54,15 +56,6 @@ class BaseEntity(EventMixin):
 
                 try:
                     super(BaseEntity, self).__fire_event__(event, dispatch)
-                #
-                #     if event.scene.engine.running:
-                #         # Propagate event to components before self
-                #         for key in list(self._components):
-                #             component = self._components[key]
-                #             if event.scene.engine.running:
-                #                 component.__fire_event__(event, dispatch)
-                #             else:
-                #                 break
                 except Exception:
                     print(
                         f"An Error Happened in {self} (Components : {self._components}) for event : {event}. ")
@@ -89,10 +82,8 @@ class BaseEntity(EventMixin):
         if (tag is not None and not isinstance(tag, str)) or (name is not None and (not isinstance(name, str))):
             raise TypeError("name and tags should be strings")
 
+        # Update number of items
         type(self).nbItems += 1
-
-        # if the object does not need to receive any kind of events
-        self.static = False
 
         # The components attached to the object
         self._components = {}  # type: Dict[str, Component]
@@ -132,7 +123,7 @@ class BaseEntity(EventMixin):
 
         :return:
         """
-        return DottedDict(width=0, height=0)
+        return DottedDict(width=abs(self.transform.scale.x), height=abs(self.transform.scale.y))
 
     @property
     def left(self):

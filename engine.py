@@ -30,8 +30,6 @@ from kge.physics.fixed_updater import FixedUpdater
 from kge.physics.physics_manager import PhysicsManager, Physics
 from kge.resources.assetlib import AssetLoader
 
-import asyncio
-
 from kge.resources.events import AssetLoaded
 
 _ellipsis = type(...)
@@ -39,7 +37,7 @@ _ellipsis = type(...)
 
 class Engine(LoggerMixin, EventMixin):
     """
-    The engine
+    The engine is the boss, the class that launches every system
     in order to run the engine, you must enter in by a with statement.
     Example:
         >>> engine = Engine(...)
@@ -313,17 +311,6 @@ class Engine(LoggerMixin, EventMixin):
         scene = self.current_scene
         event.scene = scene
         event.time_scale = self.time_scale
-
-        if scene is not None:
-            if event.onlyEntity is None:
-                if scene.has_event(type(event)):
-                    self._jobs.append(self._executor.submit(
-                        scene.__fire_event__, event, self.dispatch))
-
-                if scene.main_camera is not None:
-                    if scene.main_camera.has_event(type(event)):
-                        self._jobs.append(self._executor.submit(
-                            scene.main_camera.__fire_event__, event, self.dispatch))
 
         # launch registered event handlers
         if self.has_event(type(event)):

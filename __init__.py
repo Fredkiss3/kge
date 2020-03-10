@@ -121,6 +121,7 @@ __all__ = [
     "BLACK",
     "WHITE",
     "MAGENTA",
+    "GREY",
 ]
 
 

@@ -146,8 +146,8 @@ class SpriteRenderer(BaseComponent):
         self._vlist = None  # type: Optional[pyglet.graphics.vertexdomain.VertexList]
 
         # size of the sprite
-        self._w, self._h = DEFAULT_SPRITE_RESOLUTION[0] * abs(self.entity.transform.scale.x), \
-                           DEFAULT_SPRITE_RESOLUTION[1] * abs(self.entity.transform.scale.y)
+        self._w = DEFAULT_SPRITE_RESOLUTION[0] * abs(self.entity.transform.scale.x)
+        self._h = DEFAULT_SPRITE_RESOLUTION[1] * abs(self.entity.transform.scale.y)
 
     def draw_shape(self, camera: "kge.Camera"):
         scale = self.entity.transform.scale

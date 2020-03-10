@@ -5,6 +5,7 @@ from typing import Union, List, Callable
 import pyglet
 from pyglet.gl import *
 import kge
+from kge.utils.dotted_dict import DottedDict
 from kge.utils.vector import Vector
 from kge.core import events
 from kge.core.constants import DEFAULT_RESOLUTION, WINDOW_POSITION, IS_FULLSCREEN, IS_RESIZABLE, DEFAULT_FPS, BLACK, \
@@ -18,6 +19,10 @@ import logging
 class Renderer(System):
     """
     The system which task is to render all elements in a scene
+    TODO:
+        - Set FullScreen by script
+        - Resize by script
+        - Make this system generic for all kinds of graphic elements
     """
 
     def __init__(self, resolution=DEFAULT_RESOLUTION, fullscreen=IS_FULLSCREEN, resizable=IS_RESIZABLE, **_):
@@ -141,6 +146,8 @@ class Renderer(System):
             new_win_size = Vector(self.window.width, self.window.height)
             if self.window_size != new_win_size:
                 self.window_size = new_win_size
+                self.engine.current_scene.main_camera.resolution = DottedDict(width=new_win_size.x,
+                                                                              height=new_win_size.y)
                 self._dispatch(events.WindowResized(self.window_size))
 
 

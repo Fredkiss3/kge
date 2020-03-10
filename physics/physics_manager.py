@@ -1,29 +1,22 @@
-import time
-from collections import deque
-from itertools import chain
-from typing import Callable, Union, Deque, Optional, List, Tuple
-
 import math
+from itertools import chain
+from typing import Callable, Union, List, Tuple
 
-import pyglet
-
-import kge
-from kge.core.component_system import ComponentSystem
-from kge.core.entity import BaseEntity
-from kge.utils.vector import Vector
-from kge.physics.colliders import Collider
-from kge.physics.rigid_body import RigidBody, RigidBodyType
-from kge.core import events
-from kge.core.constants import FIXED_DELTA_TIME
-from kge.core.events import Event
-from kge.core.service import Service
 # from kge.core.system import System
 import Box2D as b2
 
+import kge
+from kge.core import events
+from kge.core.component_system import ComponentSystem
+from kge.core.constants import *
+from kge.core.entity import BaseEntity
+from kge.core.events import Event
+from kge.core.service import Service
+from kge.physics.colliders import Collider
 from kge.physics.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, \
     PhysicsUpdate, CollisionBegin, CollisionEnd
-
-from kge.core.constants import *
+from kge.physics.rigid_body import RigidBody, RigidBodyType
+from kge.utils.vector import Vector
 
 
 class DebugDrawer(b2.b2Draw):
@@ -135,7 +128,7 @@ class DestructionListener(b2.b2DestructionListener):
 
 class OverlapInfo(b2.b2QueryCallback):
     """
-    NOTE : TO TEST
+    TODO : TO TEST
     """
     MULTIPLE = 1
     ONE = 0
@@ -143,7 +136,7 @@ class OverlapInfo(b2.b2QueryCallback):
     def __init__(self, type=ONE, layer=None):
         super().__init__()
         self.type = type
-        self.colliders = []
+        self.colliders = []  # type: List[Collider]
         self.collider = None
         self.layer = layer
 
@@ -182,6 +175,11 @@ class OverlapInfo(b2.b2QueryCallback):
                     self.colliders.append(collider)
                     # Continue looking for more colliders
                     return True
+
+
+class RegionInfo(OverlapInfo):
+    MULTIPLE = 1
+    ONE = 0
 
 
 class RayCastInfo(b2.b2RayCastCallback):
@@ -254,7 +252,7 @@ class RayCastInfo(b2.b2RayCastCallback):
 
 class PhysicsManager(ComponentSystem):
     """
-    The system that handles movements, collision detection and can perform overlaps for region query and ray casts
+    The system that handles movement, collision detection and can perform region queries and ray casts
     """
     contact_listener: ContactListener = None
     destruction_listener: DestructionListener = None
@@ -271,12 +269,12 @@ class PhysicsManager(ComponentSystem):
 
     @classmethod
     def overlap_circle(cls, center: Vector, radius: float, layer: Union[int, str, None] = None,
-                       type=OverlapInfo.ONE) -> OverlapInfo:
+                       type=OverlapInfo.MULTIPLE) -> OverlapInfo:
         """
         Query for colliders which are in a given circle region
         Note: in reality this method does not query in a circle region but a squared region
 
-        :param origin: The center point of the circle to overlap
+        :param center: The center point of the circle to overlap
         :param radius: the radius of the circle to overlap
         :param layer: the layer to filter
         :param type: type of overlap. should be one of :
@@ -286,27 +284,68 @@ class PhysicsManager(ComponentSystem):
             Example of use :
                 >>> PhysicsManager.overlap_circle( center=Vector(0, 0), radius=1, type=OverlapInfo.ONE, layer="Ground" )
         """
-        if type in (OverlapInfo.MULTIPLE, OverlapInfo.ONE):
+        # if type in (OverlapInfo.MULTIPLE, OverlapInfo.ONE):
+        #     lay = None
+        #     if layer is not None:
+        #         lay = cls.engine.current_scene.getLayer(layer)
+        #     cb = OverlapInfo(type=type, layer=lay)
+        #
+        #     # Make a small box.
+        #     aabb = b2.b2AABB(lowerBound=center - Vector(radius, radius),
+        #                      upperBound=center + Vector(radius, radius))
+        #
+        #     # Query the world for overlapping shapes.
+        #     cls.world.QueryAABB(cb, aabb)
+        #
+        #     return cb
+        # else:
+        #     raise ValueError(
+        #         "Overlap Type should be one of 'OverlapInfo.ONE or OverlapInfo.MULTIPLE'")
+        raise NotImplementedError("Not implemented yet !")
+
+    @classmethod
+    def query_region(cls, bottom_left: Vector, top_right: Vector, layer: Union[int, str, None] = None,
+                     type=RegionInfo.MULTIPLE) -> RegionInfo:
+        """
+        Query for colliders which are in a given region
+
+        :param bottom_left: the bottom left of the region to query
+        :param top_right: the bottom left of the region to query
+        :param layer: the layer to filter
+        :param type: type of overlap. should be one of :
+            - RegionInfo.ONE => The Query Function will return only one collider found when query is finished
+            - RegionInfo.MULTIPLE => The Query Function will return only all colliders found query is finished
+        :return: an object of type RegionInfo, which holds information about the result of the Query
+            Example of use :
+                >>> PhysicsManager.query_region(
+                >>>                 center=Vector(0, 0),
+                >>>                 bottom_left=Vector(1, 1),
+                >>>                 top_right=Vector(2, 2),
+                >>>                 type=RegionInfo.ONE,
+                >>>                 layer="Ground"
+                >>> )
+        """
+        if type in (RegionInfo.MULTIPLE, RegionInfo.ONE):
             lay = None
             if layer is not None:
                 lay = cls.engine.current_scene.getLayer(layer)
-            cb = OverlapInfo(type=type, layer=lay)
+            cb = RegionInfo(type=type, layer=lay)
 
             # Make a small box.
-            aabb = b2.b2AABB(lowerBound=center - Vector(radius, radius),
-                             upperBound=center + Vector(radius, radius))
+            aabb = b2.b2AABB(lowerBound=bottom_left,
+                             upperBound=top_right)
 
-            # Query the world for overlapping shapes.
+            # Query the world for shapes.
             cls.world.QueryAABB(cb, aabb)
 
             return cb
         else:
             raise ValueError(
-                "Overlap Type should be one of 'OverlapInfo.ONE or OverlapInfo.MULTIPLE'")
+                "Query Type should be one of 'RegionInfo.ONE or RegionInfo.MULTIPLE'")
 
     @classmethod
     def ray_cast(cls, origin: Vector, direction: Vector, distance: float, layer: Union[int, str, None] = None,
-                 type=RayCastInfo.CLOSEST, ) -> RayCastInfo:
+                 type=RayCastInfo.CLOSEST) -> RayCastInfo:
         """
         Perform a ray cast
 
@@ -367,11 +406,11 @@ class PhysicsManager(ComponentSystem):
         """
         Update physics
         """
+        cls = PhysicsManager
         if not self.pause:
-            if PhysicsManager.world:
+            if cls.world:
                 try:
                     # Destroy garbage bodies
-                    # FIXME : If bugging verifiy
                     for body in self.garbage_bodies:
                         body.active = False
                     self.garbage_bodies.clear()
@@ -381,13 +420,34 @@ class PhysicsManager(ComponentSystem):
                         self.create_body(rb, e)
                     self.new_bodies.clear()
 
-                    PhysicsManager.world.Step(
+                    # Update the physics world
+                    cls.world.Step(
                         FIXED_DELTA_TIME * event.time_scale, 10, 10)
-                    PhysicsManager.world.ClearForces()
+                    cls.world.ClearForces()
 
+                    # get the colliders visible in frame
+                    camera = event.scene.main_camera
+                    info = cls.query_region(Vector(camera.frame_left, camera.real_frame_bottom),
+                                            Vector(camera.frame_right, camera.real_frame_top))
+
+                    # get rigid bodies
+                    rigid_bodies = filter(lambda rb: rb.body_type != RigidBodyType.STATIC,
+                                          filter(lambda rb: rb is not None,
+                                                 map(lambda c: c.rigid_body_attached, info.colliders))
+                                          )
+
+                    # Phantom Bodies
+                    phantoms = map(lambda b: b.userData, filter(lambda b: b.userData.entity is not None
+                                                                          and camera.in_frame(b.userData.entity),
+                                                                filter(lambda b: len(b.fixtures) == 0 and isinstance(
+                                                                    b.userData, RigidBody),
+                                                                       cls.world.bodies_gen)))
+
+                    # So set the sum of the rbs
+                    # rigid_bodies = list(chain(rigid_bodies, phantoms))
+                    # print(len(rigid_bodies))
                     # Launch Physics Update on rigid bodies
                     rigid_bodies = self.active_components()  # filter(lambda c: isinstance(c, RigidBody) and c.body_type != RigidBodyType.STATIC,self.active_components())
-                    # rigid_bodies = filter(lambda c: isinstance(c, RigidBody) and c.body_type != RigidBodyType.STATIC,self.active_components())
                     for rb in rigid_bodies:  # type: RigidBody
                         rb.__fire_event__(event, dispatch)
                 except Exception as e:
@@ -491,9 +551,7 @@ class PhysicsManager(ComponentSystem):
         if rb.is_ghost:
             manager = kge.ServiceProvider.getEntityManager()
             manager.add_component(e, rb, "_body")
-            # ev.entity.addComponent("_body", rb)c
 
-        # rb.entity = ev.entity
         self.new_bodies.append((rb, ev.entity))
 
     def on_body_created(self, event: BodyCreated, dispatch):

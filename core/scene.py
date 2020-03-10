@@ -1,7 +1,7 @@
 from collections.abc import Collection
 from collections import defaultdict
 from copy import deepcopy
-from typing import Iterator, Type, Callable, Sequence, Tuple, Union, TypeVar, Set
+from typing import Iterator, Type, Callable, Sequence, Tuple, Union, TypeVar, Set, Dict, List
 
 import kge
 from kge import ServiceProvider
@@ -9,7 +9,6 @@ from kge.core import events
 from kge.core.camera import Camera
 from kge.core.constants import BLACK, DEFAULT_RESOLUTION, DEFAULT_PIXEL_RATIO, RED
 from kge.core.entity import BaseEntity
-from kge.core.eventlib import EventMixin
 from kge.utils.vector import Vector
 from collections import OrderedDict
 
@@ -132,10 +131,12 @@ class EntityCollection(Collection):
                 s.discard(entity)
 
 
-class BaseScene(EventMixin, EntityCollection):
+class BaseScene(EntityCollection):
     """
-    A scene : it represents a level in a game
-    In sum, it is just a bunch of entities
+    A scene is a Level in the game.
+
+    In order to
+
     """
     nbItems = 0
     engine: "kge.Engine" = None
@@ -143,13 +144,17 @@ class BaseScene(EventMixin, EntityCollection):
     pixel_ratio: int = DEFAULT_PIXEL_RATIO
 
     @classmethod
-    def load(cls, new_scene: Union[Type["BaseScene"], "BaseScene"], **kwargs):
+    def load(cls, new_scene: Type["BaseScene"], setup: Callable[["BaseScene"], None]=None, **kwargs):
         """
         Load a new scene
         """
+        new_scene = cls(setup)
+
         if cls.engine is not None:
             cls.engine.dispatch(events.ReplaceScene(
-                new_scene=new_scene, kwargs=kwargs), immediate=True)
+                new_scene=new_scene,
+                kwargs=kwargs
+            ), immediate=True)
         else:
             raise AttributeError(
                 f"The scene provided ('{new_scene}') has no engine associated with it")
@@ -180,8 +185,9 @@ class BaseScene(EventMixin, EntityCollection):
     def Right(self):
         return self.main_camera.frame_right
 
-    def __init__(self, set_up: Callable = None, **kwargs):
+    def __init__(self, set_up: Callable[["BaseScene"], None] = None, **kwargs):
         super(BaseScene, self).__init__()
+        self._event_map = dict() # type: Dict[str, List[BaseEntity]]
         Scene.nbItems += 1
 
         self.name = f"Scene {self.nbItems}"
@@ -253,15 +259,16 @@ class BaseScene(EventMixin, EntityCollection):
         else:
             raise TypeError("Layer must be integers or string")
 
-        killer = ServiceProvider.getEntityManager()
+        manager = ServiceProvider.getEntityManager()
 
         # Enable or disable entity
         if entity.is_active:
-            killer.enable(entity)
+            manager.enable(entity)
         else:
-            killer.disable(entity)
+            manager.disable(entity)
 
         super(BaseScene, self).add(entity, entity.tag)
+        self.register_events(entity)
 
     def addAll(self, *entities: Tuple[BaseEntity, Union[Tuple[float, float], Vector]]):
         """
@@ -301,19 +308,63 @@ class BaseScene(EventMixin, EntityCollection):
     def clear(self):
         """
         Remove all entities from the scene
-        TODO
         """
-        raise NotImplementedError("Not implemented yet !")
+        self.all.clear()
+        self.kinds.clear()
+        self._event_map = dict()
 
-    def simulated(self) -> Iterator:
+    def registered_entities(self, event):
         """
-        Get entities that needs to receive events
+        Return registered entities for event
         """
-        return sorted(
-            filter(lambda e: not e.static, self),
-            key=lambda s: getattr(s, "layer", 0)
-        )
+        try:
+            return self._event_map[type(event).__name__]
+        except KeyError:
+            return []
 
+    @property
+    def registered_events(self):
+        return self._event_map.keys()
+
+    def remove(self, entity: BaseEntity) -> None:
+        """
+        Remove an entity, and its events
+        """
+        super(BaseScene, self).remove(entity)
+        self.unregister_events(entity)
+
+    def register_events(self, e: BaseEntity):
+        """
+        Map names of events to components which need the event
+        """
+        for attribute in dir(e):
+            if attribute.startswith("on_") and callable(getattr(e, attribute)):
+                name = snake_to_camel(attribute)
+                try:
+                    l = self._event_map[name]
+                except KeyError:
+                    self._event_map[name] = [e]
+                else:
+                    l.append(e)
+
+    def unregister_events(self, e: BaseEntity):
+        """
+        Remove the component from event map
+        """
+        for k, v in self._event_map.items():
+            if e in v:
+                v.remove(e)
+
+def snake_to_camel(meth_name: str):
+    if not meth_name.startswith("on_") or (meth_name[-1] not in "azertyuiopqsdfghjklmwxcvbn"):
+        return None
+    else:
+        event_name = meth_name[3:].split("_")
+        event = ""
+        for name in event_name:  # type: str
+            if len(name.strip()) > 0:
+                event += name.capitalize()
+        return event
 
 Scene = BaseScene
 

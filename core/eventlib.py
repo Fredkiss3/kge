@@ -50,6 +50,9 @@ def {method}({e_name.lower()}_event: {e_name}, dispatch_function):
 
 class EventMixin:
     def has_event(self, event_type: Type[Event]) -> bool:
+        """
+        Verify if this object implement the kind of event given
+        """
         name = camel_to_snake(event_type.__name__)
         meth_name = 'on_' + name
         meth = getattr(self, meth_name, None)

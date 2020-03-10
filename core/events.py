@@ -196,7 +196,9 @@ class PreRender(Event):
 @dataclass
 class WindowResized(Event):
     """
-    Fired when the window has been resized
+    Fired when the window has been resized,
+    meant to be used with systems or components that need to add a functionality on resize
+    like for canvases by changing the position of UI elements according to their anchors
     """
     new_size: "kge.Vector"
     fullscreen: bool = False

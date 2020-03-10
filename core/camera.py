@@ -29,8 +29,8 @@ class Camera(Entity):
         self.pixel_ratio_original = pixel_ratio
         self.pixel_ratio = self.pixel_ratio_original * self._zoom
 
-    def on_window_resized(self, ev: events.WindowResized, dispatch: Callable[[Event], None]):
-        self.resolution = DottedDict(width=ev.new_size.x, height=ev.new_size.y)
+    # def on_window_resized(self, ev: events.WindowResized, dispatch: Callable[[Event], None]):
+    #     self.resolution = DottedDict(width=ev.new_size.x, height=ev.new_size.y)
 
     @property
     def zoom(self):
@@ -67,6 +67,24 @@ class Camera(Entity):
         :return:
         """
         return self.position.y - self.half_height
+
+    @property
+    def real_frame_top(self) -> float:
+        """
+        Real Frame top position in unit
+
+        :return:
+        """
+        return -self.position.y + self.half_height
+
+    @property
+    def real_frame_bottom(self) -> float:
+        """
+        Real Frame bottom position in unit
+
+        :return:
+        """
+        return -self.position.y - self.half_height
 
     @property
     def frame_left(self) -> float:
@@ -132,15 +150,16 @@ class Camera(Entity):
         min_dist_y = size.y / 2 + self.half_height
 
         # vector from the entity to the camera
-        distVec = point - self.position
+        distVec = point - Vector(self.position.x, -self.position.y)
 
         # depth of the collision
+        # Difference between the Min Distance before a collision occurs
+        # and the actual distance between camera and the box
         xDepth = min_dist_x - abs(distVec.x)
-        yDepth = min_dist_y + abs(distVec.y)
+        yDepth = min_dist_y - abs(distVec.y)
 
         if xDepth > 0 and yDepth > 0:
             return True
-
         return False
 
     def in_frame(self, entity: Entity) -> bool:
@@ -150,22 +169,23 @@ class Camera(Entity):
         only elements that are in camera sight.
 
         :param entity: the entity to check
-        :return: True of the entity is in camera sight
+        :return: True if the entity is in camera sight
         """
         # Minimum distances before the collision occurs
         min_dist_x = entity.size.width / 2 + self.half_width
         min_dist_y = entity.size.height / 2 + self.half_height
 
-        # vector from the entity to the camera
-        distVec = entity.position - self.position
+        # distance from camera to the entity
+        distVec = entity.position - Vector(self.position.x, -self.position.y)
 
         # depth of the collision
+        # Difference between the Min Distance before a collision occurs
+        # and the actual distance between camera and entity
         xDepth = min_dist_x - abs(distVec.x)
-        yDepth = min_dist_y + abs(distVec.y)
+        yDepth = min_dist_y - abs(distVec.y)
 
         if xDepth > 0 and yDepth > 0:
             return True
-
         return False
 
     def screen_to_world_point(self, point: Vector) -> Vector:
@@ -214,6 +234,7 @@ class Camera(Entity):
 if __name__ == '__main__':
     from kge.core.entity import Entity
 
+
     class Player(Entity):
 
         @property
@@ -222,6 +243,7 @@ if __name__ == '__main__':
                 width=2, height=2
             )
 
+
     class Terrain(Entity):
 
         @property
@@ -229,6 +251,7 @@ if __name__ == '__main__':
             return DottedDict(
                 width=20, height=20
             )
+
 
     cam = Camera(resolution=Vector(640, 640))
 

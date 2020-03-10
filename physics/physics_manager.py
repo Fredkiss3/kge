@@ -432,6 +432,8 @@ class PhysicsManager(ComponentSystem):
 
     def on_scene_started(self, ev: events.SceneStarted, dispatch: Callable[[Event], None]):
         PhysicsManager.world = b2.b2World(gravity=(0, -10), doSleep=True)
+        # FIXME : Set Debug Drawer
+        # PhysicsManager.world.renderer = DebugDrawer()
         PhysicsManager.world.contactListener = self.contact_listener
         PhysicsManager.world.destructionListener = self.destruction_listener
 

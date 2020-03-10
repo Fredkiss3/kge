@@ -150,7 +150,6 @@ class SpriteRenderer(BaseComponent):
                            DEFAULT_SPRITE_RESOLUTION[1] * abs(self.entity.transform.scale.y)
 
     def draw_shape(self, camera: "kge.Camera"):
-        # FIXME : SHOULD UPDATE VERTEX LIST IF IT HAS BEEN CREATED
         scale = self.entity.transform.scale
         vertices = []
         if isinstance(self.shape, (Triangle, Square)):
@@ -159,7 +158,6 @@ class SpriteRenderer(BaseComponent):
                     tuple(camera.world_to_screen_point(
                         (self.entity.transform * Vector(v.x * scale.x, v.y * scale.y))))
                 )
-
         elif isinstance(self.shape, Circle):
             deg = 360 / self.shape.num_points
             rad = math.radians(deg)
@@ -174,7 +172,9 @@ class SpriteRenderer(BaseComponent):
                                                       ("v2d/stream", tuple(vertices)),
                                                       ("c4Bn/dynamic",
                                                        self.shape.color * self.shape.num_points))
-            return self._vlist, self.shape.mode
+            self._vlist.draw(self.shape.mode)
+            return None
+            # return self._vlist, self.shape.mode
         else:
             return
 
@@ -191,15 +191,6 @@ class SpriteRenderer(BaseComponent):
         else:
             # Update vertices
             self._vlist.vertices = vertices
-
-    def draw_poly(self, Transform: Vector, shape: "Shape", batch: "pyglet.graphics.Batch"):
-        # TODO
-        pass
-
-    def draw_circle(self, pos: Vector, radius: float, group, color: Tuple[int, int, int],
-                    batch: "pyglet.graphics.Batch"):
-        # TODO
-        pass
 
     def on_disable_entity(self, ev: events.DisableEntity, dispatch):
         """
@@ -259,7 +250,6 @@ class SpriteRenderer(BaseComponent):
             if self._image is not None:
                 # Load the asset if it has the same name as self
                 if ev.asset.name == self._image.name and self._sprite is None:
-                    # print(f'Loading Sprite... for {self.entity}\n')
                     try:
                         # Get batch & group from window service
                         win = kge.ServiceProvider.getWindow()
@@ -321,7 +311,8 @@ class SpriteRenderer(BaseComponent):
         """
         # get camera
         camera = scene.main_camera
-
+        win = kge.ServiceProvider.getWindow()
+        batch = win.batch
         # values
         pos = camera.world_to_screen_point(self.entity.position)
 
@@ -329,11 +320,12 @@ class SpriteRenderer(BaseComponent):
             raise AttributeError(
                 "Sprite renderer components should be attached to Sprites ('kge.Sprite')")
         else:
-
             if not camera.in_frame(self.entity):
+                # FIXME : CAMERA CULLING DROP THE FRAME RATE FOR SPRITES (... WEIRD :( )
                 # If not in camera sight then the sprite should be invisible
-                if self._sprite is not None and self._sprite.visible:
-                    self._sprite.visible = False
+                if self._sprite is not None and self._sprite.batch is not None:
+                    # self._sprite.visible = False
+                    self._sprite.batch = None
                 else:
                     # If vertex list is not in camera sight then we should delete it
                     if self._vlist is not None:
@@ -343,8 +335,12 @@ class SpriteRenderer(BaseComponent):
                 if self._sprite is None:
                     return self.draw_shape(camera)
                 else:
-                    self._sprite.visible = True
+                    if self._sprite.batch is None:
+                        self._sprite.batch = batch
+                    # self._sprite.visible = True
                     self._sprite.update(pos.x, pos.y, -self.entity.transform.angle,
                                         scale_x=self.entity.transform.scale.x * camera.zoom,
                                         scale_y=self.entity.transform.scale.y * camera.zoom,
                                         )
+
+                    return None

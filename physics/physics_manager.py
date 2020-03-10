@@ -23,6 +23,62 @@ import Box2D as b2
 from kge.physics.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, \
     PhysicsUpdate, CollisionBegin, CollisionEnd
 
+from kge.core.constants import *
+
+
+class DebugDrawer(b2.b2Draw):
+    """
+    This debug draw class accepts callbacks from Box2D (which specifies what to draw)
+    and handles all of the rendering.
+
+    If you are writing your own game, you likely will not want to use debug drawing.
+    Debug drawing, as its name implies, is for debugging.
+    TODO
+    """
+
+    def __init__(self, **kwargs):
+        b2.b2DrawExtended.__init__(self, **kwargs)
+
+    def StartDraw(self):
+        """ Called when drawing starts.  """
+        raise NotImplementedError("Not implemented yet !")
+
+    def EndDraw(self):
+        """ Called when drawing ends.  """
+        raise NotImplementedError("Not implemented yet !")
+
+    def DrawPoint(self, p: Vector, size=1, color=WHITE):
+        """ Draw a single point at point p given a pixel size and color.  """
+        raise NotImplementedError("Not implemented yet !")
+
+    def DrawAABB(self, aabb: b2.b2AABB, color=WHITE):
+        """ Draw a wireframe around the AABB with the given color.  """
+        raise NotImplementedError("Not implemented yet !")
+
+    def DrawSegment(self, p1: Vector, p2: Vector, color=WHITE):
+        """ Draw the line segment from p1-p2 with the specified color.  """
+        raise NotImplementedError("Not implemented yet !")
+
+    def DrawTransform(self, xf: b2.b2Transform):
+        """ Draw the transform xf on the screen """
+        raise NotImplementedError("Not implemented yet !")
+
+    def DrawCircle(self, center: Vector, radius: float, color=WHITE, drawwidth=1):
+        """ Draw a wireframe circle given the center, radius, axis of orientation and color.  """
+        raise NotImplementedError("Not implemented yet !")
+
+    def DrawSolidCircle(self, center: Vector, radius: float, axis, color=WHITE):
+        """ Draw a solid circle given the center, radius, axis of orientation and color.  """
+        raise NotImplementedError("Not implemented yet !")
+
+    def DrawPolygon(self, vertices: List[Vector], color=WHITE, _=None):
+        """ Draw a wireframe polygon given the screen vertices (tuples) with the specified color.  """
+        raise NotImplementedError("Not implemented yet !")
+
+    def DrawSolidPolygon(self, vertices: List[Vector], color=WHITE, _=None):
+        """ Draw a filled polygon given the screen vertices (tuples) with the specified color.  """
+        raise NotImplementedError("Not implemented yet !")
+
 
 class ContactListener(b2.b2ContactListener):
     """
@@ -217,9 +273,8 @@ class PhysicsManager(ComponentSystem):
     def overlap_circle(cls, center: Vector, radius: float, layer: Union[int, str, None] = None,
                        type=OverlapInfo.ONE) -> OverlapInfo:
         """
-        TODO : Add a notice here because it is much for 'overlaping Squares' than circles
         Query for colliders which are in a given circle region
-
+        Note: in reality this method does not query in a circle region but a squared region
 
         :param origin: The center point of the circle to overlap
         :param radius: the radius of the circle to overlap
@@ -288,7 +343,7 @@ class PhysicsManager(ComponentSystem):
             raise ValueError(
                 "RayCast Type should be one of 'RayCastInfo.MULTIPLE, RayCastInfo.CLOSEST, RayCastInfo.ANY'")
 
-    def __init__(self, engine):
+    def __init__(self, engine, **_):
         super(PhysicsManager, self).__init__(engine)
 
         # state
@@ -301,9 +356,9 @@ class PhysicsManager(ComponentSystem):
         self.components_supported = [RigidBody, Collider]
 
         # bodies to destroy
-        self.garbage_bodies = [] # type: List[b2.b2Body]
+        self.garbage_bodies = []  # type: List[b2.b2Body]
         # bodies to create
-        self.new_bodies = [] # type: List[Tuple[RigidBody, BaseEntity]]
+        self.new_bodies = []  # type: List[Tuple[RigidBody, BaseEntity]]
 
         # TODO : Implement layers in order to ignore collisions within different layers
         self.layers_to_ignore = {}
@@ -331,7 +386,7 @@ class PhysicsManager(ComponentSystem):
                     PhysicsManager.world.ClearForces()
 
                     # Launch Physics Update on rigid bodies
-                    rigid_bodies = self.active_components()  #filter(lambda c: isinstance(c, RigidBody) and c.body_type != RigidBodyType.STATIC,self.active_components())
+                    rigid_bodies = self.active_components()  # filter(lambda c: isinstance(c, RigidBody) and c.body_type != RigidBodyType.STATIC,self.active_components())
                     # rigid_bodies = filter(lambda c: isinstance(c, RigidBody) and c.body_type != RigidBodyType.STATIC,self.active_components())
                     for rb in rigid_bodies:  # type: RigidBody
                         rb.__fire_event__(event, dispatch)
@@ -438,7 +493,6 @@ class PhysicsManager(ComponentSystem):
 
         # rb.entity = ev.entity
         self.new_bodies.append((rb, ev.entity))
-
 
     def on_body_created(self, event: BodyCreated, dispatch):
         # get the concerned components

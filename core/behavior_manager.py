@@ -18,23 +18,17 @@ class BehaviourManager(ComponentSystem):
         super(BehaviourManager, self).__fire_event__(event, dispatch)
 
         if event.scene:
-            # If event is 'AssetLoaded' then dispatch to all entities of the world
-            # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS
             if event.onlyEntity is None:
                 components = filter(lambda c: c.has_event(type(event)) and not c.entity.static, self.active_components())
-                # clist = list(components)
-                # print(f"{len(clist)} behavior(s) for event : {event}")
 
                 for behavior in components:
                     if self.engine.running:
-                        # Instead of submitting jobs, which can take a huge amount of time to process
-                        # Just run the event handler
                         behavior.__fire_event__(event, dispatch)
                     else:
                         # Break if the engine has finished running
                         break
             else:
                 # get the behaviors concerned by the event
-                concerned = filter(lambda b: b.entity == event.onlyEntity, self.active_components())
+                concerned = event.onlyEntity.getComponents(kind=Behaviour)
                 for behavior in concerned:
                     behavior.__fire_event__(event, dispatch)

@@ -122,6 +122,27 @@ class Camera(Entity):
         """
         return self.frame_width / 2
 
+    def box_in_frame(self, point: Vector, size: Vector):
+        """
+        Check if a box is visible.
+        You can use this method if you want to test sprites, rectangles and others
+        """
+        # Minimum distances before the collision occurs
+        min_dist_x = size.x / 2 + self.half_width
+        min_dist_y = size.y / 2 + self.half_height
+
+        # vector from the entity to the camera
+        distVec = point - self.position
+
+        # depth of the collision
+        xDepth = min_dist_x - abs(distVec.x)
+        yDepth = min_dist_y + abs(distVec.y)
+
+        if xDepth > 0 and yDepth > 0:
+            return True
+
+        return False
+
     def in_frame(self, entity: Entity) -> bool:
         """
         Is this entity in the screen ?

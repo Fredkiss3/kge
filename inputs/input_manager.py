@@ -257,11 +257,9 @@ class InputManager(System):
         scene_position = camera.screen_to_world_point(screen_position)
 
         if up:
-            print("Wheel UP !")
             self.wheel_up = True
             self._dispatch(events.MouseWheelUp(position=scene_position))
         elif down:
-            print("Wheel DOWN !")
             self.wheel_down = True
             self._dispatch(events.MouseWheelDown(position=scene_position))
 
@@ -401,20 +399,22 @@ class InputService(Service):
         """
         return self._system_instance.get_key_down(key)
 
-    def get_key_up(self, key: Type[KeyCode]) -> bool:
-        """
-        Find if the specified key is released
-        """
-        return self._system_instance.get_key_up(key)
-
-    def get_mouse_up(self, mouse_btn: Type[MouseInput]) -> bool:
-        return self._system_instance.get_mouse_up(mouse_btn)
-
     def get_mouse_down(self, mouse_btn: Type[MouseInput]) -> bool:
         return self._system_instance.get_mouse_down(mouse_btn)
 
-    def get_mouse_wheel_up(self) -> bool:
-        return self._system_instance.wheel_up
+    #
+    # def get_key_up(self, key: Type[KeyCode]) -> bool:
+    #     """
+    #     Find if the specified key is released
+    #     """
+    #     return self._system_instance.get_key_up(key)
+    #
+    # def get_mouse_up(self, mouse_btn: Type[MouseInput]) -> bool:
+    #     return self._system_instance.get_mouse_up(mouse_btn)
 
-    def get_mouse_wheel_down(self) -> bool:
-        return self._system_instance.wheel_down
+    #
+    # def get_mouse_wheel_up(self) -> bool:
+    #     return self._system_instance.wheel_up
+    #
+    # def get_mouse_wheel_down(self) -> bool:
+    #     return self._system_instance.wheel_down

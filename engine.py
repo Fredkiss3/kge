@@ -58,7 +58,7 @@ class Engine(LoggerMixin, EventMixin):
                          # AssetLoader,
                          # AudioManager,
                          EntityManager,
-                         # BehaviourManager,
+                         BehaviourManager,
                  ),
                  basic_services=(
                          Physics, EntityManagerService, Audio, InputService,
@@ -256,7 +256,6 @@ class Engine(LoggerMixin, EventMixin):
 
         :return: None
         """
-        print("Looping...")
         if not self.entered:
             raise ValueError("Cannot run before things have started",
                              self.entered)

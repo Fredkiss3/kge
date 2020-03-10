@@ -119,7 +119,7 @@ class PlayerController(MoveMixin):
     speed = 7
     move_flexibility = Vector(1, 0)
     canJump = True
-    jump_speed = 10
+    jump_speed = 50
 
 
 class Player(Sprite):

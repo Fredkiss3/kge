@@ -27,8 +27,8 @@ pyglet_ffmpeg2.load_ffmpeg()
 music = pyglet.resource.media(
     'assets/bg_music.mp3', streaming=False)  # type: media.Source
 # help(music)
-player = music.play()
-player.loop = True
+# player = music.play()
+# player.loop = True
 # The batch for drawing all things
 main_batch = pyglet.graphics.Batch()
 
@@ -253,9 +253,9 @@ def on_key_press(symbol, modifiers):
     # if symbol == key.A:
     #     print('The "A" key was pressed.')
     if symbol == key.LEFT:
-        glTranslatef(50, 0, 0)
+        glTranslatef(50, 0, 1)
     elif symbol == key.RIGHT:
-        glTranslatef(-50, 0, 0)
+        glTranslatef(-50, 0, -1)
     if symbol == key.UP:
         glTranslatef(0, -50, 0)
     elif symbol == key.DOWN:

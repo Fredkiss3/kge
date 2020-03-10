@@ -40,12 +40,16 @@ class Renderer(System):
         self.batch = None  # type: Union[pyglet.graphics.Batch, None]
 
         # FPS COUNTER
-        self.fps_display = None  # type: Union[pyglet.window.FPSDisplay, None]
+        self.fps_display = None  # type: Union[pyglet.window.FPSDisplay, pyglet.text.Label, None]
 
         # layers
         self.layers = [pyglet.graphics.OrderedGroup(i) for i in range(20)]
         self.window_size = Vector.Zero()
         self.to_draw = []  # Vertices to draw
+
+        # Frame calculations
+        self.fps = 0
+        self.last_step = time.monotonic()
 
     def __enter__(self):
         self.window = pyglet.window.Window(
@@ -59,7 +63,10 @@ class Renderer(System):
         )
 
         # Batch for drawing
-        self.fps_display = pyglet.window.FPSDisplay(window=self.window)
+        # self.fps_display = pyglet.window.FPSDisplay(window=self.window)
+        self.fps_display = pyglet.text.Label(x=10, y=10,
+                                             font_size=24, bold=True,
+                                             color=(127, 127, 127, 200))
         self.batch = pyglet.graphics.Batch()
 
         # Window events
@@ -87,6 +94,13 @@ class Renderer(System):
         """
         Draw the window
         """
+        now = time.monotonic()
+        if now - self.last_step >= 1:
+            self.fps_display.text = f"{self.fps} FPS"
+            self.last_step = time.monotonic()
+            self.fps = 0
+        self.fps += 1
+
         # Clear the screen
         self.window.clear()
         glClearColor(*self._bgc, 1)

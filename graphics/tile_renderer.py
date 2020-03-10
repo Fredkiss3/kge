@@ -69,6 +69,8 @@ class TileRenderer(SpriteRenderer):
         """
         # get camera
         camera = scene.main_camera
+        win = kge.ServiceProvider.getWindow()
+        batch = win.batch
 
         if self.entity is None or not isinstance(self.entity, kge.TileGrid):
             raise AttributeError(
@@ -79,14 +81,12 @@ class TileRenderer(SpriteRenderer):
                 # If not in camera sight then the sprite should be invisible
                 for line in self._tiles:
                     for sprite in line:
-                        if sprite.visible:
-                            sprite.visible = False
+                        if sprite.batch is not None:
+                            sprite.batch = None
             else:
                 for x in range(len(self._tiles)):
                     for y in range(len(self._tiles[x])):
                         sprite = self._tiles[x][y]
-                        if not sprite.visible:
-                            sprite.visible = True
 
                         # calculate offset of the sprite
                         offset = Vector(y + 1 / 2, x + 1 / 2)
@@ -99,6 +99,9 @@ class TileRenderer(SpriteRenderer):
 
                         # calculate sprite position in screen
                         pos = camera.world_to_screen_point(new_pos)
+
+                        if sprite.batch is None:
+                            sprite.batch = batch
 
                         # Then update the sprite
                         sprite.update(pos.x, pos.y,

@@ -1,5 +1,6 @@
 from typing import Union, Callable
 
+from kge.resources.events import AssetLoaded
 from kge.utils.dotted_dict import DottedDict
 
 from kge.core.events import Event
@@ -11,11 +12,27 @@ from kge.graphics.image import Image
 class Sprite(BaseEntity):
     """
     An entity that can be visualised
+    FIXME : Migrate all of the events to renderer system
     """
 
-    def __fire_event__(self, event: Event, dispatch: Callable[[Event], None]):
-        super(Sprite, self).__fire_event__(event, dispatch)
-        # Dispatch to sprite renderer also
+    def on_asset_loaded(self, event: AssetLoaded, dispatch: Callable[[Event], None]):
+        # TODO : To remove
+        self.sprite_renderer.__fire_event__(event, dispatch)
+
+    def on_disable_entity(self, event, dispatch):
+        # TODO : To remove
+        self.sprite_renderer.__fire_event__(event, dispatch)
+
+    def on_enable_entity(self, event, dispatch):
+        # TODO : To remove
+        self.sprite_renderer.__fire_event__(event, dispatch)
+
+    def on_destroy_entity(self, event, dispatch):
+        # TODO : To remove
+        self.sprite_renderer.__fire_event__(event, dispatch)
+
+    def on_scene_stopped(self, event, dispatch):
+        # TODO : To remove
         self.sprite_renderer.__fire_event__(event, dispatch)
 
     def __init__(self, image: Union[Image, Shape] = None, name: str = None, tag: str = None, ):

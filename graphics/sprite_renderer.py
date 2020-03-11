@@ -124,7 +124,7 @@ class OutlinedCircle(Circle):
 
 class SpriteRenderer(BaseComponent):
     """
-    TODO : Create properties for color, opacity and tint
+    TODO : Create properties for color, opacity, visibility and tint
     A component that holds the visual information of a sprite
     """
 
@@ -223,7 +223,7 @@ class SpriteRenderer(BaseComponent):
                 self._sprite.visible = False
             self._sprite = None
 
-    def on_scene_stopped(self, ev, dispatch):
+    def on_scene_stopped(self, ev: events.SceneStopped, dispatch):
         super(SpriteRenderer, self).on_scene_stopped(ev, dispatch)
         if self._vlist is not None:
             self._vlist.delete()

@@ -1,3 +1,4 @@
+import math
 import traceback
 from typing import List, Union, Type, Dict, Tuple, Callable, TypeVar
 
@@ -49,7 +50,8 @@ class BaseEntity(EventMixin):
     def __fire_event__(self, event: Event, dispatch: Callable[[Event], None]):
         if event.scene is not None:
             if event.scene.engine.running:
-                if self._initialized == False and not isinstance(event, events.SceneStopped):
+                if self._initialized == False and not isinstance(event, events.SceneStopped) \
+                        and not isinstance(event, events.Init):
                     # Initialize the entity
                     super(BaseEntity, self).__fire_event__(events.Init(scene=event.scene), dispatch)
                     self._initialized = True
@@ -58,15 +60,18 @@ class BaseEntity(EventMixin):
                     super(BaseEntity, self).__fire_event__(event, dispatch)
                 except Exception:
                     print(
-                        f"An Error Happened in {self} (Components : {self._components}) for event : {event}. ")
+                        f"An Error Happened in {self} (Components : {list(self.components.values())}) for event : {event}. ")
                     traceback.print_exc()
+                else:
+                    if isinstance(event, events.Init):
+                        self._initialized = True
 
     def on_add_component(self, ev: events.AddComponent, dispatch):
         """
         Add a component to this entity
         NEVER TRY TO SUBCLASS THIS Method !!!
         """
-        self.addComponent(key=ev.key, component=ev.component)
+        self.addComponent(component=ev.component)
 
     def on_remove_component(self, ev: events.RemoveComponent, dispatch):
         """
@@ -171,7 +176,43 @@ class BaseEntity(EventMixin):
 
     @position.setter
     def position(self, value: Union[Tuple[float, float], Vector]):
+        rb = self.getComponent(kind=kge.RigidBody)
+        if rb is not None:
+            if rb.body is not None:
+                self._transform.position = rb.body.position
         self._transform.position = value
+
+    @property
+    def scale(self):
+        """
+        Get the scale of the entity
+        """
+        return self._transform.scale
+
+    @scale.setter
+    def scale(self, value: Union[Tuple[float, float], Vector]):
+        """
+        Set the scale of the entity
+        """
+        self._transform.scale = value
+
+    @property
+    def angle(self):
+        """
+        Get angle, in degrees
+        """
+        rb = self.getComponent(kind=kge.RigidBody)
+        if rb is not None:
+            if rb.body is not None:
+                self._transform.angle = math.degrees(rb.body.angle)
+        return self._transform.angle
+
+    @angle.setter
+    def angle(self, value: float):
+        """
+        Set angle, in degrees
+        """
+        self._transform.angle = value
 
     @property
     def tag(self):
@@ -301,14 +342,16 @@ class BaseEntity(EventMixin):
             raise TypeError(
                 "kind must be or a subclass of 'kge.Component or kge.Behaviour'")
 
-    def addComponent(self, key: str, component: T):
+    def addComponent(self, component: T):
         """ Add a component """
 
         if isinstance(component, Component):
             if isinstance(component, Transform):
                 raise AttributeError(
                     "Cannot add transform manually to an entity")
+
             # set component entity and activate it
+            key = hash(component)
             component.entity = self
             component.is_active = True
             self._components[key] = component

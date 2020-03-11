@@ -403,7 +403,7 @@ class AddComponent(Event):
     Fired when we need to add a component to an entity
     """
     entity: 'kge.Entity'
-    key: str
+    # key: str
     component: Type['kge.Component']
     scene: 'kge.Scene' = None
 

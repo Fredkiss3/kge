@@ -51,9 +51,7 @@ class Transform(BaseComponent):
     def position(self, value: Union[
             Tuple[float, float], Vector]):
 
-        if isinstance(value, tuple):
-            vec = Vector(value[0], value[1])
-        elif isinstance(value, Vector):
+        if isinstance(value, (tuple, Vector)):
             vec = Vector(value)
         else:
             raise TypeError(

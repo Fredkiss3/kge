@@ -9,11 +9,10 @@ from kge.utils.dotted_dict import DottedDict
 from kge.utils.vector import Vector
 from kge.core import events
 from kge.core.constants import DEFAULT_RESOLUTION, WINDOW_POSITION, IS_FULLSCREEN, IS_RESIZABLE, DEFAULT_FPS, BLACK, \
-    RED, BLUE
+    MAX_LAYERS
 from kge.core.service import Service
 from kge.core.system import System
 from kge.graphics.sprite_renderer import SpriteRenderer
-import logging
 
 
 class Renderer(System):
@@ -48,7 +47,7 @@ class Renderer(System):
         self.fps_display = None  # type: Union[pyglet.window.FPSDisplay, pyglet.text.Label, None]
 
         # layers
-        self.layers = [pyglet.graphics.OrderedGroup(i) for i in range(20)]
+        self.layers = [pyglet.graphics.OrderedGroup(i) for i in range(MAX_LAYERS)]
         self.window_size = Vector.Zero()
         self.to_draw = []  # Vertices to draw
 

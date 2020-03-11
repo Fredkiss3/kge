@@ -59,7 +59,7 @@ class EntityManager(System):
             ev.onlyEntity = e
             self._dispatch(ev, immediate=True)
 
-    def add_component(self, e: "kge.Entity", c: Union[Type["Component"], "Component"], key: str):
+    def add_component(self, e: "kge.Entity", c: Union[Type["Component"], "Component"]):
         """
         Add a component to an entity
         """
@@ -67,7 +67,6 @@ class EntityManager(System):
             ev = events.AddComponent(
                 entity=e,
                 component=c,
-                key=key
             )
             ev.onlyEntity = e
             self._dispatch(ev, immediate=True)
@@ -103,8 +102,8 @@ class EntityManagerService(Service):
                                      added: bool):
         self._system_instance.dispatch_component_operation(e, c, added)
 
-    def add_component(self, e: "kge.Entity", c: Union[Type["Component"], "Component"], key: str):
-        self._system_instance.add_component(e, c, key)
+    def add_component(self, e: "kge.Entity", c: Union[Type["Component"], "Component"]):
+        self._system_instance.add_component(e, c)
 
     def remove_component(self, e: "kge.Entity", kind: Union[Type["Component"], "Component", str]):
         self._system_instance.remove_component(e, kind)

@@ -53,8 +53,8 @@ class Engine(LoggerMixin, EventMixin):
                          EventDispatcher,
                          Renderer,
                          InputManager,
-                         # AssetLoader,
-                         # AudioManager,
+                         AssetLoader,
+                         AudioManager,
                          EntityManager,
                          BehaviourManager,
                  ),
@@ -197,8 +197,8 @@ class Engine(LoggerMixin, EventMixin):
             return
         args = next_scene.get("args", [])
         kwargs = next_scene.get("kwargs", {})
-        scene = scene(*args, **kwargs)
         BaseScene.engine = self
+        scene = scene(*args, **kwargs)
         self._scenes.append(scene)
         self.dispatch(events.SceneStarted(), immediate=True)
 

@@ -1,15 +1,17 @@
-import io
 
 import pyglet
-from pyglet_ffmpeg2 import *
-from kge.resources.assetlib import Asset
+from kge.resources.assetlib import AbstractAsset
 
 
-class Sound(Asset):
+class Sound(AbstractAsset):
     """
     Asset for sound
     """
+    def __init__(self, name: str):
+        self.name = name
 
-    def background_parse(self, data):
-        # Return Sound
-        return pyglet.media.load(self.name, file=io.BytesIO(data), streaming=False)  # type: pyglet.media.Source
+    def load(self) ->  pyglet.media.Source:
+        """
+        Load and return sound
+        """
+        return pyglet.resource.media(self.name, streaming=False)  # type: pyglet.media.Source

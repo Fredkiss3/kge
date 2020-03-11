@@ -1,5 +1,4 @@
 import logging
-import time
 
 import math
 import random
@@ -47,13 +46,13 @@ class Player(Sprite):
             ev.scene.Left + self.transform.scale.x / 2,
             ev.scene.Right - self.transform.scale.x / 2,
         )
-        self.addComponent("col", BoxCollider(bounciness=1))
-        self.addComponent("rb", self.rb)
+        self.addComponent(BoxCollider(bounciness=1))
+        self.addComponent(self.rb)
 
         if self.tag == "Player One":
-            self.addComponent("move", PlayerController(*(bounds)))
+            self.addComponent(PlayerController(*(bounds)))
         else:
-            self.addComponent("move", PlayerController2(*(bounds)))
+            self.addComponent(PlayerController2(*(bounds)))
 
 
 YELLOW = (255, 255, 0, 255)
@@ -72,8 +71,8 @@ class Ball(Sprite):
         self.rb.gravity_scale = 0
 
     def on_init(self, ev: events.Init, _):
-        self.addComponent("col", CircleCollider(bounciness=1))
-        self.addComponent("rb", self.rb)
+        self.addComponent(CircleCollider(bounciness=1))
+        self.addComponent(self.rb)
 
     def on_fixed_update(self, ev, _):
         vx, vy = self.rb.velocity
@@ -95,7 +94,7 @@ class Wall(Sprite):
         self.rb.gravity_scale = 0
 
     def on_init(self, ev: events.Init, _):
-        self.addComponent("col", BoxCollider())
+        self.addComponent(BoxCollider())
         # self.addComponent("rb", self.rb)
 
 
@@ -107,7 +106,7 @@ class Goal(Sprite):
         # self.image = Square(BLACK)
 
     def on_init(self, ev: events.Init, _):
-        self.addComponent("col", BoxCollider(isSensor=True))
+        self.addComponent(BoxCollider(isSensor=True))
     #
     # def on_update(self, ev: events.Update, _):
     #     players = list(ev.scene.get(kind=Player))
@@ -150,7 +149,7 @@ def setup(scene: "Scene"):
     scene.add(Wall(name="Wall Down"), position=Vector(0, -6))
     scene.add(Goal(name="Goal Left", player_tag=p2.tag), position=Vector(-8, 0))
     scene.add(Goal(name="Goal Right", player_tag=p1.tag), position=Vector(8, 0))
-    scene.add(FrameCounter(), position=Vector.Zero())
+    # scene.add(FrameCounter(), position=Vector.Zero())
 
 
 if __name__ == '__main__':

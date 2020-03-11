@@ -7,7 +7,7 @@ import kge
 from kge import ServiceProvider
 from kge.core import events
 from kge.core.camera import Camera
-from kge.core.constants import BLACK, DEFAULT_RESOLUTION, DEFAULT_PIXEL_RATIO, RED
+from kge.core.constants import BLACK, DEFAULT_RESOLUTION, DEFAULT_PIXEL_RATIO, MAX_LAYERS
 from kge.core.entity import BaseEntity
 from kge.utils.vector import Vector
 from collections import OrderedDict
@@ -144,7 +144,7 @@ class BaseScene(EntityCollection):
     pixel_ratio: int = DEFAULT_PIXEL_RATIO
 
     @classmethod
-    def load(cls, new_scene: Type["BaseScene"], setup: Callable[["BaseScene"], None]=None, **kwargs):
+    def load(cls, setup: Callable[["BaseScene"], None]=None, **kwargs):
         """
         Load a new scene
         """
@@ -201,7 +201,7 @@ class BaseScene(EntityCollection):
             setattr(self, k, v)
 
         self.layers = OrderedDict()
-        for i in range(20):
+        for i in range(MAX_LAYERS):
             self.layers[i] = i
 
         # Display FPS
@@ -212,6 +212,10 @@ class BaseScene(EntityCollection):
             set_up(self)
 
     def getLayer(self, layer: Union[int, str]):
+        """
+        Get a layer by its name or order,
+        there are only 20 layers.
+        """
         if layer in self.layers:
             return self.layers[layer]
         else:
@@ -219,9 +223,9 @@ class BaseScene(EntityCollection):
 
     def setLayer(self, layer_number: int, layer_name: str):
         """
-        Name a layer
-        :param layer_number: the layer number starting with zero
-        :param layer_name: the name you want to call this layer
+        Give a name to a layer
+        :param layer_number: the layer number starting from 0 to 20
+        :param layer_name: the name you want to call that layer
         """
         if not isinstance(layer_name, str) and not isinstance(layer_number, int):
             raise TypeError(
@@ -240,10 +244,12 @@ class BaseScene(EntityCollection):
             - (entity, position, layer)
 
         Usage :
-            >>> scene1.add( player, Vector(1, 2), layer=1 )
+            >>> scene1.setLayer(1, "Foreground")
+            >>> scene1.add( player, position=Vector(1, 2), layer="Foreground" )
 
-        :param entity:
-        :param position:
+        :param entity: the entity to add to the scene
+        :param position: the position of the entity in the scene
+        :param layer: the layer in which the entity should be
         :return:
         """
         # Set scene
@@ -257,10 +263,9 @@ class BaseScene(EntityCollection):
             entity.is_active = True
             entity.layer = self.getLayer(layer)
         else:
-            raise TypeError("Layer must be integers or string")
+            raise TypeError("Layer must be an int or str")
 
         manager = ServiceProvider.getEntityManager()
-
         # Enable or disable entity
         if entity.is_active:
             manager.enable(entity)
@@ -268,22 +273,24 @@ class BaseScene(EntityCollection):
             manager.disable(entity)
 
         super(BaseScene, self).add(entity, entity.tag)
+        # Initialize the entity
+        entity.__fire_event__(events.Init(self), self.engine.dispatch)
         self.register_events(entity)
 
-    def addAll(self, *entities: Tuple[BaseEntity, Union[Tuple[float, float], Vector]]):
+    def addAll(self, *entities: Tuple[BaseEntity, Union[Tuple[float, float], Vector], Union[str, int]]):
         """
         Add Many entities in the scene in one shot in format :
-          - (entity, position)
+          - (entity, position, layer)
 
         Usage :
-        >>> scene1.addAll( (player, Vector(1,1)), (enemy, Vector(1,2)),  )
+        >>> scene1.addAll( (player, Vector(1,1), "Foreground"), (enemy, Vector(1,2), 1),  )
 
         :param entities:
         :return:
         """
-        for entity, position in entities:
+        for entity, position, layer in entities:
             entity.position = position
-            super(BaseScene, self).add(entity)
+            self.add(entity, position, layer)
 
     def entity_layers(self) -> Iterator:
         """

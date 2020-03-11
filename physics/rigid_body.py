@@ -268,10 +268,16 @@ class RigidBody(BaseComponent):
 
     @property
     def angle(self):
+        """
+        Get angle in degrees
+        """
         return self._angle
 
     @angle.setter
     def angle(self, val: float):
+        """
+        set angle in degrees
+        """
         if not isinstance(val, (float, int)):
             raise TypeError("angle should be a number")
 

@@ -6,7 +6,7 @@ import kge
 from kge.core.component import BaseComponent
 
 
-class GuiRenderer(BaseComponent):
+class TextRenderer(BaseComponent):
     # entity: kge.Text
 
     def __init__(self, *args, **kwargs):
@@ -32,6 +32,6 @@ class GuiRenderer(BaseComponent):
             self.label.text = self.entity.value
             self.label.x = pos.x
             self.label.y = pos.y
-            self.label.font_size = self.entity.font_size
+            self.label.font_size = self.entity.font_size * camera.zoom
             self.label.color = self.entity.color
             self.label.bold = self.entity.bold

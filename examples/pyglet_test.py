@@ -25,9 +25,9 @@ pyglet_ffmpeg2.load_ffmpeg()
 # playing music
 
 music = pyglet.resource.media(
-    'assets/bg_music.mp3', streaming=False)  # type: media.Source
+    'assets/laser1.ogg', streaming=False)  # type: media.Source
 # help(music)
-# player = music.play()
+player = music.play()
 # player.loop = True
 # The batch for drawing all things
 main_batch = pyglet.graphics.Batch()
@@ -40,7 +40,7 @@ main_batch = pyglet.graphics.Batch()
 config = pyglet.gl.Config(sample_buffers=1, samples=8,
                           depth_size=1000, double_buffer=True, alpha_size=8)
 window = pyglet.window.Window(fullscreen=False, resizable=True,
-                              vsync=True,)  # width=1366, height=768)
+                              vsync=False,)  # width=1366, height=768)
 
 background = pyglet.graphics.OrderedGroup(0)
 foreground = pyglet.graphics.OrderedGroup(1)
@@ -143,7 +143,7 @@ class Player:
     def __init__(self, sprite: pyglet.sprite.Sprite, pos: tuple):
         self.sprite = sprite
         self.pos = pos
-        vel = [random.choice([-1, 0,  1]), random.choice([-1, 0, 1])]
+        vel = [random.choice([-1, 1]), random.choice([-1, 1])]
         if vel[0] == vel[1] and vel[0] == 0:
             vel = [random.choice([-1,  1]), random.choice([-1, 1])]
 
@@ -332,7 +332,7 @@ def draw_circle(pos, angle, radius, outline_color, fill_color):
 
 window.push_handlers(keys)
 
-
+window.set_icon(coin_img)
 # @window.event
 def on_draw(*args):
     global dd, fpss

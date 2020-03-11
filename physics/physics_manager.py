@@ -409,10 +409,11 @@ class PhysicsManager(ComponentSystem):
         cls = PhysicsManager
         if not self.pause:
             if cls.world:
-                # Destroy garbage bodies
+                # Disable garbage bodies from being simulated
                 for body in self.garbage_bodies:
                     body.active = False
-                    cls.world.DestroyBody(body)
+                    # Note: this has been removed because it causes bugs
+                    # cls.world.DestroyBody(body)
                 self.garbage_bodies.clear()
 
                 # Create new bodies
@@ -427,8 +428,8 @@ class PhysicsManager(ComponentSystem):
 
                 # get the colliders visible in frame
                 camera = event.scene.main_camera
-                info = cls.query_region(Vector(camera.frame_left, camera.real_frame_bottom) * 1.5,
-                                        Vector(camera.frame_right, camera.real_frame_top) * 1.5)
+                info = cls.query_region(Vector(camera.frame_left, camera.real_frame_bottom) - Vector(1, 1),
+                                        Vector(camera.frame_right, camera.real_frame_top) + Vector(1, 1))
 
                 # get rigid bodies
                 rigid_bodies = filter(lambda rb: rb.body_type != RigidBodyType.STATIC,
@@ -439,8 +440,10 @@ class PhysicsManager(ComponentSystem):
                 # Phantom Bodies
                 phantoms = map(lambda b: b.userData, filter(lambda b: b.userData.entity is not None
                                                                       and camera.in_frame(b.userData.entity),
-                                                            filter(lambda b: len(b.fixtures) == 0 and isinstance(
-                                                                b.userData, RigidBody) or b.type == b2.b2_kinematicBody,
+                                                            filter(lambda b: b.active and (
+                                                                    len(b.fixtures) == 0 and isinstance(
+                                                                b.userData,
+                                                                RigidBody) or b.type == b2.b2_kinematicBody),
                                                                    cls.world.bodies_gen)))
 
                 # So set the sum of the rbs
@@ -543,7 +546,7 @@ class PhysicsManager(ComponentSystem):
 
         if rb.is_ghost:
             manager = kge.ServiceProvider.getEntityManager()
-            manager.add_component(e, rb, "_body")
+            manager.add_component(e, rb)
 
         self.new_bodies.append((rb, ev.entity))
 
@@ -559,7 +562,8 @@ class PhysicsManager(ComponentSystem):
 
         for c in concerned:  # type: Union[RigidBody, Collider]
             c.__fire_event__(event, dispatch)
-            self._components.remove(c)
+            if c in self._components:
+                self._components.remove(c)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         PhysicsManager.world = None

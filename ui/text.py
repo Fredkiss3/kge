@@ -1,5 +1,5 @@
 from kge.core.entity import BaseEntity
-from kge.ui.gui_renderer import GuiRenderer
+from kge.ui.gui_renderer import TextRenderer
 from kge.core.constants import WHITE
 
 
@@ -14,7 +14,7 @@ class Text(BaseEntity):
         self._color = WHITE
 
         # renderer component
-        self.sprite_renderer = GuiRenderer(self)
+        self.sprite_renderer = TextRenderer(self)
 
     @property
     def value(self):

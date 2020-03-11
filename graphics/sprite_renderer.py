@@ -173,8 +173,7 @@ class SpriteRenderer(BaseComponent):
                                                       ("c4Bn/dynamic",
                                                        self.shape.color * self.shape.num_points))
             self._vlist.draw(self.shape.mode)
-            return None
-            # return self._vlist, self.shape.mode
+            return self._vlist, self.shape.mode
         else:
             return
 

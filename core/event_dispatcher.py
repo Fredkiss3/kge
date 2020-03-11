@@ -14,7 +14,6 @@ class EventDispatcher(System):
     """
 
     def __fire_event__(self, event: events.Event, dispatch: Callable[[events.Event], None]) -> None:
-        # start = time.monotonic()
         if self.engine.running and not isinstance(event, (events.Update, events.FixedUpdate, PhysicsUpdate)):
             if event.scene:
                 # If event is 'AssetLoaded' then dispatch to all entities of the world
@@ -42,4 +41,5 @@ class EventDispatcher(System):
                                     # Break if the engine has finished running
                                     break
                         else:
-                            event.onlyEntity.__fire_event__(event, dispatch)
+                            if event.onlyEntity in event.scene.registered_entities(event):
+                                event.onlyEntity.__fire_event__(event, dispatch)

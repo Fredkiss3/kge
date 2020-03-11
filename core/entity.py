@@ -187,6 +187,9 @@ class BaseEntity(EventMixin):
 
     @parent.setter
     def parent(self, value: "BaseEntity"):
+        """
+        TODO : Parent-Child relation with rigid body constraints
+        """
         if isinstance(value, BaseEntity):
             self._parent = value
             value.children.append(self)
@@ -217,7 +220,7 @@ class BaseEntity(EventMixin):
         You can call it either with type (a subtype of component) to get all components
         of type given, that are in the entity :
             >>> player.getComponents(Transform)
-            >>> [transform component1, transform component2]
+            >>> ["transform component1", "transform component2"]
 
         :param kind: the kind of component to retrieve
         :return:
@@ -228,18 +231,13 @@ class BaseEntity(EventMixin):
             raise TypeError(
                 "kind argument should be a type or a subtype of 'kge.Component'")
 
-    def getComponent(self, kind: Union[Type[T], str]) -> Union[T, None]:
+    def getComponent(self, kind: Type[T]) -> Union[T, None]:
         """
         return the first component whose key is 'kind' or type is 'kind'.
 
         You can call it either with type (a subtype of component) to get one component
         of type given, that is in the entity :
             >>> t = player.getComponent(Transform)
-            >>> print(t)
-            >>> "Component Transform of entity Entity X"
-
-        of with an string parameter to get directly the component you want to have:
-            >>> t = player.getComponent("transform")
             >>> print(t)
             >>> "Component Transform of entity Entity X"
 
@@ -253,26 +251,23 @@ class BaseEntity(EventMixin):
                     cp = component
                     break
             return cp
-        elif isinstance(kind, str):
-            try:
-                return self._components[kind]
-            except KeyError:
-                return None
+        # elif isinstance(kind, str):
+        #     raise
+        #     try:
+        #         return self._components[kind]
+        #     except KeyError:
+        #         return None
         else:
             return None
 
-    def removeComponent(self, kind: Union[Type[T], str]) -> Union[List[T]]:
+    def removeComponent(self, kind: Union[Type[T]]) -> Union[List[T]]:
         """
         remove components of type given
 
         You can call it either with type (a subtype of component) to get all components
         of type given, that are in the entity :
             >>> player.removeComponent(PlayerMovement)
-            >>> ["Component PlayerMovement of entity player", "Component PlayerMovement of entity player"]
-
-        of with an string parameter to get directly the component you want to have:
-            >>> player.removeComponent("player_movement")
-            >>> ["Component PlayerMovement of entity player"]
+            >>> ["Component PlayerMovement 1 of entity player", "Component PlayerMovement 2 of entity player"]
 
         :param kind: the kind of component to retrieve
         """
@@ -290,20 +285,21 @@ class BaseEntity(EventMixin):
             manager = kge.ServiceProvider.getEntityManager()
             manager.dispatch_component_operation(self, cp, added=False)
             return cp
-        elif isinstance(kind, str):
-            try:
-                cp = self._components.pop(kind)
-                cp.is_active = False
-
-                # Dispatch component removed event
-                manager = kge.ServiceProvider.getEntityManager()
-                manager.dispatch_component_operation(self, [cp], added=False)
-                return [cp]
-            except KeyError:
-                raise []
+        # elif isinstance(kind, str):
+        #     raise
+        #     # try:
+        #     #     cp = self._components.pop(kind)
+        #     #     cp.is_active = False
+        #     #
+        #     #     # Dispatch component removed event
+        #     #     manager = kge.ServiceProvider.getEntityManager()
+        #     #     manager.dispatch_component_operation(self, [cp], added=False)
+        #     #     return [cp]
+        #     # except KeyError:
+        #     #     return []
         else:
             raise TypeError(
-                "kind must be a string or a subclass of 'kge.Component'")
+                "kind must be or a subclass of 'kge.Component or kge.Behaviour'")
 
     def addComponent(self, key: str, component: T):
         """ Add a component """

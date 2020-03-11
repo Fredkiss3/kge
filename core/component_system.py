@@ -36,6 +36,7 @@ class ComponentSystem(System):
             if isinstance(component, type_):
                 self._components.append(component)
                 self.register_events(event.component)
+                event.component.__fire_event__(events.Init(event.scene), dispatch)
 
     def register_events(self, b: Component):
         """
@@ -58,13 +59,6 @@ class ComponentSystem(System):
         for k, v in self.event_map.items():
             if b in v:
                 v.remove(b)
-
-    def on_add_component(self, event: events.AddComponent, dispatch):
-        component = event.component
-        for type_ in self.components_supported:
-            if isinstance(component, type_):
-                # Init component
-                component.__fire_event__(events.Init(event.scene), dispatch)
 
     def on_component_removed(self, event: events.ComponentRemoved, dispatch):
         components = event.components

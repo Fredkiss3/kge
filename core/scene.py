@@ -171,11 +171,11 @@ class BaseScene(EntityCollection):
 
     @property
     def Top(self):
-        return self.main_camera.frame_top
+        return self.main_camera.real_frame_top
 
     @property
     def Bottom(self):
-        return self.main_camera.frame_bottom
+        return self.main_camera.real_frame_bottom
 
     @property
     def Left(self):

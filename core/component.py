@@ -17,13 +17,16 @@ class BaseComponent(EventMixin):
         """
         if event.scene is not None:
             if event.scene.engine.running:
-                if self._initialized == False and not isinstance(event, events.SceneStopped):
+                if not self._initialized and not isinstance(event, events.SceneStopped) and \
+                        not isinstance(event, events.Init):
                     # Initialize the component
                     super(BaseComponent, self).__fire_event__(events.Init(scene=event.scene), dispatch)
                     self._initialized = True
 
                 # fire event
                 super(BaseComponent, self).__fire_event__(event, dispatch)
+                if isinstance(event, events.Init) and not self._initialized:
+                    self._initialized = True
 
     def on_scene_stopped(self, ev, dispatch):
         self._initialized = False
@@ -32,7 +35,7 @@ class BaseComponent(EventMixin):
         if entity is not None:
             if not isinstance(entity, kge.Entity):
                 raise TypeError("entity should be of type 'kge.Entity' or a subclass of 'kge.Entity'")
-        self.entity = entity # type: kge.Entity
+        self.entity = entity  # type: kge.Entity
 
         # children and parent
         self._children = []  # type: List[BaseComponent]
@@ -68,5 +71,6 @@ class BaseComponent(EventMixin):
 
     def __repr__(self):
         return f"component {type(self).__name__} of entity '{self.entity}'"
+
 
 Component = BaseComponent

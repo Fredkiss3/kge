@@ -409,51 +409,45 @@ class PhysicsManager(ComponentSystem):
         cls = PhysicsManager
         if not self.pause:
             if cls.world:
-                try:
-                    # Destroy garbage bodies
-                    for body in self.garbage_bodies:
-                        body.active = False
-                    self.garbage_bodies.clear()
+                # Destroy garbage bodies
+                for body in self.garbage_bodies:
+                    body.active = False
+                    cls.world.DestroyBody(body)
+                self.garbage_bodies.clear()
 
-                    # Create new bodies
-                    for rb, e in self.new_bodies:
-                        self.create_body(rb, e)
-                    self.new_bodies.clear()
+                # Create new bodies
+                for rb, e in self.new_bodies:
+                    self.create_body(rb, e)
+                self.new_bodies.clear()
 
-                    # Update the physics world
-                    cls.world.Step(
-                        FIXED_DELTA_TIME * event.time_scale, 10, 10)
-                    cls.world.ClearForces()
+                # Update the physics world
+                cls.world.Step(
+                    FIXED_DELTA_TIME * event.time_scale, 10, 10)
+                cls.world.ClearForces()
 
-                    # get the colliders visible in frame
-                    camera = event.scene.main_camera
-                    info = cls.query_region(Vector(camera.frame_left, camera.real_frame_bottom),
-                                            Vector(camera.frame_right, camera.real_frame_top))
+                # get the colliders visible in frame
+                camera = event.scene.main_camera
+                info = cls.query_region(Vector(camera.frame_left, camera.real_frame_bottom) * 1.5,
+                                        Vector(camera.frame_right, camera.real_frame_top) * 1.5)
 
-                    # get rigid bodies
-                    rigid_bodies = filter(lambda rb: rb.body_type != RigidBodyType.STATIC,
-                                          filter(lambda rb: rb is not None,
-                                                 map(lambda c: c.rigid_body_attached, info.colliders))
-                                          )
+                # get rigid bodies
+                rigid_bodies = filter(lambda rb: rb.body_type != RigidBodyType.STATIC,
+                                      filter(lambda rb: rb is not None,
+                                             map(lambda c: c.rigid_body_attached, info.colliders))
+                                      )
 
-                    # Phantom Bodies
-                    phantoms = map(lambda b: b.userData, filter(lambda b: b.userData.entity is not None
-                                                                          and camera.in_frame(b.userData.entity),
-                                                                filter(lambda b: len(b.fixtures) == 0 and isinstance(
-                                                                    b.userData, RigidBody),
-                                                                       cls.world.bodies_gen)))
+                # Phantom Bodies
+                phantoms = map(lambda b: b.userData, filter(lambda b: b.userData.entity is not None
+                                                                      and camera.in_frame(b.userData.entity),
+                                                            filter(lambda b: len(b.fixtures) == 0 and isinstance(
+                                                                b.userData, RigidBody) or b.type == b2.b2_kinematicBody,
+                                                                   cls.world.bodies_gen)))
 
-                    # So set the sum of the rbs
-                    # rigid_bodies = list(chain(rigid_bodies, phantoms))
-                    # print(len(rigid_bodies))
-                    # Launch Physics Update on rigid bodies
-                    rigid_bodies = self.active_components()  # filter(lambda c: isinstance(c, RigidBody) and c.body_type != RigidBodyType.STATIC,self.active_components())
-                    for rb in rigid_bodies:  # type: RigidBody
-                        rb.__fire_event__(event, dispatch)
-                except Exception as e:
-                    import traceback
-                    traceback.print_exc()
-                    print(e)
+                # So set the sum of the rbs
+                rigid_bodies = chain(rigid_bodies, phantoms)
+                # Launch Physics Update on rigid bodies
+                for rb in rigid_bodies:  # type: RigidBody
+                    rb.__fire_event__(event, dispatch)
 
     def on_disable_entity(self, event: events.DisableEntity, dispatch: Callable[[Event], None]):
         """
@@ -543,7 +537,6 @@ class PhysicsManager(ComponentSystem):
     def on_create_body(self, ev: CreateBody, dispatch: Callable[[Event], None]):
         """
         Create a body
-        FIXME : SHOULD NOT HAPPEN WHEN WORLD IS STEPPING
         """
         rb = ev.body_component
         e = ev.entity

@@ -172,7 +172,7 @@ class SpriteRenderer(BaseComponent):
                                                       ("v2d/stream", tuple(vertices)),
                                                       ("c4Bn/dynamic",
                                                        self.shape.color * self.shape.num_points))
-            self._vlist.draw(self.shape.mode)
+            # self._vlist.draw(self.shape.mode)
             return self._vlist, self.shape.mode
         else:
             return

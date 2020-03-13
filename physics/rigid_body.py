@@ -1,8 +1,10 @@
 from enum import Enum, auto
-from typing import Tuple, Union, Callable
+from typing import Tuple, Union, Callable, Optional
 
 import Box2D as b2
 import math
+
+import pyglet
 from Box2D import (
     b2_dynamicBody,
     b2_kinematicBody,
@@ -81,8 +83,22 @@ class RigidBody(BaseComponent):
         except:
             self._physics_system = None
 
+        # Vertices for the transform
+        self._tranform_vlist = None  # type: Optional[pyglet.graphics.vertexdomain.VertexList]
+
         # public
         self.is_ghost = False
+
+    @property
+    def vlist(self):
+        return self._tranform_vlist
+
+    @vlist.setter
+    def vlist(self, value):
+        if isinstance(value, pyglet.graphics.vertexdomain.VertexList) or value is None:
+            self._tranform_vlist = value
+        else:
+            raise TypeError("Vertices should be of type 'pyglet.graphics.vertexdomain.VertexList'")
 
     @property
     def fixed_rotation(self):
@@ -351,6 +367,10 @@ class RigidBody(BaseComponent):
             self._body = None
             manager = kge.ServiceProvider.getEntityManager()
             manager.remove_component(self.entity, kind=RigidBody)
+
+            # Delete vertices if there has been created
+            if self._tranform_vlist is not None:
+                self._tranform_vlist.delete()
 
     def on_init(self, ev: events.Init, dispatch: Callable[[Event], None]):
         """

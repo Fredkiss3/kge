@@ -24,13 +24,14 @@ class Renderer(System):
         - Make this system generic for all kinds of graphic elements
     """
 
-    def __init__(self, resolution=DEFAULT_RESOLUTION, fullscreen=IS_FULLSCREEN, resizable=IS_RESIZABLE, **_):
+    def __init__(self, resolution=DEFAULT_RESOLUTION, fullscreen=IS_FULLSCREEN, resizable=IS_RESIZABLE, vsync=True, **_):
         super().__init__(**_)
         self.accumulated_time = 0
         self.last_tick = None
         self.start_time = None
         self.time_step = 1 / DEFAULT_FPS
         self.window = None  # type: Union[pyglet.window.Window, None]
+        self._vsync = vsync
 
         self._is_fullscreen = fullscreen
         self._is_resizable = resizable
@@ -57,8 +58,7 @@ class Renderer(System):
 
     def __enter__(self):
         self.window = pyglet.window.Window(
-            # todo: allow vsync or not ?
-            vsync=False,
+            vsync=self._vsync,
             width=self.resolution[0],
             height=self.resolution[1],
             resizable=self._is_resizable,
@@ -117,23 +117,10 @@ class Renderer(System):
 
         # Display FPS
         if self.engine.current_scene.display_fps == True:
+
             self.fps_display.draw()
 
-        # debug = kge.ServiceProvider.getDebug()
-        # for vlist in debug.vertices:
-        #     vlist.delete()
-        # debug.vertices.clear()
-
-        # self._dispatch(events.Rendered())
-
         return pyglet.event.EVENT_HANDLED
-
-    # def on_rendered(self, event: events.Rendered, dispatch):
-    #     # vertices of debug drawer
-    #     debug = kge.ServiceProvider.getDebug()
-    #     for vlist in debug.vertices:
-    #         vlist.delete()
-    #     debug.vertices.clear()
 
     def render(self, dt: float):
         """

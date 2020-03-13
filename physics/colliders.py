@@ -1,4 +1,6 @@
-from typing import Union, Callable, List
+from typing import Union, Callable, List, Optional
+
+import pyglet
 
 import kge
 from kge.physics.rigid_body import RigidBody, RigidBodyType
@@ -44,6 +46,24 @@ class Collider(BaseComponent):
         self._density = density
         self._bounciness = bounciness
         self._friction = friction
+
+        # Vertices of the shape of the collider
+        self._shape_vlist = None  # type: Optional[pyglet.graphics.vertexdomain.VertexList]
+
+    @property
+    def fixture(self):
+        return self._fixture
+
+    @property
+    def vlist(self):
+        return self._shape_vlist
+
+    @vlist.setter
+    def vlist(self, value):
+        if isinstance(value, pyglet.graphics.vertexdomain.VertexList) or value is None:
+            self._shape_vlist = value
+        else:
+            raise TypeError("Vertices should be of type 'pyglet.graphics.vertexdomain.VertexList'")
 
     @property
     def rigid_body_attached(self):
@@ -157,6 +177,10 @@ class Collider(BaseComponent):
         if ev.entity == self.entity:
             manager = kge.ServiceProvider.getEntityManager()
             manager.remove_component(self.entity, kind=Collider)
+
+            # Delete vertices if there has been created
+            if self._shape_vlist is not None:
+                self._shape_vlist.delete()
 
     def on_init(self, ev: events.Init, dispatch: Callable[[Event], None]):
         """
@@ -302,7 +326,7 @@ class CircleCollider(Collider):
         super(CircleCollider, self).on_init(ev, dispatch)
 
     @property
-    def shape(self) -> b2.b2Shape:
+    def shape(self) -> b2.b2CircleShape:
         return b2.b2CircleShape(
             pos=(*self._offset,), radius=self._radius
         )
@@ -337,7 +361,7 @@ class PolygonCollider(Collider):
         self._vertices = vertices
 
     @property
-    def shape(self) -> b2.b2Shape:
+    def shape(self) -> b2.b2PolygonShape:
         return b2.b2PolygonShape(
             vertices=[(*v,) for v in self._vertices]
         )
@@ -387,7 +411,7 @@ class TriangleCollider(Collider):
             super(TriangleCollider, self).on_init(ev, dispatch)
 
     @property
-    def shape(self) -> b2.b2Shape:
+    def shape(self) -> b2.b2PolygonShape:
         return b2.b2PolygonShape(
             vertices=[(v.x, v.y) for v in self._vertices]
         )
@@ -395,7 +419,7 @@ class TriangleCollider(Collider):
 
 class EdgeCollider(Collider):
     """
-    A component that handles collisions which occurs in a list of lines
+    A component that handles collisions which occurs in a line segment shape
     """
 
     def __init__(self,
@@ -411,26 +435,27 @@ class EdgeCollider(Collider):
         :param vertices: a list of points of the collider in this form :
             # each point is relative to the parent body
             >>> collider = EdgeCollider(
-            >>> vertices=[
-            >>>   Vector(-1, -1), Vector(2, 2), Vector(1, 1)
+            >>>     vertices=[
+            >>>         Vector(-1, -1), Vector(1, 1)
             >>> ])
         """
         super().__init__(isSensor, Vector.Zero(), bounciness, friction, density)
 
-        # the vertices
-        self._vertices = vertices  # type: List[Vector]
+        if 2 <= len(vertices) <= 4:
+            # the vertices
+            self._vertices = vertices[:4]  # type: List[Vector]
+        else:
+            raise ValueError("Expected from 2 to 4 vertices.")
 
     @property
-    def shape(self) -> b2.b2Shape:
+    def shape(self) -> b2.b2EdgeShape:
         return b2.b2EdgeShape(
             vertices=[(*v,) for v in self._vertices]
         )
 
-
 class LoopCollider(Collider):
     """
     A component that handles collisions which occurs in a sequence of line segments that forms a circular list.
-    TODO : TO TEST
     """
 
     def __init__(self,
@@ -457,7 +482,7 @@ class LoopCollider(Collider):
         self._vertices = vertices  # type: List[Vector]
 
     @property
-    def shape(self) -> b2.b2Shape:
+    def shape(self) -> b2.b2LoopShape:
         return b2.b2LoopShape(
             vertices=[(*v,) for v in self._vertices]
         )

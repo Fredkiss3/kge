@@ -231,7 +231,7 @@ The following are equivalent:
 
 ```python
     shape = b2EdgeShape()
-    shape.vertices = [(-40,0), (40,0)]
+    shape.vlist = [(-40,0), (40,0)]
     body = world.CreateBody(type=b2_staticBody)
     body.position = (1, 0)
 ```
@@ -2608,7 +2608,7 @@ information, please see [the qt4 framework](examples/pyqt4_framework.py#331)
         elif isinstance(shape, b2CircleShape):
             DrawCircleShape(shape, transform, color)
         elif isinstance(shape, b2LoopShape):
-            vertices = shape.vertices
+            vertices = shape.vlist
             v1 = b2Mul(transform, vertices[-1])
             for v2 in vertices:
                 v2 = b2Mul(transform, v2)

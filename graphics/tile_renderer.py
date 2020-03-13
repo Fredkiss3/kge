@@ -100,10 +100,15 @@ class TileRenderer(SpriteRenderer):
                         # calculate sprite position in screen
                         pos = camera.world_to_screen_point(new_pos)
 
-                        if sprite.batch is None:
-                            sprite.batch = batch
+                        sprite_in_frame = camera.box_in_frame(new_pos, camera.pixels_to_unit(Vector(sprite.width, sprite.height)))
 
-                        # Then update the sprite
-                        sprite.update(pos.x, pos.y,
-                                      scale_x=camera.zoom,
-                                      scale_y=camera.zoom)
+                        if sprite_in_frame:
+                            if sprite.batch is None:
+                                sprite.batch = batch
+
+                            # Then update the sprite
+                            sprite.update(pos.x, pos.y,
+                                          scale_x=camera.zoom,
+                                          scale_y=camera.zoom)
+                        else:
+                            sprite.batch = None

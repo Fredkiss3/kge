@@ -223,7 +223,7 @@ class Camera(Entity):
         :param unit:
         :return:
         """
-        if isinstance(unit, float):
+        if isinstance(unit, (float, int)):
             return unit * self.pixel_ratio
         elif isinstance(unit, Vector):
             return Vector(unit * self.pixel_ratio)

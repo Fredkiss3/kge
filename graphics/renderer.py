@@ -119,13 +119,28 @@ class Renderer(System):
         if self.engine.current_scene.display_fps == True:
             self.fps_display.draw()
 
+        # debug = kge.ServiceProvider.getDebug()
+        # for vlist in debug.vertices:
+        #     vlist.delete()
+        # debug.vertices.clear()
+
+        # self._dispatch(events.Rendered())
+
         return pyglet.event.EVENT_HANDLED
+
+    # def on_rendered(self, event: events.Rendered, dispatch):
+    #     # vertices of debug drawer
+    #     debug = kge.ServiceProvider.getDebug()
+    #     for vlist in debug.vertices:
+    #         vlist.delete()
+    #     debug.vertices.clear()
 
     def render(self, dt: float):
         """
         Render calculations
         """
         scene = self.engine.current_scene
+
         if scene is not None:
             # set scene color
             self._bgc = tuple(

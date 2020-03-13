@@ -1,6 +1,6 @@
 import math
 import traceback
-from typing import List, Union, Type, Dict, Tuple, Callable, TypeVar
+from typing import List, Union, Type, Dict, Tuple, Callable, TypeVar, Any
 
 import kge
 from kge.utils.vector import Vector
@@ -307,12 +307,6 @@ class BaseEntity(EventMixin):
                     cp = component
                     break
             return cp
-        # elif isinstance(kind, str):
-        #     raise
-        #     try:
-        #         return self._components[kind]
-        #     except KeyError:
-        #         return None
         else:
             return None
 
@@ -341,18 +335,6 @@ class BaseEntity(EventMixin):
             manager = kge.ServiceProvider.getEntityManager()
             manager.dispatch_component_operation(self, cp, added=False)
             return cp
-        # elif isinstance(kind, str):
-        #     raise
-        #     # try:
-        #     #     cp = self._components.pop(kind)
-        #     #     cp.is_active = False
-        #     #
-        #     #     # Dispatch component removed event
-        #     #     manager = kge.ServiceProvider.getEntityManager()
-        #     #     manager.dispatch_component_operation(self, [cp], added=False)
-        #     #     return [cp]
-        #     # except KeyError:
-        #     #     return []
         else:
             raise TypeError(
                 "kind must be or a subclass of 'kge.Component or kge.Behaviour'")
@@ -388,25 +370,37 @@ class BaseEntity(EventMixin):
     def __repr__(self):
         return f"{self.name} ({type(self).__name__})"
 
-    def __deepcopy__(self, memo=None):
-        """
-        Copy an instance of this object
-        """
-        entity = type(self)()
-        entity.name = f"copy of {self.name}"
-        entity.scene = self.scene
-        entity._components = dict(self._components)
-        entity.is_active = True
-        entity._children = dict(self._children)
-        entity._parent = deepcopy(self._parent)
-        return entity
-
-    def copy(self):
-        """
-        returns a copy of this entity
-        """
-        copy = deepcopy(self)
-        return copy
+    # def __deepcopy__(self, memo=None):
+    #     """
+    #     Copy an instance of this object
+    #     """
+    #     entity = type(self)()
+    #     entity.name = f"copy of {self.name}"
+    #     entity.scene = self.scene
+    #     entity._components = dict(self._components)
+    #     entity.is_active = True
+    #     entity._children = dict(self._children)
+    #     entity._parent = deepcopy(self._parent)
+    #     return entity
+    #
+    # def copy(self):
+    #     """
+    #     returns a copy of this entity
+    #     """
+    #     copy = deepcopy(self)
+    #     return copy
+    #
+    # @classmethod
+    # def instantiate(cls, e: "BaseEntity", scene: "kge.Scene", position: Vector = Vector.Zero(),
+    #                 layer: Union[str, int] = 0):
+    #     """
+    #     Create a new instance of e and add it to scene
+    #     TODO : get arguments
+    #     """
+    #     e2 = type(e)(**e.kwargs)
+    #     e2.addComponents(*e.components.values())
+    #     e.is_active = True
+    #     scene.add(e2, position, layer)
 
     def __iter__(self):
         return (component for component in self._components)
@@ -499,19 +493,18 @@ if __name__ == '__main__':
     # c.__fire_event__(events.Update(0.5), None)
     # time.sleep(0)
     # print(player.tags)
-    player.addComponent("movement", PlayerMovement(player))
-    player.addComponent("movement2", PlayerMovement(player))
+    player.addComponent(PlayerMovement(player))
+    player.addComponent(PlayerMovement(player))
 
     # print(c.transform)
     player.position = Vector(1, 1)
     player._transform.position = (5, 5)
     print(player._transform)
     print(player.getComponent(PlayerMovement))
-    print(player.getComponent("movement"))
 
-    player2 = player.copy()
+    # player2 = player.copy()
 
-    print(player2)
+    # print(player2)
     print(player)
     # ev = deque()
     # ev.append(5)

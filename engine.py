@@ -305,10 +305,13 @@ class Engine(LoggerMixin, EventMixin):
         for system in self.systems:
             # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS -> By Regrouping the sprite renderers on renderer system
             # if event is AssetLoaded event, then run it in the main thread
-            if isinstance(event, AssetLoaded) or isinstance(event, events.DebugDraw):
+            if isinstance(event, AssetLoaded):
                 # Only dispatch this event to EventDispatcher on main thread
                 if isinstance(system, EventDispatcher):
                     system.__fire_event__(event, self.dispatch)
+                continue
+            elif isinstance(event, events.DebugDraw) and isinstance(system, (PhysicsManager, BehaviourManager, EventDispatcher)):
+                system.__fire_event__(event, self.dispatch)
                 continue
             elif isinstance(event, (events.Update, events.FixedUpdate, events.LateUpdate)):
                 # Only to Behaviours
@@ -319,7 +322,7 @@ class Engine(LoggerMixin, EventMixin):
                     )
 
                 # Dispatch this event to event dispatcher
-                if isinstance(event, events.LateUpdate) and isinstance(system, EventDispatcher):
+                if isinstance(event, (events.LateUpdate)) and isinstance(system, EventDispatcher):
                     self._jobs.append(
                         self._executor.submit(
                             system.__fire_event__, event, self.dispatch)

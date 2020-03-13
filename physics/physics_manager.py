@@ -1,7 +1,7 @@
 import logging
 import math
 from itertools import chain
-from typing import Callable, Union, List, Tuple, Sequence
+from typing import Callable, Union, List, Tuple, Sequence, Optional
 
 # from kge.core.system import System
 import Box2D as b2
@@ -99,6 +99,14 @@ class DebugDrawer(b2.b2Draw):
         self.group = pyglet.graphics.OrderedGroup(21)
         self.batch = batch
         self.system = system
+        self.flags = dict(drawShapes=True,
+                          drawJoints=True,
+                          drawAABBs=False,
+
+                          # Transform
+                          drawCOMs=True,
+                          # convertVertices=True,
+                          )
 
     def StartDraw(self):
         pass
@@ -210,9 +218,13 @@ class DebugDrawer(b2.b2Draw):
         ret_tf, ret_ll = [], []
 
         for x, y in self.circle_cache_tf[radius]:
-            ret_tf.extend((x + center[0], y + center[1]))
+            ret_tf.extend(
+                self.to_screen((x + center[0], y + center[1]))
+            )
         for x, y in self.circle_cache_ll[radius]:
-            ret_ll.extend((x + center[0], y + center[1]))
+            ret_ll.extend(
+                self.to_screen((x + center[0], y + center[1]))
+            )
         return ret_tf, ret_ll
 
     def DrawCircle(self, center, radius, color):
@@ -226,8 +238,7 @@ class DebugDrawer(b2.b2Draw):
         v_list = self.batch.add(ll_count, gl.GL_LINES, self.group,
                                 ('v2f', ll_vertices),
                                 ('c4f', [color.r, color.g, color.b, 1.0] * ll_count))
-
-        return v_list
+        self.system.vertices.append(v_list)
 
     def DrawSolidCircle(self, center, radius, axis, color):
         """
@@ -237,68 +248,79 @@ class DebugDrawer(b2.b2Draw):
             center, radius, self.circle_segments)
         tf_count, ll_count = len(tf_vertices) // 2, len(ll_vertices) // 2
 
-        self.batch.add(tf_count, gl.GL_TRIANGLES, self.blended,
-                       ('v2f', tf_vertices),
-                       ('c4f', [0.5 * color.r, 0.5 * color.g, 0.5 * color.b, 0.5] * tf_count))
+        v_list = self.batch.add(tf_count, gl.GL_TRIANGLES, self.blended,
+                                ('v2f', tf_vertices),
+                                ('c4f', [0.5 * color.r, 0.5 * color.g, 0.5 * color.b, 0.5] * tf_count))
+        self.system.vertices.append(v_list)
 
-        self.batch.add(ll_count, gl.GL_LINES, None,
-                       ('v2f', ll_vertices),
-                       ('c4f', [color.r, color.g, color.b, 1.0] * (ll_count)))
+        v_list = self.batch.add(ll_count, gl.GL_LINES, self.group,
+                                ('v2f', ll_vertices),
+                                ('c4f', [color.r, color.g, color.b, 1.0] * (ll_count)))
+        self.system.vertices.append(v_list)
 
         p = Vector(center) + radius * Vector(axis)
-        self.batch.add(2, gl.GL_LINES, None,
-                       ('v2f', (center[0], center[1], p[0], p[1])),
-                       ('c3f', [1.0, 0.0, 0.0] * 2))
+        v_list = self.batch.add(2, gl.GL_LINES, self.group,
+                                ('v2f', (center[0], center[1], p[0], p[1])),
+                                ('c3f', [1.0, 0.0, 0.0] * 2))
+        self.system.vertices.append(v_list)
 
     def DrawPolygon(self, vertices, color):
         """
         Draw a wireframe polygon given the world vertices (tuples) with the specified color.
         """
         if len(vertices) == 2:
-            p1, p2 = vertices
-            self.batch.add(2, gl.GL_LINES, None,
-                           ('v2f', (p1[0], p1[1], p2[0], p2[1])),
-                           ('c3f', [color.r, color.g, color.b] * 2))
+            p1, p2 = [self.to_screen(v) for v in vertices]
+            v_list = self.batch.add(2, gl.GL_LINES, self.group,
+                                    ('v2f', (p1[0], p1[1], p2[0], p2[1])),
+                                    ('c3f', [color.r, color.g, color.b] * 2))
+            self.system.vertices.append(v_list)
         else:
-            ll_count, ll_vertices = self.line_loop(vertices)
+            ll_count, ll_vertices = self.line_loop([self.to_screen(v) for v in vertices])
 
-            self.batch.add(ll_count, gl.GL_LINES, None,
-                           ('v2f', ll_vertices),
-                           ('c4f', [color.r, color.g, color.b, 1.0] * (ll_count)))
+            v_list = self.batch.add(ll_count, gl.GL_LINES, self.group,
+                                    ('v2f', ll_vertices),
+                                    ('c4f', [color.r, color.g, color.b, 1.0] * (ll_count)))
+            self.system.vertices.append(v_list)
 
     def DrawSolidPolygon(self, vertices, color):
         """
         Draw a filled polygon given the world vertices (tuples) with the specified color.
         """
         if len(vertices) == 2:
-            p1, p2 = vertices
-            self.batch.add(2, gl.GL_LINES, None,
-                           ('v2f', (p1[0], p1[1], p2[0], p2[1])),
-                           ('c3f', [color.r, color.g, color.b] * 2))
+            p1, p2 = [self.to_screen(v) for v in vertices]
+            v_list = self.batch.add(2, gl.GL_LINES, self.group,
+                                    ('v2f', (p1[0], p1[1], p2[0], p2[1])),
+                                    ('c3f', [color.r, color.g, color.b] * 2))
+
+            self.system.vertices.append(v_list)
         else:
-            tf_count, tf_vertices = self.triangle_fan(vertices)
+            tf_count, tf_vertices = self.triangle_fan([self.to_screen(v) for v in vertices])
             if tf_count == 0:
                 return
 
-            self.batch.add(tf_count, gl.GL_TRIANGLES, self.blended,
-                           ('v2f', tf_vertices),
-                           ('c4f', [0.5 * color.r, 0.5 * color.g, 0.5 * color.b, 0.5] * (tf_count)))
+            v_list = self.batch.add(tf_count, gl.GL_TRIANGLES, self.blended,
+                                    ('v2f', tf_vertices),
+                                    ('c4f', [0.5 * color.r, 0.5 * color.g, 0.5 * color.b, 0.5] * (tf_count)))
+            self.system.vertices.append(v_list)
 
-            ll_count, ll_vertices = self.line_loop(vertices)
+            ll_count, ll_vertices = self.line_loop([self.to_screen(v) for v in vertices])
 
-            self.batch.add(ll_count, gl.GL_LINES, None,
-                           ('v2f', ll_vertices),
-                           ('c4f', [color.r, color.g, color.b, 1.0] * ll_count))
+            v_list = self.batch.add(ll_count, gl.GL_LINES, self.group,
+                                    ('v2f', ll_vertices),
+                                    ('c4f', [color.r, color.g, color.b, 1.0] * ll_count))
+            self.system.vertices.append(v_list)
 
     def DrawSegment(self, p1, p2, color):
         """
         Draw the line segment from p1-p2 with the specified color.
         """
-        self.batch.add(2, gl.GL_LINES, None,
-                       ('v2f', (p1[0], p1[1], p2[0], p2[1])),
-                       ('c3f', [color.r, color.g, color.b] * 2))
+        p1, p2 = self.to_screen(p1), self.to_screen(p2),
+        v_list = self.batch.add(2, gl.GL_LINES, self.group,
+                                ('v2f', (p1[0], p1[1], p2[0], p2[1])),
+                                ('c3f', [color.r, color.g, color.b] * 2))
+        self.system.vertices.append(v_list)
 
-    def DrawXForm(self, xf):
+    def DrawTransform(self, xf):
         """
         Draw the transform xf on the screen
         """
@@ -307,40 +329,48 @@ class DebugDrawer(b2.b2Draw):
         p2 = p1 + k_axisScale * xf.R.x_axis
         p3 = p1 + k_axisScale * xf.R.y_axis
 
-        self.batch.add(3, gl.GL_LINES, None,
-                       ('v2f', (p1[0], p1[1], p2[0], p2[
-                           1], p1[0], p1[1], p3[0], p3[1])),
-                       ('c3f', [1.0, 0.0, 0.0] * 2 + [0.0, 1.0, 0.0] * 2))
+        p1, p2, p3 = self.to_screen(p1), self.to_screen(p2), self.to_screen(p3),
+
+        v_list = self.batch.add(4, gl.GL_LINES, self.group,
+                                ('v2f', (p1[0], p1[1], p2[0], p2[1], p1[0], p1[1], p3[0], p3[1])),
+                                ('c3f', [1.0, 0.0, 0.0] * 2 + [0.0, 1.0, 0.0] * 2))
+        self.system.vertices.append(v_list)
 
     def DrawPoint(self, p, size, color):
         """
         Draw a single point at point p given a point size and color.
         """
-        self.batch.add(1, gl.GL_POINTS, grPointSize(size),
-                       ('v2f', (p[0], p[1])),
-                       ('c3f', [color.r, color.g, color.b]))
+        p = self.to_screen(p)
+        v_list = self.batch.add(1, gl.GL_POINTS, grPointSize(size),
+                                ('v2f', (p[0], p[1])),
+                                ('c3f', [color.r, color.g, color.b]))
+        self.system.vertices.append(v_list)
 
     def DrawAABB(self, aabb, color):
         """
         Draw a wireframe around the AABB with the given color.
         """
-        self.batch.add(8, gl.GL_LINES, None,
-                       ('v2f', (aabb.lowerBound.x, aabb.lowerBound.y,
-                                aabb.upperBound.x, aabb.lowerBound.y,
-                                aabb.upperBound.x, aabb.lowerBound.y,
-                                aabb.upperBound.x, aabb.upperBound.y,
-                                aabb.upperBound.x, aabb.upperBound.y,
-                                aabb.lowerBound.x, aabb.upperBound.y,
-                                aabb.lowerBound.x, aabb.upperBound.y,
-                                aabb.lowerBound.x, aabb.lowerBound.y)),
-                       ('c3f', [color.r, color.g, color.b] * 8))
+        v_list = self.batch.add(8, gl.GL_LINES, self.group,
+                                ('v2f', (
+                                    *self.to_screen((aabb.lowerBound.x, aabb.lowerBound.y)),
+                                    *self.to_screen((aabb.upperBound.x, aabb.lowerBound.y)),
+                                    *self.to_screen((aabb.upperBound.x, aabb.lowerBound.y)),
+                                    *self.to_screen((aabb.upperBound.x, aabb.upperBound.y)),
+                                    *self.to_screen((aabb.upperBound.x, aabb.upperBound.y)),
+                                    *self.to_screen((aabb.lowerBound.x, aabb.upperBound.y)),
+                                    *self.to_screen((aabb.lowerBound.x, aabb.upperBound.y)),
+                                    *self.to_screen((aabb.lowerBound.x, aabb.lowerBound.y)),
+                                ),
+                                 ('c3f', [color.r, color.g, color.b] * 8))
+                                )
+        self.system.vertices.append(v_list)
 
     def to_screen(self, point):
         """
         In here for compatibility with other frameworks.
         """
         cam = self.system.engine.current_scene.main_camera
-        return cam.world_to_screen_point(Vector(point))
+        return tuple(cam.world_to_screen_point(Vector(*point)))
 
 
 class ContactListener(b2.b2ContactListener):
@@ -700,12 +730,15 @@ class PhysicsManager(ComponentSystem):
 
                 # Debug Draw only if debug is activated
                 if self.logger.getEffectiveLevel() == logging.DEBUG:
-                    # delete vertices
-                    for vlist in self.vertices:
-                        vlist.delete()
-                    self.vertices.clear()
-
                     self._dispatch(events.DebugDraw())
+
+    def on_debug_draw(self, event: events.DebugDraw, dispatch: Callable[[Event], None]):
+        self.debug_drawer.StartDraw()
+        cls = PhysicsManager
+        if cls.world:
+            if not cls.world.locked:
+                cls.world.DrawDebugData()
+        self.debug_drawer.EndDraw()
 
     def on_disable_entity(self, event: events.DisableEntity, dispatch: Callable[[Event], None]):
         """
@@ -747,6 +780,9 @@ class PhysicsManager(ComponentSystem):
         cls.world = b2.b2World(gravity=(0, -10), doSleep=True)
         win = kge.ServiceProvider.getWindow()
         self.debug_drawer.batch = win.batch
+        self.debug_drawer.cam = self.engine.current_scene.main_camera
+
+        # self.debug_drawer.surface = win.window.screen
         cls.world.renderer = self.debug_drawer
 
         cls.world.contactListener = self.contact_listener
@@ -1017,7 +1053,7 @@ class DebugDrawService(Service):
         """
 
     def to_screen(self, point: Vector):
-        return self._system_instance.engine.current_scene.main_camera.world_to_screen_point(point)
+        return tuple(self._system_instance.engine.current_scene.main_camera.world_to_screen_point(point))
 
     def to_pixels(self, unit: float):
         return self._system_instance.engine.current_scene.main_camera.unit_to_pixels(unit)
@@ -1026,8 +1062,11 @@ class DebugDrawService(Service):
         return b2.b2Color([c / 255 for c in color[:3]])
 
     def draw_circle(self, center: Vector, radius: float, color: Tuple[int, int, int, int]):
-        vlist = self.debug.DrawCircle(self.to_screen(center), self.to_pixels(radius), self.getColor(color))
-        self._system_instance.vertices.append(vlist)
+        self.debug.DrawCircle(self.to_screen(center), self.to_pixels(radius), self.getColor(color))
+
+    @property
+    def vertices(self):
+        return self._system_instance.vertices
 
     def DrawStringAt(self, point: Vector, str, color=(229, 153, 153, 255)):
         """
@@ -1036,10 +1075,9 @@ class DebugDrawService(Service):
         win = kge.ServiceProvider.getWindow()
 
         point = self.to_screen(point)
-
         label = pyglet.text.Label(str,
-                          font_size=15, x=point.x, y=point.y,
-                          color=color, batch=win.batch, group=win.render_layers[-1])
+                                  font_size=15, x=point.x, y=point.y,
+                                  color=color, batch=win.batch, group=grText(window=win.window))
 
         self._system_instance.vertices.append(label)
 
@@ -1049,9 +1087,9 @@ class DebugDrawService(Service):
         """
         win = kge.ServiceProvider.getWindow()
         label = pyglet.text.Label(str,
-                          font_size=15, x=5, y=win.window.height -
-                                               self.textLine, color=color, batch=win.batch,
-                          group=win.render_layers[-1])
+                                  font_size=15, x=5, y=win.window.height -
+                                                       self.textLine, color=color, batch=win.batch,
+                                  group=grText(window=win.window))
 
         self._system_instance.vertices.append(label)
         self.textLine += 15

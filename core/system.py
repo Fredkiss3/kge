@@ -29,12 +29,8 @@ class System(EventMixin, LoggerMixin):
         if self.engine.running:
             super(System, self).__fire_event__(event, dispatch)
 
-    def start(self):
-        """
-        Start the system in it own thread
-        mean to be subclassed
-        """
-        pass
+    def __repr__(self):
+        return type(self).__name__
 
     def __enter__(self):
         pass

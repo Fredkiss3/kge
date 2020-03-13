@@ -10,46 +10,21 @@ from kge.core import events
 from kge.core.constants import DEFAULT_FPS
 from kge.core.system import System
 
+
 class Updater(System):
     def __init__(self, engine=None, time_step=1 / (DEFAULT_FPS), **kwargs):
         super().__init__(engine, **kwargs)
         self.event_to_dispatch = events.Update
         self.after_event = events.LateUpdate
-        self.require_thread = False
 
         self.accumulated_time = 0
         self.last_tick = None
         self.time_step = time_step
 
     def __enter__(self):
-        if not self.require_thread:
-            pyglet.clock.schedule_interval_soft(self.update_entities, self.time_step)
+        pyglet.clock.schedule_interval_soft(self.update_entities, self.time_step)
 
-    def start(self):
-        """
-        Start the system in its own thread
-        """
-        thread = threading.Thread(target=self.run)
-        thread.setDaemon(True)
-        thread.start()
-
-    def run(self):
-        while self.engine.running:
-            if self.last_tick is None:
-                self.last_tick = time.monotonic()
-            this_tick = time.monotonic()
-            self.accumulated_time += this_tick - self.last_tick
-            self.last_tick = this_tick
-            while self.accumulated_time >= self.time_step:
-                self.accumulated_time += -self.time_step
-                self.update_entities(self.time_step)
-
-            time.sleep(1e-20)
-
-    def update_entities(self, time_delta: float,
-                        # dispatch: Callable[[Event], None], scene: "kge.Scene"
-                        ):
-        # time.sleep(1)
+    def update_entities(self, time_delta: float):
         start = time.monotonic()
         dispatch = self._dispatch
         scene = self.engine.current_scene

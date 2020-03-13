@@ -1,14 +1,12 @@
 import sys
 import traceback
 from concurrent import futures
-import time
-from collections import deque, defaultdict
+from collections import deque
 from contextlib import ExitStack
 from itertools import chain
-from typing import List, Type, DefaultDict, Union, Callable, Any, Deque, Dict, Optional
+from typing import List, Type, Union, Callable, Any, Deque, Dict
 
 import pyglet
-
 from kge.audio.audio_manager import AudioManager, Audio
 from kge.clocks.updater import Updater
 from kge.core import events
@@ -27,7 +25,7 @@ from kge.core.system import System
 from kge.graphics.renderer import Renderer, WindowService
 from kge.inputs.input_manager import InputManager, InputService
 from kge.physics.fixed_updater import FixedUpdater
-from kge.physics.physics_manager import PhysicsManager, Physics
+from kge.physics.physics_manager import PhysicsManager, Physics, DebugDrawService
 from kge.resources.assetlib import AssetLoader
 
 from kge.resources.events import AssetLoaded
@@ -60,7 +58,7 @@ class Engine(LoggerMixin, EventMixin):
                  ),
                  basic_services=(
                          Physics, EntityManagerService, Audio, InputService,
-                         WindowService,
+                         WindowService, DebugDrawService,
                  ),
                  systems=(), scene_kwargs=None, window_title: str = None, **kwargs):
         super(Engine, self).__init__()
@@ -99,11 +97,6 @@ class Engine(LoggerMixin, EventMixin):
         # Executor for multi threading
         self._executor = futures.ThreadPoolExecutor()
         self._jobs = deque()
-
-        # independents threads
-        self._threads = deque() # type: Deque[System]
-        # system related jobs
-        self._sys_jobs = deque()
 
     @property
     def current_scene(self):
@@ -149,9 +142,7 @@ class Engine(LoggerMixin, EventMixin):
                 system = system(engine=self, **self.kwargs)  # type: System
                 kinds[t] = system
             # appends system to independent threads
-            if system.require_thread:
-                self._threads.append(system)
-            else:
+            if not isinstance(system, (Updater, FixedUpdater, AssetLoader, AudioManager, EntityManager)):
                 self.systems.append(system)
 
             self._exit_stack.enter_context(system)
@@ -171,13 +162,6 @@ class Engine(LoggerMixin, EventMixin):
         self.running = True
         self.activate_scene({"scene_class": self.first_scene,
                              "kwargs": self.scene_kwargs})
-
-        for thread in self._threads:
-            self._sys_jobs.append(
-                self._executor.submit(
-                    thread.start
-                )
-            )
 
     def activate_scene(self, next_scene: dict):
         """
@@ -221,6 +205,7 @@ class Engine(LoggerMixin, EventMixin):
         The main loop
         """
         pyglet.clock.schedule_interval(self.loop_once, 1 / 10_000)
+        # Flush the jobs created
         pyglet.clock.schedule_interval(self.flush_jobs, 1 / 10)
         pyglet.app.run()
 
@@ -228,7 +213,6 @@ class Engine(LoggerMixin, EventMixin):
         self.flush_events()
         self.running = False
 
-        # self._jobs = self._jobs.extend(self._sys_jobs)
         for future in futures.as_completed(self._jobs):
             try:
                 data = future.result()
@@ -313,33 +297,40 @@ class Engine(LoggerMixin, EventMixin):
         event.time_scale = self.time_scale
 
         # launch registered event handlers
-        if self.has_event(type(event)):
+        if self.has_event(event):
             self._jobs.append(self._executor.submit(
                 self.__fire_event__, event, self.dispatch))
 
         # dispatch events on subsystems
-        filter(lambda s: not s.require_thread, self.systems)
-
         for system in self.systems:
-            # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS
+            # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS -> By Regrouping the sprite renderers on renderer system
             # if event is AssetLoaded event, then run it in the main thread
-            if isinstance(event, AssetLoaded):
-                # Only dispatch this event to EventDispatcher
+            if isinstance(event, AssetLoaded) or isinstance(event, events.DebugDraw):
+                # Only dispatch this event to EventDispatcher on main thread
                 if isinstance(system, EventDispatcher):
                     system.__fire_event__(event, self.dispatch)
                 continue
             elif isinstance(event, (events.Update, events.FixedUpdate, events.LateUpdate)):
+                # Only to Behaviours
                 if isinstance(system, BehaviourManager):
                     self._jobs.append(
                         self._executor.submit(
                             system.__fire_event__, event, self.dispatch)
                     )
+
+                # Dispatch this event to event dispatcher
+                if isinstance(event, events.LateUpdate) and isinstance(system, EventDispatcher):
+                    self._jobs.append(
+                        self._executor.submit(
+                            system.__fire_event__, event, self.dispatch)
+                    )
+                continue
             else:
                 self._jobs.append(
                     self._executor.submit(
                         system.__fire_event__, event, self.dispatch)
                 )
-            # FIXME : TO TEST
+            # TODO
             # if isinstance(system, Renderer):
             #     system.__fire_event__(event, self.dispatch)
             #     continue

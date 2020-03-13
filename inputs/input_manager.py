@@ -34,8 +34,6 @@ class InputManager(System):
         mouse_ev.LEFT: mouse.Left,
         mouse_ev.MIDDLE: mouse.Middle,
         mouse_ev.RIGHT: mouse.Right,
-        4: mouse.WheelDown,
-        5: mouse.WheelUp
     }
 
     # Keyboard map
@@ -219,31 +217,13 @@ class InputManager(System):
                 self.window_ref = window
                 self.logger.debug(f"Input Manager Window : {window}")
 
-    # def flush_keys(self,
-    #                time_delta
-    #                # idle_event: events.Idle, dispatch
-    #                ):
-    #     """
-    #     This method is called on each frame in order to dispatch events
-    #     """
-    #     self.k_ups = []
-    #     self.mouse_ups = []
-    #     self.wheel_up = False
-    #     self.wheel_down = False
-    #
-    #     # TODO
-    #     # joysticks = pyglet.input.get_joysticks()
-    #     # if joysticks:
-    #     #     joystick = joysticks[0]
-    #     #     joystick.open()
-    #     # joystick.push_handlers()
-    #     # print(joystick)
-
-    # def get_mouse_up(self, mouse: Type[MouseInput]):
-    #     """
-    #     Get Mouse Up
-    #     """
-    #     return mouse in self.mouse_ups
+        # TODO
+        # joysticks = pyglet.input.get_joysticks()
+        # if joysticks:
+        #     joystick = joysticks[0]
+        #     joystick.open()
+        # joystick.push_handlers()
+        # print(joystick)
 
     def mouse_wheel(self, x, y, up, down, scene: "kge.Scene"):
         """

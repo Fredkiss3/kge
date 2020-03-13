@@ -23,15 +23,3 @@ class Middle(MouseInput):
     """
     Third mouse button (commonly middle)
     """
-
-
-class WheelDown(MouseInput):
-    """
-    Mouse wheel scrolled down ?
-    """
-
-
-class WheelUp(MouseInput):
-    """
-    Mouse wheel scrolled up ?
-    """

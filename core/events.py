@@ -3,7 +3,7 @@ from typing import Union, Dict, Any, Type, Collection, Set, List
 
 import kge
 from kge.inputs.keys import KeyCode
-from kge.inputs.mouse import MouseInput, WheelDown, WheelUp
+from kge.inputs.mouse import MouseInput
 from kge.utils.vector import Vector
 
 
@@ -14,7 +14,6 @@ class Event:
     scene: 'kge.Scene' = None
     onlyEntity: Union['kge.Entity', None] = None
     time_scale: float = 1.0
-    onlySystems: bool = False
 
 
 """
@@ -22,41 +21,23 @@ The events below are handled by user
 """
 
 
-# @dataclass
-# class PauseGame(Event):
-#     """
-#     Fired when we need to pause the game
-#     """
-#     scene: "kge.Scene" = None
-#
-# @dataclass
-# class GamePaused(Event):
-#     """
-#     Fired when the game has been paused
-#     """
-#     scene: "kge.Scene" = None
-#
-# @dataclass
-# class ContinueGame(Event):
-#     """
-#     Fired when we need to pause the game
-#     """
-#     scene: "kge.Scene" = None
-#
-# @dataclass
-# class GameContinued(Event):
-#     """
-#     Fired when we need to pause the game
-#     """
-#     scene: "kge.Scene" = None
-#
+@dataclass
+class MouseEnter(Event):
+    """
+    Fired when mouse enters the window
+    """
+    position: Vector  # Scene position
+    screen_position: Vector
+    scene: 'kge.Scene' = None
+
 
 @dataclass
-class LateUpdate(Event):
+class MouseLeave(Event):
     """
-    Fired when when need an update after the real update has finished
+    Fired when mouse exits the window
     """
-    delta_time: float = 0.0
+    position: Vector  # Scene position
+    screen_position: Vector
     scene: 'kge.Scene' = None
 
 
@@ -135,6 +116,14 @@ class KeyUp(Event):
 
 
 @dataclass
+class Init(Event):
+    """
+    Fired on initialisation of an entity, or a script
+    """
+    scene: 'kge.Scene' = None
+
+
+@dataclass
 class Update(Event):
     """
     Fired when, we need to update entities,
@@ -146,10 +135,55 @@ class Update(Event):
 
 
 @dataclass
-class Init(Event):
+class FixedUpdate(Event):
     """
-    Fired on initialisation of an entity
+    Fired before physics starts to update
     """
+    fixed_delta_time: float
+    scene: 'kge.Scene' = None
+
+
+@dataclass
+class LateUpdate(Event):
+    """
+    Fired when when need to attach functionality after everything has been updated
+    """
+    delta_time: float = 0.0
+    scene: 'kge.Scene' = None
+
+
+@dataclass
+class TimeDilation(Event):
+    """
+    Fired when we need to change the time scale
+    """
+    new_time_scale: float
+    scene: "kge.Scene" = None
+
+
+@dataclass
+class DebugDraw(Event):
+    """
+    Fired when we need to draw something to the screen
+    """
+    scene: 'kge.Scene' = None
+
+
+@dataclass
+class EnableEntity(Event):
+    """
+    Fired when we need to set an entity as active
+    """
+    entity: "kge.Entity"
+    scene: 'kge.Scene' = None
+
+
+@dataclass
+class DisableEntity(Event):
+    """
+    Fired when we need to set an entity as inactive
+    """
+    entity: "kge.Entity"
     scene: 'kge.Scene' = None
 
 
@@ -159,15 +193,6 @@ class DestroyEntity(Event):
     Fired when we want to destroy an Entity
     """
     entity: "kge.Entity"
-    scene: "kge.Scene" = None
-
-
-@dataclass
-class TimeDilation(Event):
-    """
-    Fired when we need to change the time scale
-    """
-    new_time_scale: float
     scene: "kge.Scene" = None
 
 
@@ -206,15 +231,6 @@ class WindowResized(Event):
 
 
 @dataclass
-class FixedUpdate(Event):
-    """
-    Fired when physics have been updated
-    """
-    fixed_delta_time: float
-    scene: 'kge.Scene' = None
-
-
-@dataclass
 class Quit(Event):
     """
     Fired on an OS Quit event.
@@ -235,26 +251,8 @@ class Render(Event):
 @dataclass
 class Rendered(Event):
     """
-    Fired when the window has been drawn
+    Fired after the window has been drawn
     """
-    scene: 'kge.Scene' = None
-
-
-@dataclass
-class DisableEntity(Event):
-    """
-    Fired when we need to activate an entity
-    """
-    entity: "kge.Entity"
-    scene: 'kge.Scene' = None
-
-
-@dataclass
-class EnableEntity(Event):
-    """
-    Fired when we need to deactivate an entity
-    """
-    entity: "kge.Entity"
     scene: 'kge.Scene' = None
 
 

@@ -2,7 +2,7 @@ from typing import Type, TypeVar
 
 from kge.graphics.renderer import WindowService
 from kge.inputs.input_manager import InputService
-from kge.physics.physics_manager import Physics
+from kge.physics.physics_manager import Physics, DebugDrawService
 from kge.audio.audio_manager import Audio
 from kge.core.entity_manager import EntityManagerService
 from kge.core.service import Service
@@ -34,6 +34,10 @@ class ServiceProvider(object):
     @classmethod
     def getWindow(cls) -> WindowService:
         return cls.getService(WindowService)
+
+    @classmethod
+    def getDebug(cls) -> DebugDrawService:
+        return cls.getService(DebugDrawService)
 
     @classmethod
     def getService(cls, kind: Type[T]) -> T:

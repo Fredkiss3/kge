@@ -49,11 +49,11 @@ def {method}({e_name.lower()}_event: {e_name}, dispatch_function):
 
 
 class EventMixin:
-    def has_event(self, event_type: Type[Event]) -> bool:
+    def has_event(self, event: Event) -> bool:
         """
         Verify if this object implement the kind of event given
         """
-        name = camel_to_snake(event_type.__name__)
+        name = camel_to_snake(type(event).__name__)
         meth_name = 'on_' + name
         meth = getattr(self, meth_name, None)
         return meth != None
@@ -88,5 +88,5 @@ class EventMixin:
             except Exception as e:
                 import traceback
                 traceback.print_exc()
-                elog.error(e)
+                elog.error(f"[{type(event).__name__} for {self}]:{e}")
                 raise

@@ -256,7 +256,7 @@ class BaseScene(EntityCollection):
         entity.scene = self
 
         # Set position
-        entity.position = position
+        entity.transform.position = position
 
         # Set layer
         if isinstance(layer, (int, str)):
@@ -289,7 +289,6 @@ class BaseScene(EntityCollection):
         :return:
         """
         for entity, position, layer in entities:
-            entity.position = position
             self.add(entity, position, layer)
 
     def entity_layers(self) -> Iterator:

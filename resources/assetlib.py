@@ -174,7 +174,6 @@ class AssetLoader(System):
         # schedule idle event
         # pyglet.clock.schedule_interval_soft(self.on_idle, 1/10)
 
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         # Reset the hint provider
         global _hint, _finished
@@ -201,29 +200,13 @@ class AssetLoader(System):
         self._ended += 1
         self._event_queue.append(asset)
 
-        # Schedule call for asset loaded
+        # Dispatch Asset Loaded event
         ev = events.AssetLoaded(
             asset=asset,
             total_loaded=self._ended,
             total_queued=self._began - self._ended,
         )
         self._dispatch(ev)
-
-    #
-    # def on_idle(self,
-    #             time_delta
-    #             # event, dispatch
-    #             ):
-    #     while self._event_queue:
-    #         # print("Idle")
-    #         asset = self._event_queue.popleft()  # type: Asset
-    #         # Not for this entity
-    #         ev = events.AssetLoaded(
-    #             asset=asset,
-    #             total_loaded=self._ended,
-    #             total_queued=self._began - self._ended,
-    #         )
-    #         self._dispatch(ev)
 
 
 _backlog = []

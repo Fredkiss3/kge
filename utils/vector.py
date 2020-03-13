@@ -9,7 +9,7 @@ class Vector:
     """
 
     def __init__(self, arg1: Union["Vector", float, Tuple[float, float], List[float]] = 0.0, arg2: float = 0.0):
-        if isinstance(arg1, (Vector)):
+        if isinstance(arg1, Vector):
             self.x = arg1.x
             self.y = arg1.y
         elif isinstance(arg1, (tuple, list)):
@@ -20,13 +20,15 @@ class Vector:
                     self.x, self.y = arg1
                 else:
                     raise TypeError(
-                        "Arguments of vectors should be either another Vector, a List or a tuple of two numbers, or x and y values")
+                        "Arguments of vectors should be either another Vector, a List or a tuple of two numbers, "
+                        "or x and y values")
         elif isinstance(arg1, (int, float)) and isinstance(arg2, (int, float)):
             self.x = arg1
             self.y = arg2
         else:
             raise TypeError(
-                "Arguments of vectors should be either another Vector, a List or a tuple of two numbers, or x and y values")
+                f"Arguments of vectors should be either another Vector, a List or a tuple of two numbers, or x and y "
+                f"values not {type(arg1)}")
 
     def __eq__(self, other: "Vector"):
         if not isinstance(other, Vector):
@@ -69,7 +71,7 @@ class Vector:
         return Vector(1 / 2, -1 / 2)
 
     @classmethod
-    def Box(self) -> List["Vector"]:
+    def Box(cls) -> List["Vector"]:
         return [Vector.TopLeft(),
                 Vector.TopRight(),
                 Vector.BottomRight(),
@@ -105,7 +107,7 @@ class Vector:
         return Vector(0, 0)
 
     @classmethod
-    def Unit(self):
+    def Unit(cls):
         """
         Return a 1 unit vector
         :return:
@@ -202,7 +204,7 @@ class Vector:
 
     @property
     def angle(self):
-        if (self.length_sqrd == 0):
+        if self.length_sqrd == 0:
             return 0
         return math.degrees(math.atan2(self.y, self.x))
 

@@ -168,19 +168,34 @@ class BaseEntity(EventMixin):
 
     @property
     def transform(self):
+        # set position and angle
+        rb = self.getComponent(kind=kge.RigidBody)
+        if rb is not None:
+            if rb.body is not None:
+                self._transform.angle = rb.angle
+                self._transform.position = rb.position
         return self._transform
 
     @property
     def position(self):
+        # If there is a rigidBody
+        rb = self.getComponent(kind=kge.RigidBody)
+        if rb is not None:
+            if rb.body is not None:
+                self._transform.position = rb.position
         return self._transform.position
 
     @position.setter
     def position(self, value: Union[Tuple[float, float], Vector]):
         rb = self.getComponent(kind=kge.RigidBody)
+
+        # Set position of the body
+        # TODO : set position with rb
         if rb is not None:
-            if rb.body is not None:
-                self._transform.position = rb.body.position
-        self._transform.position = value
+            raise AttributeError(
+                "You should not use position to move the entity when a RigidBody is attached, instead use RigidBody to set position")
+        else:
+            self._transform.position = value
 
     @property
     def scale(self):
@@ -341,6 +356,10 @@ class BaseEntity(EventMixin):
         else:
             raise TypeError(
                 "kind must be or a subclass of 'kge.Component or kge.Behaviour'")
+
+    def addComponents(self, *components: T):
+        for c in components:
+            self.addComponent(c)
 
     def addComponent(self, component: T):
         """ Add a component """

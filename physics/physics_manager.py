@@ -1,6 +1,7 @@
+import logging
 import math
 from itertools import chain
-from typing import Callable, Union, List, Tuple
+from typing import Callable, Union, List, Tuple, Sequence
 
 # from kge.core.system import System
 import Box2D as b2
@@ -18,6 +19,66 @@ from kge.physics.events import CollisionEnter, CollisionExit, CreateBody, BodyCr
 from kge.physics.rigid_body import RigidBody, RigidBodyType
 from kge.utils.vector import Vector
 
+import pyglet
+from pyglet import gl
+
+
+class grBlended(pyglet.graphics.Group):
+    """
+    This pyglet rendering group enables blending.
+    """
+
+    def set_state(self):
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
+    def unset_state(self):
+        gl.glDisable(gl.GL_BLEND)
+
+
+class grPointSize(pyglet.graphics.Group):
+    """
+    This pyglet rendering group sets a specific point size.
+    """
+
+    def __init__(self, size=4.0):
+        super(grPointSize, self).__init__()
+        self.size = size
+
+    def set_state(self):
+        gl.glPointSize(self.size)
+
+    def unset_state(self):
+        gl.glPointSize(1.0)
+
+
+class grText(pyglet.graphics.Group):
+    """
+    This pyglet rendering group sets the proper projection for
+    displaying text when used.
+    """
+    window = None
+
+    def __init__(self, window=None):
+        super(grText, self).__init__()
+        self.window = window
+
+    def set_state(self):
+        gl.glMatrixMode(gl.GL_PROJECTION)
+        gl.glPushMatrix()
+        gl.glLoadIdentity()
+        gl.gluOrtho2D(0, self.window.width, 0, self.window.height)
+
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+        gl.glPushMatrix()
+        gl.glLoadIdentity()
+
+    def unset_state(self):
+        gl.glPopMatrix()
+        gl.glMatrixMode(gl.GL_PROJECTION)
+        gl.glPopMatrix()
+        gl.glMatrixMode(gl.GL_MODELVIEW)
+
 
 class DebugDrawer(b2.b2Draw):
     """
@@ -26,51 +87,260 @@ class DebugDrawer(b2.b2Draw):
 
     If you are writing your own game, you likely will not want to use debug drawing.
     Debug drawing, as its name implies, is for debugging.
-    TODO
     """
+    blended = grBlended()
+    circle_segments = 16
+    surface = None
+    circle_cache_tf = {}  # triangle fan (inside)
+    circle_cache_ll = {}  # line loop (border)
 
-    def __init__(self, **kwargs):
-        b2.b2DrawExtended.__init__(self, **kwargs)
+    def __init__(self, system: "PhysicsManager", batch=None):
+        super(DebugDrawer, self).__init__()
+        self.group = pyglet.graphics.OrderedGroup(21)
+        self.batch = batch
+        self.system = system
 
     def StartDraw(self):
-        """ Called when drawing starts.  """
-        raise NotImplementedError("Not implemented yet !")
+        pass
 
     def EndDraw(self):
-        """ Called when drawing ends.  """
-        raise NotImplementedError("Not implemented yet !")
+        pass
 
-    def DrawPoint(self, p: Vector, size=1, color=WHITE):
-        """ Draw a single point at point p given a pixel size and color.  """
-        raise NotImplementedError("Not implemented yet !")
+    def triangle_fan(self, vertices):
+        """
+        in: vertices arranged for gl_triangle_fan ((x,y),(x,y)...)
+        out: vertices arranged for gl_triangles (x,y,x,y,x,y...)
+        """
+        out = []
+        for i in range(1, len(vertices) - 1):
+            # 0,1,2   0,2,3  0,3,4 ..
+            out.extend(vertices[0])
+            out.extend(vertices[i])
+            out.extend(vertices[i + 1])
+        return len(out) // 2, out
 
-    def DrawAABB(self, aabb: b2.b2AABB, color=WHITE):
-        """ Draw a wireframe around the AABB with the given color.  """
-        raise NotImplementedError("Not implemented yet !")
+    def line_loop(self, vertices):
+        """
+        in: vertices arranged for gl_line_loop ((x,y),(x,y)...)
+        out: vertices arranged for gl_lines (x,y,x,y,x,y...)
+        """
+        out = []
+        for i in range(len(vertices) - 1):
+            # 0,1  1,2  2,3 ... len-1,len  len,0
+            out.extend(vertices[i])
+            out.extend(vertices[i + 1])
 
-    def DrawSegment(self, p1: Vector, p2: Vector, color=WHITE):
-        """ Draw the line segment from p1-p2 with the specified color.  """
-        raise NotImplementedError("Not implemented yet !")
+        out.extend(vertices[len(vertices) - 1])
+        out.extend(vertices[0])
 
-    def DrawTransform(self, xf: b2.b2Transform):
-        """ Draw the transform xf on the screen """
-        raise NotImplementedError("Not implemented yet !")
+        return len(out) // 2, out
 
-    def DrawCircle(self, center: Vector, radius: float, color=WHITE, drawwidth=1):
-        """ Draw a wireframe circle given the center, radius, axis of orientation and color.  """
-        raise NotImplementedError("Not implemented yet !")
+    def _getLLCircleVertices(self, radius, points):
+        """
+        Get the line loop-style vertices for a given circle.
+        Drawn as lines.
 
-    def DrawSolidCircle(self, center: Vector, radius: float, axis, color=WHITE):
-        """ Draw a solid circle given the center, radius, axis of orientation and color.  """
-        raise NotImplementedError("Not implemented yet !")
+        "Line Loop" is used as that's how the C++ code draws the
+        vertices, with lines going around the circumference of the
+        circle (GL_LINE_LOOP).
 
-    def DrawPolygon(self, vertices: List[Vector], color=WHITE, _=None):
-        """ Draw a wireframe polygon given the screen vertices (tuples) with the specified color.  """
-        raise NotImplementedError("Not implemented yet !")
+        This returns 'points' amount of lines approximating the
+        border of a circle.
 
-    def DrawSolidPolygon(self, vertices: List[Vector], color=WHITE, _=None):
-        """ Draw a filled polygon given the screen vertices (tuples) with the specified color.  """
-        raise NotImplementedError("Not implemented yet !")
+        (x1, y1, x2, y2, x3, y3, ...)
+        """
+        ret = []
+        step = 2 * math.pi / points
+        n = 0
+        for i in range(points):
+            ret.append((math.cos(n) * radius, math.sin(n) * radius))
+            n += step
+            ret.append((math.cos(n) * radius, math.sin(n) * radius))
+        return ret
+
+    def _getTFCircleVertices(self, radius, points):
+        """
+        Get the triangle fan-style vertices for a given circle.
+        Drawn as triangles.
+
+        "Triangle Fan" is used as that's how the C++ code draws the
+        vertices, with triangles originating at the center of the
+        circle, extending around to approximate a filled circle
+        (GL_TRIANGLE_FAN).
+
+        This returns 'points' amount of lines approximating the
+        circle.
+
+        (a1, b1, c1, a2, b2, c2, ...)
+        """
+        ret = []
+        step = 2 * math.pi / points
+        n = 0
+        for i in range(points):
+            ret.append((0.0, 0.0))
+            ret.append((math.cos(n) * radius, math.sin(n) * radius))
+            n += step
+            ret.append((math.cos(n) * radius, math.sin(n) * radius))
+        return ret
+
+    def getCircleVertices(self, center, radius, points):
+        """
+        Returns the triangles that approximate the circle and
+        the lines that border the circles edges, given
+        (center, radius, points).
+
+        Caches the calculated LL/TF vertices, but recalculates
+        based on the center passed in.
+
+        TODO: Currently, there's only one point amount,
+        so the circle cache ignores it when storing. Could cause
+        some confusion if you're using multiple point counts as
+        only the first stored point-count for that radius will
+        show up.
+        TODO: What does the previous TODO mean?
+
+        Returns: (tf_vertices, ll_vertices)
+        """
+        if radius not in self.circle_cache_tf:
+            self.circle_cache_tf[
+                radius] = self._getTFCircleVertices(radius, points)
+            self.circle_cache_ll[
+                radius] = self._getLLCircleVertices(radius, points)
+
+        ret_tf, ret_ll = [], []
+
+        for x, y in self.circle_cache_tf[radius]:
+            ret_tf.extend((x + center[0], y + center[1]))
+        for x, y in self.circle_cache_ll[radius]:
+            ret_ll.extend((x + center[0], y + center[1]))
+        return ret_tf, ret_ll
+
+    def DrawCircle(self, center, radius, color):
+        """
+        Draw an unfilled circle given center, radius and color.
+        """
+        unused, ll_vertices = self.getCircleVertices(
+            center, radius, self.circle_segments)
+        ll_count = len(ll_vertices) // 2
+
+        v_list = self.batch.add(ll_count, gl.GL_LINES, self.group,
+                                ('v2f', ll_vertices),
+                                ('c4f', [color.r, color.g, color.b, 1.0] * ll_count))
+
+        return v_list
+
+    def DrawSolidCircle(self, center, radius, axis, color):
+        """
+        Draw an filled circle given center, radius, axis (of orientation) and color.
+        """
+        tf_vertices, ll_vertices = self.getCircleVertices(
+            center, radius, self.circle_segments)
+        tf_count, ll_count = len(tf_vertices) // 2, len(ll_vertices) // 2
+
+        self.batch.add(tf_count, gl.GL_TRIANGLES, self.blended,
+                       ('v2f', tf_vertices),
+                       ('c4f', [0.5 * color.r, 0.5 * color.g, 0.5 * color.b, 0.5] * tf_count))
+
+        self.batch.add(ll_count, gl.GL_LINES, None,
+                       ('v2f', ll_vertices),
+                       ('c4f', [color.r, color.g, color.b, 1.0] * (ll_count)))
+
+        p = Vector(center) + radius * Vector(axis)
+        self.batch.add(2, gl.GL_LINES, None,
+                       ('v2f', (center[0], center[1], p[0], p[1])),
+                       ('c3f', [1.0, 0.0, 0.0] * 2))
+
+    def DrawPolygon(self, vertices, color):
+        """
+        Draw a wireframe polygon given the world vertices (tuples) with the specified color.
+        """
+        if len(vertices) == 2:
+            p1, p2 = vertices
+            self.batch.add(2, gl.GL_LINES, None,
+                           ('v2f', (p1[0], p1[1], p2[0], p2[1])),
+                           ('c3f', [color.r, color.g, color.b] * 2))
+        else:
+            ll_count, ll_vertices = self.line_loop(vertices)
+
+            self.batch.add(ll_count, gl.GL_LINES, None,
+                           ('v2f', ll_vertices),
+                           ('c4f', [color.r, color.g, color.b, 1.0] * (ll_count)))
+
+    def DrawSolidPolygon(self, vertices, color):
+        """
+        Draw a filled polygon given the world vertices (tuples) with the specified color.
+        """
+        if len(vertices) == 2:
+            p1, p2 = vertices
+            self.batch.add(2, gl.GL_LINES, None,
+                           ('v2f', (p1[0], p1[1], p2[0], p2[1])),
+                           ('c3f', [color.r, color.g, color.b] * 2))
+        else:
+            tf_count, tf_vertices = self.triangle_fan(vertices)
+            if tf_count == 0:
+                return
+
+            self.batch.add(tf_count, gl.GL_TRIANGLES, self.blended,
+                           ('v2f', tf_vertices),
+                           ('c4f', [0.5 * color.r, 0.5 * color.g, 0.5 * color.b, 0.5] * (tf_count)))
+
+            ll_count, ll_vertices = self.line_loop(vertices)
+
+            self.batch.add(ll_count, gl.GL_LINES, None,
+                           ('v2f', ll_vertices),
+                           ('c4f', [color.r, color.g, color.b, 1.0] * ll_count))
+
+    def DrawSegment(self, p1, p2, color):
+        """
+        Draw the line segment from p1-p2 with the specified color.
+        """
+        self.batch.add(2, gl.GL_LINES, None,
+                       ('v2f', (p1[0], p1[1], p2[0], p2[1])),
+                       ('c3f', [color.r, color.g, color.b] * 2))
+
+    def DrawXForm(self, xf):
+        """
+        Draw the transform xf on the screen
+        """
+        p1 = xf.position
+        k_axisScale = 0.4
+        p2 = p1 + k_axisScale * xf.R.x_axis
+        p3 = p1 + k_axisScale * xf.R.y_axis
+
+        self.batch.add(3, gl.GL_LINES, None,
+                       ('v2f', (p1[0], p1[1], p2[0], p2[
+                           1], p1[0], p1[1], p3[0], p3[1])),
+                       ('c3f', [1.0, 0.0, 0.0] * 2 + [0.0, 1.0, 0.0] * 2))
+
+    def DrawPoint(self, p, size, color):
+        """
+        Draw a single point at point p given a point size and color.
+        """
+        self.batch.add(1, gl.GL_POINTS, grPointSize(size),
+                       ('v2f', (p[0], p[1])),
+                       ('c3f', [color.r, color.g, color.b]))
+
+    def DrawAABB(self, aabb, color):
+        """
+        Draw a wireframe around the AABB with the given color.
+        """
+        self.batch.add(8, gl.GL_LINES, None,
+                       ('v2f', (aabb.lowerBound.x, aabb.lowerBound.y,
+                                aabb.upperBound.x, aabb.lowerBound.y,
+                                aabb.upperBound.x, aabb.lowerBound.y,
+                                aabb.upperBound.x, aabb.upperBound.y,
+                                aabb.upperBound.x, aabb.upperBound.y,
+                                aabb.lowerBound.x, aabb.upperBound.y,
+                                aabb.lowerBound.x, aabb.upperBound.y,
+                                aabb.lowerBound.x, aabb.lowerBound.y)),
+                       ('c3f', [color.r, color.g, color.b] * 8))
+
+    def to_screen(self, point):
+        """
+        In here for compatibility with other frameworks.
+        """
+        cam = self.system.engine.current_scene.main_camera
+        return cam.world_to_screen_point(Vector(point))
 
 
 class ContactListener(b2.b2ContactListener):
@@ -386,10 +656,12 @@ class PhysicsManager(ComponentSystem):
         super(PhysicsManager, self).__init__(engine)
 
         # state
+        self.debug_drawer = DebugDrawer(self)
         PhysicsManager.contact_listener = ContactListener(self)
         PhysicsManager.destruction_listener = DestructionListener(self)
         PhysicsManager.engine = self.engine
-        self.time_step = FIXED_DELTA_TIME
+
+        self.vertices = list()  # type: List[pyglet.graphics.vertexdomain.VertexList]
 
         # only rigid bodies and colliders supported
         self.components_supported = [RigidBody, Collider]
@@ -426,31 +698,14 @@ class PhysicsManager(ComponentSystem):
                     FIXED_DELTA_TIME * event.time_scale, 10, 10)
                 cls.world.ClearForces()
 
-                # get the colliders visible in frame
-                camera = event.scene.main_camera
-                info = cls.query_region(Vector(camera.frame_left, camera.real_frame_bottom) - Vector(1, 1),
-                                        Vector(camera.frame_right, camera.real_frame_top) + Vector(1, 1))
+                # Debug Draw only if debug is activated
+                if self.logger.getEffectiveLevel() == logging.DEBUG:
+                    # delete vertices
+                    for vlist in self.vertices:
+                        vlist.delete()
+                    self.vertices.clear()
 
-                # get rigid bodies
-                rigid_bodies = filter(lambda rb: rb.body_type != RigidBodyType.STATIC,
-                                      filter(lambda rb: rb is not None,
-                                             map(lambda c: c.rigid_body_attached, info.colliders))
-                                      )
-
-                # Phantom Bodies
-                phantoms = map(lambda b: b.userData, filter(lambda b: b.userData.entity is not None
-                                                                      and camera.in_frame(b.userData.entity),
-                                                            filter(lambda b: b.active and (
-                                                                    len(b.fixtures) == 0 and isinstance(
-                                                                b.userData,
-                                                                RigidBody) or b.type == b2.b2_kinematicBody),
-                                                                   cls.world.bodies_gen)))
-
-                # So set the sum of the rbs
-                rigid_bodies = chain(rigid_bodies, phantoms)
-                # Launch Physics Update on rigid bodies
-                for rb in rigid_bodies:  # type: RigidBody
-                    rb.__fire_event__(event, dispatch)
+                    self._dispatch(events.DebugDraw())
 
     def on_disable_entity(self, event: events.DisableEntity, dispatch: Callable[[Event], None]):
         """
@@ -488,11 +743,14 @@ class PhysicsManager(ComponentSystem):
         self.pause = False
 
     def on_scene_started(self, ev: events.SceneStarted, dispatch: Callable[[Event], None]):
-        PhysicsManager.world = b2.b2World(gravity=(0, -10), doSleep=True)
-        # FIXME : Set Debug Drawer
-        # PhysicsManager.world.renderer = DebugDrawer()
-        PhysicsManager.world.contactListener = self.contact_listener
-        PhysicsManager.world.destructionListener = self.destruction_listener
+        cls = PhysicsManager
+        cls.world = b2.b2World(gravity=(0, -10), doSleep=True)
+        win = kge.ServiceProvider.getWindow()
+        self.debug_drawer.batch = win.batch
+        cls.world.renderer = self.debug_drawer
+
+        cls.world.contactListener = self.contact_listener
+        cls.world.destructionListener = self.destruction_listener
 
     def on_scene_stopped(self, ev: events.SceneStopped, dispatch: Callable[[Event], None]):
         PhysicsManager.world = b2.b2World(gravity=(0, -10), doSleep=True)
@@ -662,24 +920,16 @@ class PhysicsManager(ComponentSystem):
             while PhysicsManager.world.locked:
                 continue
 
-            # try:
-            # self.logger.debug(f"Destroying {ev.body_component} of {ev.entity}")
             ev.body_component.is_active = False
             colliders = ev.entity.getComponents(kind=Collider)
             for col in colliders:
                 col.is_active = False
-            # FIXME : SHOULD DESTROY LATER
+
+            # Put the bodies into garbage collector
             self.garbage_bodies.append(ev.body_component.body)
+
             # set user data to none in order to free it
             ev.body_component.body.userData = None
-            # pyglet.clock.schedule_once(lambda dt: PhysicsManager.world.DestroyBody(ev.body_component.body), 1)
-            # ev.body_component.body.active = False
-            # PhysicsManager.world.DestroyBody(ev.body_component.body)
-            # except Exception as e:
-            #     import traceback
-            #     traceback.print_exc()
-            #     print(e)
-            # else:
             event = BodyDestroyed(
                 body=ev.body_component.body,
                 entity=ev.entity
@@ -741,6 +991,70 @@ class Physics(Service):
             raise TypeError("Gravity should be a Vector")
 
         self._system_instance.world.gravity = val
+
+    @property
+    def debug_drawer(self):
+        return self._system_instance.debug_drawer
+
+
+class DebugDrawService(Service):
+    """
+    The service that helps to draw custom shape and others
+    TODO
+    """
+    system_class = PhysicsManager
+    _system_instance: PhysicsManager
+
+    def __init__(self, instance: PhysicsManager):
+        super().__init__(instance)
+        self.debug = instance.debug_drawer
+        self.textLine = 30
+
+    def draw_world(self):
+        """
+        Draw the world
+        TODO
+        """
+
+    def to_screen(self, point: Vector):
+        return self._system_instance.engine.current_scene.main_camera.world_to_screen_point(point)
+
+    def to_pixels(self, unit: float):
+        return self._system_instance.engine.current_scene.main_camera.unit_to_pixels(unit)
+
+    def getColor(self, color: Sequence[int]):
+        return b2.b2Color([c / 255 for c in color[:3]])
+
+    def draw_circle(self, center: Vector, radius: float, color: Tuple[int, int, int, int]):
+        vlist = self.debug.DrawCircle(self.to_screen(center), self.to_pixels(radius), self.getColor(color))
+        self._system_instance.vertices.append(vlist)
+
+    def DrawStringAt(self, point: Vector, str, color=(229, 153, 153, 255)):
+        """
+        Draw some text, str, at screen coordinates (x, y).
+        """
+        win = kge.ServiceProvider.getWindow()
+
+        point = self.to_screen(point)
+
+        label = pyglet.text.Label(str,
+                          font_size=15, x=point.x, y=point.y,
+                          color=color, batch=win.batch, group=win.render_layers[-1])
+
+        self._system_instance.vertices.append(label)
+
+    def Print(self, str, color=(229, 153, 153, 255)):
+        """
+        Draw some text, str, at screen coordinates (x, y).
+        """
+        win = kge.ServiceProvider.getWindow()
+        label = pyglet.text.Label(str,
+                          font_size=15, x=5, y=win.window.height -
+                                               self.textLine, color=color, batch=win.batch,
+                          group=win.render_layers[-1])
+
+        self._system_instance.vertices.append(label)
+        self.textLine += 15
 
 
 if __name__ == '__main__':

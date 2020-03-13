@@ -271,6 +271,8 @@ class RigidBody(BaseComponent):
         """
         Get angle in degrees
         """
+        if self._body is not None:
+            self._angle = math.degrees(self._body.angle)
         return self._angle
 
     @angle.setter
@@ -288,9 +290,11 @@ class RigidBody(BaseComponent):
             self._body.angle = math.radians(val)
 
     # TODO
-    # @property
-    # def position(self):
-    #     return self._position
+    @property
+    def position(self):
+        if self._body is not None:
+            self._position = Vector(self._body.position.x, self._body.position.y)
+        return self._position
 
     # @position.setter
     # def position(self, val: Vector):
@@ -320,7 +324,7 @@ class RigidBody(BaseComponent):
     @property
     def angular_drag(self):
         """
-        The
+        The resistance to the rotation
         """
         return self._angular_drag
 
@@ -332,16 +336,6 @@ class RigidBody(BaseComponent):
         self._angular_drag = val
         if self._body is not None:
             self._body.angularDamping = val
-
-    def on_physics_update(self, event: PhysicsUpdate, dispatch: Callable[[Event], None]):
-        """
-        The rigid body change the entity transform
-        """
-        if self._body is not None:
-            self.entity.transform.position = Vector(self._body.position.x, self._body.position.y)
-            self._angle = math.degrees(self._body.angle)
-            self._position = Vector(self._body.position.x, self._body.position.y)
-            self.entity.transform.angle = self._angle
 
     def on_body_created(self, ev: BodyCreated, dispatch: Callable[[Event], None]):
         """

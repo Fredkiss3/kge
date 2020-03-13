@@ -1,6 +1,6 @@
-import threading
+
 import time
-from typing import Union, List, Callable
+from typing import Union, List
 
 import pyglet
 from pyglet.gl import *
@@ -8,7 +8,7 @@ import kge
 from kge.utils.dotted_dict import DottedDict
 from kge.utils.vector import Vector
 from kge.core import events
-from kge.core.constants import DEFAULT_RESOLUTION, WINDOW_POSITION, IS_FULLSCREEN, IS_RESIZABLE, DEFAULT_FPS, BLACK, \
+from kge.core.constants import DEFAULT_RESOLUTION, IS_FULLSCREEN, IS_RESIZABLE, DEFAULT_FPS, BLACK, \
     MAX_LAYERS
 from kge.core.service import Service
 from kge.core.system import System

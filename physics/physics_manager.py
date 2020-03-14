@@ -90,7 +90,7 @@ class DebugDrawer(b2.b2Draw):
     Debug drawing, as its name implies, is for debugging.
     """
     blended = grBlended()
-    circle_segments = 16
+    circle_segments = 40
     surface = None
     circle_cache_tf = {}  # triangle fan (inside)
     circle_cache_ll = {}  # line loop (border)
@@ -210,10 +210,8 @@ class DebugDrawer(b2.b2Draw):
         Returns: (tf_vertices, ll_vertices)
         """
         if radius not in self.circle_cache_tf:
-            self.circle_cache_tf[
-                radius] = self._getTFCircleVertices(radius, points)
-            self.circle_cache_ll[
-                radius] = self._getLLCircleVertices(radius, points)
+            self.circle_cache_tf[radius] = self._getTFCircleVertices(radius, points)
+            self.circle_cache_ll[radius] = self._getLLCircleVertices(radius, points)
 
         ret_tf, ret_ll = [], []
 

@@ -1,11 +1,8 @@
-import time
 from typing import Callable
 
 from kge.core import events
-from kge.core.entity import Entity
 from kge.core.system import System
 from kge.physics.events import PhysicsUpdate
-from kge.resources.events import AssetLoaded
 
 
 class EventDispatcher(System):
@@ -19,7 +16,7 @@ class EventDispatcher(System):
                 if type(event).__name__ in event.scene.registered_events:
                     if event.onlyEntity is None:
 
-                        # entities = filter(lambda e: e.has_event(type(event)), event.scene)
+                        # Get Registered entities for event
                         entities = event.scene.registered_entities(event)
 
                         for e in entities:

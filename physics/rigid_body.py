@@ -149,7 +149,6 @@ class RigidBody(BaseComponent):
             while self._physics_system.world.locked:
                 continue
             self._body.linearVelocity = (*val,)
-            pass
 
     @property
     def mass(self) -> float:

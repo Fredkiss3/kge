@@ -15,7 +15,7 @@ import pyglet
 
 import kge
 import kge.resources.vfs as vfs
-from kge.audio import events
+from kge.resources import events
 from kge.core.system import System
 
 __all__ = 'AbstractAsset', 'Asset', 'AssetLoader',

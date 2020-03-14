@@ -8,7 +8,7 @@ It is built on top of the [pyglet](https://pyglet.org) library for rendering, an
 If you have any issue you can add an issue to the repository. I will be very pleased to help.
 
 ### Prerequisities 
-  - Python >= 3.7
+  - Python >= 3.6
   - pyglet >= 1.4.0
   - pybox2d [See How to install it here](https://github.com/pybox2d/pybox2d/blob/master/INSTALL.md)
   - pyglet_ffmpeg2
@@ -16,16 +16,20 @@ If you have any issue you can add an issue to the repository. I will be very ple
 ### Functionnalities availables :
 System | Components
 ------------ | -------------
-  Rendering | Simple Shapes (squares, circles, triangles),  Sprites
-  Physics Engine | Colliders (BoxColliders, CircleColiders, PolygonColliders, TrianlgeColliders, EdgeColliders), RigidBodies
-  Audio Engine | Play Sound, Loop Sound
+  Rendering | Simple Shapes (squares, circles, triangles),  Sprites with Images
+  GUI | Text
+  Debug | Debug the world, see colliders and bodies, draw custom shapes
+  Physics Engine | Colliders (BoxColliders, CircleColiders, PolygonColliders, TriangleColliders, EdgeColliders), RigidBodies
+  Audio Engine | Play Sound with volume
+  Scripting | With Entities (i.e GameObjects), and Behaviours
   
 ### TODO
+  - Level Transitions
   - Animation System :
       - Frame By Frame with Sprites
       - From Sequence of images on one Spritesheet
       - From GIF
   - Particle Sytem
   - 2D Light System
-  - GUI System
+  - GUI System : with buttons, images and Text
   - Editor

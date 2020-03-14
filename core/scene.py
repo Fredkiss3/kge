@@ -345,8 +345,8 @@ class BaseScene(EntityCollection):
         """
         Remove an entity, and its events
         """
-        super(BaseScene, self).remove(entity)
         self.unregister_events(entity)
+        super(BaseScene, self).remove(entity)
 
     def register_events(self, e: BaseEntity):
         """
@@ -367,16 +367,18 @@ class BaseScene(EntityCollection):
         """
         Remove entity from event map
         """
-        k_, l = None, []
+        k_l = dict()
         for k, v in self._event_map.items():
             if e in v:
                 v.remove(e)
-                k_, l = k, v
-                break
+                k_l[k] = v
 
-        # Remove event from Map
-        if len(l) == 0:
-            self._event_map.pop(k_)
+        # Remove event from Map if there is no more entity for it
+        for k, v in k_l.items():
+            if len(v) == 0:
+                self._event_map.pop(k)
+
+        k_l.clear()
 
 
 def snake_to_camel(meth_name: str):

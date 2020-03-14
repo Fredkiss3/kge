@@ -1,22 +1,20 @@
-import random
-from typing import Union, Sequence, Tuple, Optional
-
 import math
+import random
+from typing import Union, Sequence, Optional
+
 import pyglet
 from pyglet.gl import *
 
 import kge
 from kge.core import events
-from kge.resources.events import AssetLoaded
-from kge.utils.vector import Vector
-from kge.core.component import BaseComponent
-from kge.graphics.image import Image
-
 from kge.core.constants import (
     DEFAULT_SPRITE_RESOLUTION,
-    DEFAULT_SPRITE_SIZE,
     DEFAULT_PIXEL_RATIO
 )
+from kge.graphics.image import Image
+from kge.graphics.render_component import RenderComponent
+from kge.resources.events import AssetLoaded
+from kge.utils.vector import Vector
 
 
 class Shape:
@@ -48,6 +46,10 @@ class Square(Shape):
 
 
 class OutLinedSquare(Square):
+    """
+    An outlined square of a single color.
+    """
+
     def __init__(self, color: Sequence[int]):
         super().__init__(color)
 
@@ -122,7 +124,7 @@ class OutlinedCircle(Circle):
         self.mode = GL_LINE_LOOP
 
 
-class SpriteRenderer(BaseComponent):
+class SpriteRenderer(RenderComponent):
     """
     TODO : Create properties for color, opacity, visibility and tint
     A component that holds the visual information of a sprite

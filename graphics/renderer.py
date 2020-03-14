@@ -137,9 +137,7 @@ class Renderer(System):
 
             self.to_draw = []
 
-            elist = list(scene.entity_layers())
-
-            for entity in elist:  # type: Union[kge.Sprite]
+            for entity in scene.entity_layers():  # type: Union[kge.Sprite]
                 # Render only sprites
                 element = entity.sprite_renderer.render(scene)
                 if element is not None:

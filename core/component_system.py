@@ -56,9 +56,17 @@ class ComponentSystem(System):
         """
         Remove the component from event map
         """
+        k_l = dict()
         for k, v in self.event_map.items():
             if b in v:
                 v.remove(b)
+                k_l[k] = v
+
+        # Remove event from Map if there is no more entity for it
+        for k, v in k_l.items():
+            if len(v) == 0:
+                self.event_map.pop(k)
+        k_l.clear()
 
     def on_component_removed(self, event: events.ComponentRemoved, dispatch):
         components = event.components

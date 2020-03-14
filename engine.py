@@ -1,9 +1,11 @@
 import sys
+import time
 import traceback
 from concurrent import futures
 from collections import deque
 from contextlib import ExitStack
 from itertools import chain
+import random
 from typing import List, Type, Union, Callable, Any, Deque, Dict
 
 import pyglet
@@ -29,8 +31,6 @@ from kge.physics.physics_manager import PhysicsManager, Physics, DebugDrawServic
 from kge.resources.assetlib import AssetLoader
 
 from kge.resources.events import AssetLoaded
-
-_ellipsis = type(...)
 
 
 class Engine(LoggerMixin, EventMixin):
@@ -290,6 +290,9 @@ class Engine(LoggerMixin, EventMixin):
 
         :return:
         """
+        # This is to fix bugs when using random
+        random.seed(time.monotonic())
+
         # Get the last event
         event = self._event_queue.popleft()
         scene = self.current_scene

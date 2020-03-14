@@ -3,11 +3,13 @@ from typing import Union
 import pyglet
 
 import kge
-from kge.core.component import BaseComponent
+from kge.graphics.render_component import RenderComponent
 
 
-class TextRenderer(BaseComponent):
-    # entity: kge.Text
+class TextRenderer(RenderComponent):
+    """
+    TODO : Reformat this for canvas
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -1,18 +1,22 @@
-from typing import List
+from typing import List, Union
 
 import pyglet
 
 import kge
+from kge.graphics.render_component import RenderComponent
 from kge.utils.vector import Vector
 from kge.graphics.image import Image
 from kge.graphics.sprite_renderer import SpriteRenderer
 from kge.resources.events import AssetLoaded
 
 
-class TileRenderer(SpriteRenderer):
+class TileRenderer(RenderComponent):
 
     def __init__(self, entity):
         super().__init__(entity)
+
+        self._image = None  # type: Union[Image, None]
+        self._sprite = None  # type: Union[None, pyglet.sprite.Sprite]
 
         self._tiles = []  # type: List[List[pyglet.sprite.Sprite]]
 

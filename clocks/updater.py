@@ -34,6 +34,7 @@ class Updater(System):
             # Dispatch to behaviours
             self._dispatch(event)
 
+            # Get registered entities for event
             entities = event.scene.registered_entities(event)
 
             for e in entities:

@@ -12,6 +12,7 @@ T = TypeVar("T")
 class ServiceProvider(object):
     """
     Class for providing services to users
+    TODO : ACCESS TO THIS SHOULD BE EASY
     """
     services = {}
 

@@ -78,14 +78,14 @@ class AIController(Behaviour):
 class Player(Sprite):
     def __init__(self, name, tag, label: "Score"):
         super().__init__(name=name, tag=tag)
-        self.image = Square(WHITE)
-        self.scale = Vector(1, 1)
+        # Add a Kinematic rigid body (This kind of body do not respond to forces and gravity)
         self.rb = RigidBody(RigidBodyType.KINEMATIC)
-        self.rb.gravity_scale = 0
-        self.rb.inertia = 5
-        self.rb.entity = self
+
+        # Score and label
         self.score = 0
         self.label = label
+
+        # For collisions
         self.addComponent(BoxCollider(bounciness=1, box=Vector(
             24 / 64, 115 / 64
         )))

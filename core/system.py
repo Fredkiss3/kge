@@ -18,10 +18,6 @@ class System(EventMixin, LoggerMixin):
         self.engine = engine  # type: kge.Engine
         self._dispatch = None  # type: Union[Callable[[Event, bool], None], None]
 
-        # FIXME : to test
-        # If the system must be running on its own thread
-        self.require_thread = False
-
         if self.engine:
             self._dispatch = self.engine.dispatch
 

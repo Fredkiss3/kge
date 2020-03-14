@@ -305,13 +305,13 @@ class RigidBody(BaseComponent):
                 continue
             self._body.angle = math.radians(val)
 
-    # TODO
     @property
     def position(self):
         if self._body is not None:
             self._position = Vector(self._body.position.x, self._body.position.y)
         return self._position
 
+    # TODO : Set position (?)
     # @position.setter
     # def position(self, val: Vector):
     #     if not isinstance(val, Vector):

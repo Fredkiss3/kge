@@ -201,12 +201,11 @@ class DebugDrawer(b2.b2Draw):
         Caches the calculated LL/TF vertices, but recalculates
         based on the center passed in.
 
-        TODO: Currently, there's only one point amount,
+        Currently, there's only one point amount,
         so the circle cache ignores it when storing. Could cause
         some confusion if you're using multiple point counts as
         only the first stored point-count for that radius will
         show up.
-        TODO: What does the previous TODO mean?
 
         Returns: (tf_vertices, ll_vertices)
         """
@@ -448,7 +447,6 @@ class DebugDrawer(b2.b2Draw):
                         # Add vertices to Batch
                         count = len(vertices) // 2
 
-                        print(col, colors, len(colors) // 3, count, vertices, len(vertices))
                         col.vlist = self.batch.add(count, mode, self.group,
                                                    ('v2f/stream', vertices),
                                                    ('c3f/dynamic', colors))
@@ -803,6 +801,9 @@ class PhysicsManager(ComponentSystem):
                 "RayCast Type should be one of 'RayCastInfo.MULTIPLE, RayCastInfo.CLOSEST, RayCastInfo.ANY'")
 
     def __init__(self, engine, **_):
+        """
+        TODO : Create And Destroy Joint
+        """
         super(PhysicsManager, self).__init__(engine)
 
         # state
@@ -990,7 +991,6 @@ class PhysicsManager(ComponentSystem):
         Handle a contact, it will generate collisions only
         if two colliders have made contact. And it will generate collisions enter & exit events
         only on colliders which are sensors.
-        FIXME : DO NOT DESTROY ANY BODY OBJECT IN THE CALLBACK
         """
         collider_a = contact.fixtureA.userData
         collider_b = contact.fixtureB.userData
@@ -1073,7 +1073,6 @@ class PhysicsManager(ComponentSystem):
     def on_destroy_body(self, ev: DestroyBody, dispatch):
         """
         Destroy a body
-        FIXME : SHOULD NOT DESTROY BODY ON COLLISION
         """
         if ev.body_component.body is not None:
             while PhysicsManager.world.locked:
@@ -1159,7 +1158,7 @@ class Physics(Service):
 class DebugDrawService(Service):
     """
     The service that helps to draw custom shape and others
-    TODO
+    TODO : Custom Draw
     """
     system_class = PhysicsManager
     _system_instance: PhysicsManager
@@ -1172,7 +1171,7 @@ class DebugDrawService(Service):
     def draw_world(self):
         """
         Draw the world
-        TODO
+        FIXME : OPTIMIZE THIS
         """
         # Draw all rigid bodies
         for b in self._system_instance.world:
@@ -1181,7 +1180,7 @@ class DebugDrawService(Service):
         # Draw all joints
         # TODO
 
-    def to_screen(self, point: Vector):
+    def to_screen(self, point: Vector) -> Tuple[float, float]:
         return tuple(self._system_instance.engine.current_scene.main_camera.world_to_screen_point(point))
 
     def to_pixels(self, unit: float):
@@ -1205,21 +1204,26 @@ class DebugDrawService(Service):
 
         point = self.to_screen(point)
         label = pyglet.text.Label(str,
-                                  font_size=15, x=point.x, y=point.y,
-                                  color=color, batch=win.batch, group=grText(window=win.window))
+                                  font_size=15, x=point[0], y=point[1],
+                                  color=color,
+                                  batch=win.batch,
+                                  group=grText(window=win.window)
+                                  )
 
         self._system_instance.vertices.append(label)
 
     def Print(self, str, color=(229, 153, 153, 255)):
         """
         Draw some text, str, at screen coordinates (x, y).
+        FIXME : TO TEST
         """
         win = kge.ServiceProvider.getWindow()
         label = pyglet.text.Label(str,
-                                  font_size=15, x=5, y=win.window.height -
-                                                       self.textLine, color=color, batch=win.batch,
+                                  font_size=15, x=5, y=win.window.height - self.textLine,
+                                  color=color, #batch=win.batch,
                                   group=grText(window=win.window))
 
+        # label.draw()
         self._system_instance.vertices.append(label)
         self.textLine += 15
 

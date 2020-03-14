@@ -33,6 +33,7 @@ class Renderer(System):
         self.window = None  # type: Union[pyglet.window.Window, None]
         self._vsync = vsync
 
+        # TODO : THESE ATTRIBUTES DO NOT WORK PROPERLY
         self._is_fullscreen = fullscreen
         self._is_resizable = resizable
         self.resolution = resolution
@@ -159,6 +160,18 @@ class WindowService(Service):
     @property
     def window(self) -> pyglet.window.Window:
         return self._system_instance.window
+
+
+    # FIXME : FULLSCREEN NOT WORKING PROPERLY
+    @property
+    def fullscreen(self) -> bool:
+        return self._system_instance.window.fullscreen
+
+    @fullscreen.setter
+    def fullscreen(self, value: bool):
+        if not isinstance(value, bool):
+            raise TypeError("Fullscreen should be a bool")
+        self._system_instance.window.set_fullscreen(value)
 
     @property
     def batch(self) -> pyglet.graphics.Batch:

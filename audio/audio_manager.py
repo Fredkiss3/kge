@@ -9,7 +9,6 @@ from kge.core.system import System
 class AudioManager(System):
     """
     Audio System
-    FIXME : REFACTOR
     """
 
     def __init__(self, engine=None, **kw):

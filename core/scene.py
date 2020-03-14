@@ -135,7 +135,15 @@ class BaseScene(EntityCollection):
     """
     A scene is a Level in the game.
 
-    In order to
+    In order to start a new scene, it is advised to use the method with setup function :
+        >>> def setup(scene):
+        >>>     scene.setLayer(1, "Foreground") # set layer 1 as Foreground
+        >>>     player = Sprite(name="player")  # Create the player
+        >>>     scene.add(player, position=Vector(1, 1), layer="Foreground") # add player to the scene
+        >>>
+        >>> Scene.load(setup)
+
+
 
     """
     nbItems = 0
@@ -144,7 +152,7 @@ class BaseScene(EntityCollection):
     pixel_ratio: int = DEFAULT_PIXEL_RATIO
 
     @classmethod
-    def load(cls, setup: Callable[["BaseScene"], None]=None, **kwargs):
+    def load(cls, setup: Callable[["BaseScene"], None] = None, **kwargs):
         """
         Load a new scene
         """
@@ -163,6 +171,7 @@ class BaseScene(EntityCollection):
     def pause(cls):
         """
         Pause the running scene
+        TODO: TO TEST
         """
         if cls.engine is not None:
             cls.engine.pause_scene()
@@ -187,7 +196,7 @@ class BaseScene(EntityCollection):
 
     def __init__(self, set_up: Callable[["BaseScene"], None] = None, **kwargs):
         super(BaseScene, self).__init__()
-        self._event_map = dict() # type: Dict[str, List[BaseEntity]]
+        self._event_map = dict()  # type: Dict[str, List[BaseEntity]]
         Scene.nbItems += 1
 
         self.name = f"Scene {self.nbItems}"
@@ -341,36 +350,47 @@ class BaseScene(EntityCollection):
 
     def register_events(self, e: BaseEntity):
         """
-        Map names of events to components which need the event
+        Map names of events to entities that need the event
         """
         for attribute in dir(e):
             if attribute.startswith("on_") and callable(getattr(e, attribute)):
                 name = snake_to_camel(attribute)
-                try:
-                    l = self._event_map[name]
-                except KeyError:
-                    self._event_map[name] = [e]
-                else:
-                    l.append(e)
+                if name:
+                    try:
+                        l = self._event_map[name]
+                    except KeyError:
+                        self._event_map[name] = [e]
+                    else:
+                        l.append(e)
 
     def unregister_events(self, e: BaseEntity):
         """
-        Remove the component from event map
+        Remove entity from event map
         """
+        k_, l = None, []
         for k, v in self._event_map.items():
             if e in v:
                 v.remove(e)
+                k_, l = k, v
+                break
+
+        # Remove event from Map
+        if len(l) == 0:
+            self._event_map.pop(k_)
+
 
 def snake_to_camel(meth_name: str):
     if not meth_name.startswith("on_") or (meth_name[-1] not in "azertyuiopqsdfghjklmwxcvbn"):
         return None
     else:
+        # Remove "on_" prefix
         event_name = meth_name[3:].split("_")
         event = ""
         for name in event_name:  # type: str
             if len(name.strip()) > 0:
                 event += name.capitalize()
         return event
+
 
 Scene = BaseScene
 
@@ -394,10 +414,10 @@ if __name__ == '__main__':
     key = Sprite(name="key", tag="key")
 
     enemies = [
-        (Sprite(name=f"enemy {i + 1}", tag="enemy", ), Vector(i + 5, 1)) for i in range(5)]
+        (Sprite(name=f"enemy {i + 1}", tag="enemy",), Vector(i + 5, 1), 0) for i in range(5)]
 
-    scene1.addAll((player, (1, 1)), (ground, Vector(0, -7)),
-                  *enemies, (key, (2, 1)))
+    scene1.addAll((player, (1, 1), 0), (ground, Vector(0, -7), 0),
+                  *enemies, (key, (2, 1), 1))
 
     player.is_active = False
     # print(list(scene.get(kind=Enemy, tag="destroyer")))

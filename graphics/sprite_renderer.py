@@ -108,7 +108,7 @@ class Circle(Shape):
     A circle image of a single color.
     """
 
-    def __init__(self, color: Sequence[int], radius=1 / 2):
+    def __init__(self, color: Sequence[int], radius=None):
         super().__init__(color)
         self.center = Vector(0, 0)
         self.radius = radius
@@ -159,6 +159,8 @@ class SpriteRenderer(BaseComponent):
                         (self.entity.transform * Vector(v.x * scale.x, v.y * scale.y))))
                 )
         elif isinstance(self.shape, Circle):
+            if self.shape.radius is None:
+                self.shape.radius = max(self.entity.scale.x, self.entity.scale.y) / 2
             deg = 360 / self.shape.num_points
             rad = math.radians(deg)
             for i in range(self.shape.num_points):

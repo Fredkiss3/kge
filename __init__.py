@@ -155,7 +155,7 @@ def run(setup: Callable[[Scene], None] = None, *, log_level=logging.WARNING,
     # TODO : ADD NOTICE FOR ARGUMENTS
     Run a game.
 
-    The resolution will 1000 pixels wide by 700 pixels tall.
+    The resolution will be 1000 pixels wide by 700 pixels be default.
 
     setup is a callable that accepts a scene and returns None.
 

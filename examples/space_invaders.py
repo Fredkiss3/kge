@@ -247,7 +247,7 @@ class EnemySpawner(Empty):
         self.enemies_time_span = 1 # The Time between each spawn of enemy
         
         # Background Music
-        self.music = Sound("assets/laser1.ogg")
+        self.music = Sound("assets/bg_music.mp3")
         self.music.play(volume=1, loop=True)
 
     def on_update(self, ev: events.Update, _):

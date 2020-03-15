@@ -36,11 +36,12 @@ class Sound(AbstractAsset):
             return None
             # raise OSError(f"The sound File '{self.name}' was not found")
 
-    def play(self, volume: float = 10, loop: bool = False):
+    def play(self, volume: float = 10, loop: bool = False, pitch=1):
         """
         Play the sound
         """
-        if not (isinstance(volume, (int, float)) and isinstance(loop, bool)):
-            raise TypeError("Volume should be a number and loop should be a bool")
         audio = kge.ServiceProvider.getAudio()
-        audio.play(self, volume, loop)
+        audio.play(self, volume, loop, pitch)
+
+    def __repr__(self):
+        return f"<{type(self).__name__} name={self.name!r}{' loaded' if self.is_loaded() else ''}>"

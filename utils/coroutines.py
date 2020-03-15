@@ -10,6 +10,8 @@ class _Coroutine:
     """
     def __init__(self, f: Callable, delay=0.01, loop=False):
         self.f = f
+        print(f)
+        print(f.__self__)
         self.loop = loop
         self.delay = delay
 
@@ -49,9 +51,19 @@ def coroutine(function=None, delay=0.01, loop=False):
 
 
 if __name__ == '__main__':
-    @coroutine(loop=True, delay=1)
-    def f(name):
-        print(f"Hello {name}")
+    # @coroutine(loop=True, delay=1)
+    # def f(name):
+    #     print(f"Hello {name}")
+    #
+    # f("Fred")
+    # pyglet.app.run()
+    #
+    class O:
+        def m(self):
+            pass
 
-    f("Fred")
-    pyglet.app.run()
+    o = O()
+    f = o.m
+    print(f.__self__, "\n", f, "\n", o.m)
+
+    pass

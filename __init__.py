@@ -5,8 +5,8 @@ Copyright (C) 2020-2021 Fredhel KISSIE
 
 THIS GAME ENGINE USE A COMBINATION OF GAME ENGINES :
     - PYGLET : FOR RENDERING AND SOUND SYSTEM
-    - LEPTON : FOR PARTICLE SYSTEM
     - PYBOX2D : FOR PHYSICS SYSTEM
+    - LEPTON : FOR PARTICLE SYSTEM
     - LIGHTVOLUME : FOR LIGHTING SYSTEM
 
 inspired by PPB ENGINE:
@@ -33,7 +33,6 @@ from kge.physics.colliders import (
 from kge.core import events
 from kge.physics import events as physics_events
 from kge.audio import events as audio_events
-from kge.utils.coroutines import coroutine
 from kge.core.events import Event
 from kge.utils.vector import Vector
 from kge.resources.assetlib import Asset
@@ -77,7 +76,6 @@ __all__ = [
 
     # Utils
     "Vector",
-    "coroutine",
 
     # Assets
     "Asset",

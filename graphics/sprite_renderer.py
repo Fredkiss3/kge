@@ -148,8 +148,10 @@ class SpriteRenderer(RenderComponent):
         self._vlist = None  # type: Optional[pyglet.graphics.vertexdomain.VertexList]
 
         # size of the sprite
-        self._w = DEFAULT_SPRITE_RESOLUTION[0] * abs(self.entity.transform.scale.x)
-        self._h = DEFAULT_SPRITE_RESOLUTION[1] * abs(self.entity.transform.scale.y)
+        self._w = DEFAULT_SPRITE_RESOLUTION[0] * \
+            abs(self.entity.transform.scale.x)
+        self._h = DEFAULT_SPRITE_RESOLUTION[1] * \
+            abs(self.entity.transform.scale.y)
 
     def draw_shape(self, camera: "kge.Camera"):
         scale = self.entity.transform.scale
@@ -162,18 +164,22 @@ class SpriteRenderer(RenderComponent):
                 )
         elif isinstance(self.shape, Circle):
             if self.shape.radius is None:
-                self.shape.radius = max(self.entity.scale.x, self.entity.scale.y) / 2
+                self.shape.radius = max(
+                    self.entity.scale.x, self.entity.scale.y) / 2
             deg = 360 / self.shape.num_points
             rad = math.radians(deg)
             for i in range(self.shape.num_points):
                 n = rad * i
                 pos = camera.world_to_screen_point(self.entity.position)
                 vertices.extend((
-                    int(camera.unit_to_pixels(self.shape.radius) * math.cos(n)) + pos.x,
-                    int(camera.unit_to_pixels(self.shape.radius) * math.sin(n)) + pos.y
+                    int(camera.unit_to_pixels(self.shape.radius)
+                        * math.cos(n)) + pos.x,
+                    int(camera.unit_to_pixels(self.shape.radius)
+                        * math.sin(n)) + pos.y
                 ))
             self._vlist = pyglet.graphics.vertex_list(self.shape.num_points,
-                                                      ("v2d/stream", tuple(vertices)),
+                                                      ("v2d/stream",
+                                                       tuple(vertices)),
                                                       ("c4Bn/dynamic",
                                                        self.shape.color * self.shape.num_points))
             # self._vlist.draw(self.shape.mode)
@@ -261,7 +267,7 @@ class SpriteRenderer(RenderComponent):
 
                         self._sprite = pyglet.sprite.Sprite(
                             img=self._image.load(), subpixel=True,
-                            batch=batch,
+                            # batch=batch,
                             group=layers[self.entity.layer]
                         )
 

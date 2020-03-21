@@ -310,15 +310,18 @@ class RigidBody(BaseComponent):
             self._position = Vector(self._body.position.x, self._body.position.y)
         return self._position
 
-    # TODO : Set position (?)
-    # @position.setter
-    # def position(self, val: Vector):
-    #     if not isinstance(val, Vector):
-    #         raise TypeError("angle should be a float")
-    #
-    #     self._position = val
-    #     if self._body is not None:
-    #         self._body.position = (val.x, val.y)
+    # TODO : TO TEST
+    @position.setter
+    def position(self, val: Union[Vector, tuple]):
+        if not isinstance(val, (Vector, tuple)):
+            raise TypeError("Position should be either a tuple of Numbers or a vector")
+
+        # set vector
+        val = Vector(val)
+
+        self._position = val
+        if self._body is not None:
+            self._body.position = (val.x, val.y)
 
     @property
     def drag(self):
@@ -441,6 +444,8 @@ class RigidBody(BaseComponent):
         Moves the rigid body to the specified position by calculating the appropriate
         linear velocity required to move  the rigid body to that position
         during the next physics update.
+
+        Warning : Do not use this method to move between large distances
 
         :param destination: destination
         :return:

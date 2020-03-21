@@ -1,7 +1,8 @@
+from typing import List, Type, Dict
+
 from kge.core import events
-from kge.core.system import System
 from kge.core.component import Component
-from typing import List, Type, Iterator, Dict
+from kge.core.system import System
 
 
 def snake_to_camel(meth_name: str):
@@ -17,6 +18,9 @@ def snake_to_camel(meth_name: str):
 
 
 class ComponentSystem(System):
+    """
+    A System that handles components
+    """
 
     def __init__(self, engine=None, **_):
         super().__init__(engine, **_)
@@ -76,8 +80,19 @@ class ComponentSystem(System):
                 self._components.remove(component)
                 self.unregister_events(component)
 
-    def active_components(self) -> Iterator[Component]:
+    def on_destroy_entity(self, event: events.DestroyEntity, dispatch):
+        components = []
+
+        for type_ in self.components_supported:
+            components.append(*event.entity.getComponents(kind=type_))
+
+        for component in components:
+            if component in self._components:
+                self._components.remove(component)
+                self.unregister_events(component)
+
+    def on_start_scene(self, event: events.StartScene, dispatch):
         """
-        components that are active
+        Clear components when scene starts
         """
-        return filter(lambda c: c.is_active or c.entity.is_active, self._components)
+        self._components.clear()

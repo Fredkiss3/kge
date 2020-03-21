@@ -16,6 +16,10 @@ class TextRenderer(RenderComponent):
 
         self.label = None  # type: Union[pyglet.text.Label, None]
 
+    def delete(self):
+        if self.label is not None:
+            self.label.delete()
+
     def render(self, scene: kge.Scene):
 
         camera = scene.main_camera

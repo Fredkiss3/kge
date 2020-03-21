@@ -1,21 +1,19 @@
 import math
 import traceback
-from typing import List, Union, Type, Dict, Tuple, Callable, TypeVar, Any
+from typing import List, Union, Type, Dict, Tuple, Callable, TypeVar
 
 import kge
-from kge.utils.vector import Vector
 from kge.core import events
 from kge.core.component import Component
 from kge.core.eventlib import EventMixin
-
-from copy import deepcopy
-
 from kge.core.events import Event
 from kge.core.transform import Transform
+from kge.utils.coroutines import coroutine, Coroutine
 from kge.utils.dotted_dict import DottedDict
+from kge.utils.vector import Vector
 
 # Anything
-T = TypeVar("T")
+T = TypeVar("T", bound=Component)
 
 
 class BaseEntity(EventMixin):
@@ -109,7 +107,7 @@ class BaseEntity(EventMixin):
         self._children = []  # type: List[BaseEntity]
         self._parent = None  # type: Union[BaseEntity, None]
 
-        # is active ? (if False, it will not render)
+        # is active ? (if False, it will not render or receive events)
         self._is_active = True
 
         # the layer in which the entity is in
@@ -118,6 +116,9 @@ class BaseEntity(EventMixin):
         # transform of the entity
         self._transform = Transform(entity=self)
         self.destoyed = False
+
+        # coroutines attached to this entity
+        self._coroutines = [] # type: List[Coroutine]
 
     @property
     def size(self) -> DottedDict:
@@ -190,10 +191,10 @@ class BaseEntity(EventMixin):
         rb = self.getComponent(kind=kge.RigidBody)
 
         # Set position of the body
-        # TODO : set position with rb
         if rb is not None:
-            raise AttributeError(
-                "You should not use position to move the entity when a RigidBody is attached, instead use RigidBody to set position")
+            rb.position = value
+            # raise AttributeError(
+            #     "You should not use position to move the entity when a RigidBody is attached, instead use RigidBody to set position")
         else:
             self._transform.position = value
 
@@ -227,6 +228,12 @@ class BaseEntity(EventMixin):
         """
         Set angle, in degrees
         """
+        rb = self.getComponent(kind=kge.RigidBody)
+
+        # Set position of the body
+        if rb is not None:
+            rb.angle = value
+
         self._transform.angle = value
 
     @property
@@ -265,9 +272,56 @@ class BaseEntity(EventMixin):
     @property
     def components(self):
         """
-        Get a copy of components of this entity
+        Get a list of components of this entity
         """
-        return dict(self._components)
+        return self._components
+
+    def start_coroutine(self, func: Callable, delay: float = .01, loop: bool = True, *args, **kwargs):
+        """
+        Start a coroutine
+
+        when setting a function as coroutine, your function should not have an infinite loop in it
+        if there is one, it will freeze your game
+        instead use loop argument in order to loop your function and use delay argument to defer the call to your function
+
+        Coroutines return nothing.
+
+        Example of use :
+            >>> class Player:
+            >>>     def yodele(self, name)
+            >>>         print("YODELE", name, "!")
+            >>>
+            >>>     def call_yodele(self, name):
+            >>>         self.start_coroutine(self.yodele, name="Fred")
+            >>>
+            >>> p = Player()
+            >>> p.call_yodele("hi hou !")
+            >>> Output : "YODELE hi hou !"
+
+        """
+        c = coroutine(func, delay, loop)
+        c(*args, **kwargs)
+        # add coroutines
+        self._coroutines.append(c)
+
+    def on_stop_scene(self, event: Event, dispatch: Callable[[Event], None]):
+        """
+        When scene get stopped, destroy self
+        """
+        self.on_destroy_entity(event, dispatch)
+
+    def on_destroy_entity(self, event, dispatch):
+        """
+        When entity gets destroyed,
+        pay attention when subclassing, you could break default behaviours
+        """
+        # Remove parent-child relation
+        if self.parent is not None:
+            self.parent.children.remove(self)
+            self.parent = None
+        for coroutine in self._coroutines:
+            coroutine.stop_loop()
+
 
     def getComponents(self, kind: Type[T]) -> Union[List[T]]:
         """
@@ -298,7 +352,7 @@ class BaseEntity(EventMixin):
             >>> "Component Transform of entity Entity X"
 
         :param kind: the kind of component to retrieve
-        :return: the component requested or None if there is None
+        :return: the component OF type requested or None if there is no component of type requested
         """
         if isinstance(kind, type):
             cp = None
@@ -369,38 +423,6 @@ class BaseEntity(EventMixin):
 
     def __repr__(self):
         return f"{self.name} ({type(self).__name__})"
-
-    # def __deepcopy__(self, memo=None):
-    #     """
-    #     Copy an instance of this object
-    #     """
-    #     entity = type(self)()
-    #     entity.name = f"copy of {self.name}"
-    #     entity.scene = self.scene
-    #     entity._components = dict(self._components)
-    #     entity.is_active = True
-    #     entity._children = dict(self._children)
-    #     entity._parent = deepcopy(self._parent)
-    #     return entity
-    #
-    # def copy(self):
-    #     """
-    #     returns a copy of this entity
-    #     """
-    #     copy = deepcopy(self)
-    #     return copy
-    #
-    # @classmethod
-    # def instantiate(cls, e: "BaseEntity", scene: "kge.Scene", position: Vector = Vector.Zero(),
-    #                 layer: Union[str, int] = 0):
-    #     """
-    #     Create a new instance of e and add it to scene
-    #     TODO : get arguments
-    #     """
-    #     e2 = type(e)(**e.kwargs)
-    #     e2.addComponents(*e.components.values())
-    #     e.is_active = True
-    #     scene.add(e2, position, layer)
 
     def __iter__(self):
         return (component for component in self._components)

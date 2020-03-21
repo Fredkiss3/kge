@@ -98,6 +98,16 @@ class Engine(LoggerMixin, EventMixin):
         self._executor = futures.ThreadPoolExecutor()
         self._jobs = deque()
 
+    def append_job(self, func: Callable, *args, **kwargs):
+        """
+        Append a job to this engine
+        """
+        self._jobs.append(
+            self._executor.submit(
+                func, *args, **kwargs
+            )
+        )
+
     @property
     def current_scene(self):
         """

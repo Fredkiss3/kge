@@ -100,7 +100,6 @@ class Player(Sprite):
         self.rb.angle = Vector.Up().angle_to(ev.position)
 
     def on_update(self, ev: events.Update, _):
-
         # Adjusting fire rate (10 bullets / sec), modify fire_rate in order to change the number
         # of bullets per second
         if self.last_fire is None:

@@ -16,6 +16,10 @@ class Text(BaseEntity):
         # renderer component
         self.sprite_renderer = TextRenderer(self)
 
+    def on_destroy_entity(self, event, dispatch):
+        super().on_destroy_entity(event, dispatch)
+        self.sprite_renderer.delete()
+
     @property
     def value(self):
         return self._value

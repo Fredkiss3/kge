@@ -1,4 +1,5 @@
-from typing import Union, List, Callable
+from typing import Callable
+
 import kge
 from kge.core import events
 from kge.core.eventlib import EventMixin
@@ -37,37 +38,11 @@ class BaseComponent(EventMixin):
                 raise TypeError("entity should be of type 'kge.Entity' or a subclass of 'kge.Entity'")
         self.entity = entity  # type: kge.Entity
 
-        # children and parent
-        self._children = []  # type: List[BaseComponent]
-        self._parent = None  # type: Union[BaseComponent, None]
-
         # Used to Initialize component
         self._initialized = False
 
         # Used to tell if the component is active
         self.is_active = True
-
-    @property
-    def children(self):
-        return self._children
-
-    @property
-    def parent(self):
-        return self._parent
-
-    @parent.setter
-    def parent(self, value: "BaseComponent"):
-        if isinstance(value, BaseComponent):
-            self._parent = value
-            value.children.append(self)
-        elif value is None:
-            # remove self from children
-            self._parent.children.remove(self)
-
-            # set parent to None
-            self._parent = None
-        else:
-            raise TypeError("parent Should be of type 'kge.Component' or a subclass of 'kge.Component'")
 
     def __repr__(self):
         return f"component {type(self).__name__} of entity '{self.entity}'"

@@ -63,7 +63,8 @@ class Collider(BaseComponent):
         if isinstance(value, pyglet.graphics.vertexdomain.VertexList) or value is None:
             self._shape_vlist = value
         else:
-            raise TypeError("Vertices should be of type 'pyglet.graphics.vertexdomain.VertexList'")
+            raise TypeError(
+                "Vertices should be of type 'pyglet.graphics.vertexdomain.VertexList'")
 
     @property
     def rigid_body_attached(self):
@@ -321,7 +322,8 @@ class CircleCollider(Collider):
     def on_init(self, ev: events.Init, dispatch: Callable[[Event], None]):
         # if no radius has been provided, then set it to the max scale of the entity
         if self._radius is None:
-            self._radius = max(self.entity.transform.scale.x, self.entity.transform.scale.y) / 2
+            self._radius = max(self.entity.transform.scale.x,
+                               self.entity.transform.scale.y) / 2
 
         super(CircleCollider, self).on_init(ev, dispatch)
 
@@ -355,7 +357,8 @@ class PolygonCollider(Collider):
         super().__init__(isSensor, Vector.Zero(), bounciness, friction, density)
 
         if len(vertices) < 3:
-            raise ValueError("Polligon collider should have 3 or more vertices")
+            raise ValueError(
+                "Polligon collider should have 3 or more vertices")
 
         # the vertices
         self._vertices = vertices
@@ -453,6 +456,7 @@ class EdgeCollider(Collider):
             vertices=[(*v,) for v in self._vertices]
         )
 
+
 class LoopCollider(Collider):
     """
     A component that handles collisions which occurs in a sequence of line segments that forms a circular list.
@@ -491,7 +495,6 @@ class LoopCollider(Collider):
 if __name__ == '__main__':
     class Player(BaseEntity):
         pass
-
 
     p = Player()
     c = BoxCollider(box=Vector(20, 20))

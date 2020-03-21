@@ -29,6 +29,7 @@ class Sprite(BaseEntity):
 
     def on_destroy_entity(self, event, dispatch):
         # TODO : To remove
+        super().on_destroy_entity(event, dispatch)
         self.sprite_renderer.__fire_event__(event, dispatch)
 
     def on_scene_stopped(self, event, dispatch):

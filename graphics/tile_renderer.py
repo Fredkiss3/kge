@@ -3,11 +3,10 @@ from typing import List, Union
 import pyglet
 
 import kge
-from kge.graphics.render_component import RenderComponent
-from kge.utils.vector import Vector
 from kge.graphics.image import Image
-from kge.graphics.sprite_renderer import SpriteRenderer
+from kge.graphics.render_component import RenderComponent
 from kge.resources.events import AssetLoaded
+from kge.utils.vector import Vector
 
 
 class TileRenderer(RenderComponent):
@@ -37,9 +36,9 @@ class TileRenderer(RenderComponent):
 
                         scale = self.entity.transform.scale
 
-                        for x in range(scale.y):
+                        for x in range(int(scale.y)):
                             line = []
-                            for y in range(scale.x):
+                            for y in range(int(scale.x)):
                                 sprite = pyglet.sprite.Sprite(
                                     img=self._image.load(), subpixel=True,
                                     batch=batch,
@@ -93,7 +92,8 @@ class TileRenderer(RenderComponent):
                         sprite = self._tiles[x][y]
 
                         # calculate offset of the sprite
-                        offset = Vector(y + 1 / 2, x + 1 / 2)
+                        offset = Vector(y + 1 / 2,
+                                        x + 1 / 2)
 
                         # calculate the offset of the anchor of the sprite
                         anchor = self.entity.position - self.entity.transform.scale / 2
@@ -104,7 +104,8 @@ class TileRenderer(RenderComponent):
                         # calculate sprite position in screen
                         pos = camera.world_to_screen_point(new_pos)
 
-                        sprite_in_frame = camera.box_in_frame(new_pos, camera.pixels_to_unit(Vector(sprite.width, sprite.height)))
+                        sprite_in_frame = camera.box_in_frame(new_pos, camera.pixels_to_unit(
+                            Vector(sprite.width, sprite.height)))
 
                         if sprite_in_frame:
                             if sprite.batch is None:

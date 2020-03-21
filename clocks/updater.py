@@ -1,11 +1,8 @@
 import time
-import traceback
 from typing import Union
 
 import pyglet
 
-import threading
-import kge
 from kge.core import events
 from kge.core.constants import DEFAULT_FPS
 from kge.core.system import System
@@ -17,19 +14,24 @@ class Updater(System):
         self.event_to_dispatch = events.Update
         self.after_event = events.LateUpdate
 
-        self.accumulated_time = 0
-        self.last_tick = None
         self.time_step = time_step
 
     def __enter__(self):
-        pyglet.clock.schedule_interval_soft(self.update_entities, self.time_step)
+        pyglet.clock.schedule_interval_soft(
+            self.update, self.time_step)
+
+    def update(self, dt):
+        self.engine.append_job(
+            self.update_entities, dt
+        )
 
     def update_entities(self, time_delta: float):
         start = time.monotonic()
         dispatch = self._dispatch
         scene = self.engine.current_scene
         if self.engine.running:
-            event = self.event_to_dispatch.__call__(time_delta, scene)  # type: Union[events.Update, events.FixedUpdate]
+            # type: Union[events.Update, events.FixedUpdate]
+            event = self.event_to_dispatch.__call__(time_delta, scene)
 
             # Dispatch to behaviours
             self._dispatch(event)
@@ -52,4 +54,5 @@ class Updater(System):
 
                 # add the time elapsed in the loop
                 dt += time.monotonic() - start
-                self._dispatch(self.after_event.__call__(delta_time=dt, scene=event.scene))
+                self._dispatch(self.after_event.__call__(
+                    delta_time=dt, scene=event.scene))

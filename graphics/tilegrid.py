@@ -1,6 +1,3 @@
-from typing import Union
-
-from kge import Vector
 from kge.graphics.image import Image
 from kge.graphics.sprite import Sprite
 from kge.graphics.tile_renderer import TileRenderer
@@ -11,11 +8,14 @@ class TileGrid(Sprite):
     """
     A grid of multiple sprites
     """
-    def __init__(self, name: str = None, tag: str = None):
+
+    def __init__(self, tile: Image = None, name: str = None, tag: str = None):
         super().__init__(name, tag)
 
         # image and renderer
         self.sprite_renderer = TileRenderer(self)
+        if tile is not None:
+            self.tile = tile
 
     @property
     def image(self):

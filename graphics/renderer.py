@@ -1,4 +1,4 @@
-
+import logging
 import time
 from typing import Union, List
 
@@ -100,6 +100,7 @@ class Renderer(System):
         Draw the window
         """
         now = time.monotonic()
+
         if now - self.last_step >= 1:
             self.fps_display.text = f"{self.fps} FPS"
             self.last_step = time.monotonic()
@@ -118,8 +119,12 @@ class Renderer(System):
 
         # Display FPS
         if self.engine.current_scene.display_fps == True:
-
             self.fps_display.draw()
+
+        # Draw physics data
+        if self.logger.getEffectiveLevel() == logging.DEBUG:
+            physX = kge.ServiceProvider.getPhysics()
+            physX.debug_drawer.batch.draw()
 
         return pyglet.event.EVENT_HANDLED
 

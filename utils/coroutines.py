@@ -23,10 +23,9 @@ class _Coroutine:
 
     def stop_loop(self):
         """
-        Stop the loop function if should be looping
+        Stop the coroutine
         """
-        if self.loop:
-            pyglet.clock.unschedule(self._call_function)
+        pyglet.clock.unschedule(self._call_function)
 
 
 # wrap _Coroutine to allow for deferred calling

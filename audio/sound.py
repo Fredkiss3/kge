@@ -26,7 +26,7 @@ class Sound(AbstractAsset):
         Load and return sound
         """
         try:
-            return pyglet.resource.media(self.name,
+            return pyglet.media.load(self.name,
                                          streaming=True)  # type: pyglet.media.Source
         except EOFError:
             logger.warning(f"The sound File '{self.name}' is empty, it won't play.")

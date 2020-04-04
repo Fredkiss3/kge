@@ -7,13 +7,27 @@ It is built on top of the [pyglet](https://pyglet.org) library for rendering, an
 
 If you have any issue you can add an issue to the repository. I will be very pleased to help.
 
-### Prerequisities 
-  - Python >= 3.6
-  - pyglet >= 1.4.0
-  - pybox2d [See How to install it here](https://github.com/pybox2d/pybox2d/blob/master/INSTALL.md)
-  - pyglet_ffmpeg2
+## Requirements
+kge runs under python 3.7 Being written in pure Python, it also works on other Python interpreters such as PyPy. Supported platforms are:
+   - Windows 7 or later
+   - Linux, with the following libraries (most recent distributions will have these in a default installation):
+        - OpenGL and GLX
+        - GDK 2.0+ or Pillow (required for loading images other than PNG and BMP)
+        - OpenAL or Pulseaudio (required for playing audio)
  
-### Functionnalities availables :
+## Installation
+
+pyglet is installable from PyPI:
+
+    pip install --upgrade --user kge
+    
+## Installation from source
+
+If you're reading this `README` from a source distribution, you can install kge with:
+
+    python setup.py install --user
+ 
+## Functionnalities availables :
 System | Components
 ------------ | -------------
   Rendering | Simple Shapes (squares, circles, triangles),  Sprites with Images

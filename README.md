@@ -25,7 +25,7 @@ kge is installable from PyPI:
 
 If you're reading this `README` from a source distribution, you can install kge with:
 
-    python setup.py install --user
+    python -m pip install .
  
 ## Functionnalities availables :
 System | Components

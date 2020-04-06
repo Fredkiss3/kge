@@ -50,7 +50,7 @@ class Engine(LoggerMixin, EventMixin):
                          Renderer,
                          InputManager,
                          AssetLoader,
-                         # AudioManager,
+                         AudioManager,
                          EntityManager,
                          BehaviourManager,
                  ),

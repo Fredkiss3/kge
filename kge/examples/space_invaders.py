@@ -106,13 +106,6 @@ class Player(Sprite):
     def on_mouse_motion(self, ev: events.MouseMotion, _):
         self.rb.angle = Vector.Up().angle_to(ev.position)
 
-    def on_mouse_drag(self, ev: events.MouseDrag, _):
-        """
-        Change the rotation of the body if mouse is moving
-        """
-        # print(self.rb.body is not None)
-        self.rb.angle = ev.position.angle
-
     def on_update(self, ev: events.Update, _):
         # Adjusting fire rate (10 bullets / sec), modify fire_rate in order to change the number
         # of bullets per second
@@ -278,7 +271,7 @@ class EnemySpawner(Empty):
 
         # Background Music
         self.music = Sound("assets/bg_music.mp3")
-        self.music.play(volume=0, loop=True)
+        self.music.play(volume=1, loop=True)
 
     def on_update(self, ev: events.Update, _):
         if not self.stop:

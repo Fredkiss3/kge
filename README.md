@@ -12,7 +12,7 @@ kge runs only under ``python 3.7`` in windows and ``python 3.6`` in linux. Being
    - Windows 7 or later 
         - With ``python 3.7``
    - Linux, with the following libraries (most recent distributions will have these in a default installation):
-        - With ``python 3.6``
+        - With ``python 3.6`
         - OpenGL and GLX
         - GDK 2.0+ or Pillow (required for loading images other than PNG and BMP)
         - OpenAL or Pulseaudio (required for playing audio)

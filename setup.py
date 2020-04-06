@@ -40,6 +40,7 @@ setup(
         'Topic :: Games/Entertainment',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    python_requires=">= 3.7, < 3.8"
+    python_requires=">= 3.7, < 3.8",
+
 )
 

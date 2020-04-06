@@ -10,7 +10,7 @@ inspired by PPB ENGINE:
 Checkout the repository :  https://github.com/ppb/pursuedpybear/
 """
 #: The release version
-version = '1.0'
+version = '1.0.1'
 
 import pyglet_ffmpeg2
 import logging

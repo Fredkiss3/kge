@@ -11,8 +11,8 @@ if sys.platform == "win32":
     elif platform.architecture()[0] == "32bit":
         import kge.extra.win32.Box2D as b2
 else:
-    # TODO: make for linux
-    pass
+    import kge.extra.linux64.Box2D as b2
+
 
 from kge.core.component import BaseComponent
 from kge.utils.vector import Vector

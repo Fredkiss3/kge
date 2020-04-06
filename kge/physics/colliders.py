@@ -4,9 +4,8 @@ import platform
 import sys
 from typing import Union, Callable, List, Optional
 
-import pyglet
-
 import kge
+import pyglet
 from kge.core import events
 from kge.core.component import BaseComponent
 from kge.core.entity import BaseEntity
@@ -19,8 +18,7 @@ if sys.platform == "win32":
     elif platform.architecture()[0] == "32bit":
         import kge.extra.win32.Box2D as b2
 else:
-    # TODO: make for linux
-    pass
+    import kge.extra.linux64.Box2D as b2
 
 from kge.core.events import Event
 from kge.physics.events import BodyCreated, BodyDestroyed, CreateBody
@@ -269,7 +267,7 @@ class BoxCollider(Collider):
             *self._box, (*self._offset,), 0
         ))
 
-    def setBox(self, box : Vector):
+    def setBox(self, box: Vector):
         """
         Change the 'Box' Value of the Collider
         """

@@ -31,6 +31,7 @@ setup(
     package_data={
         "kge.extra.win32.Box2D": ["_Box2D.cp37-win32.pyd"],
         "kge.extra.win64.Box2D": ["_Box2D.cp37-win_amd64.pyd"],
+        "kge.extra.linux64.Box2D": ["_Box2D.cpython-36m-x86_64-linux-gnu.so"],
     },
     long_description_content_type='text/markdown',
     install_requires=requirements,
@@ -42,8 +43,9 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Games/Entertainment',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    python_requires=">= 3.7, < 3.8"
+    python_requires=">= 3.6, < 3.8"
 )

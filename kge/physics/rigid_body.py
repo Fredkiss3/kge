@@ -21,8 +21,12 @@ if sys.platform == "win32":
             b2_staticBody,
         )
 else:
-    # TODO: make for linux
-    pass
+    import kge.extra.linux64.Box2D as b2
+    from kge.extra.linux64.Box2D import (
+        b2_dynamicBody,
+        b2_kinematicBody,
+        b2_staticBody,
+    )
 
 
 import math

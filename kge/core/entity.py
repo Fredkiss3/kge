@@ -66,22 +66,19 @@ class BaseEntity(EventMixin):
                     if isinstance(event, events.Init):
                         self._initialized = True
 
-    def on_add_component(self, ev: events.AddComponent, dispatch):
-        """
-        Add a component to this entity
-        NEVER TRY TO SUBCLASS THIS Method !!!
-        """
-        self.addComponent(component=ev.component)
+    # def on_add_component(self, ev: events.AddComponent, dispatch):
+    #     """
+    #     Add a component to this entity
+    #     NEVER TRY TO SUBCLASS THIS Method !!!
+    #     """
+    #     self.addComponent(component=ev.component)
 
-    def on_remove_component(self, ev: events.RemoveComponent, dispatch):
-        """
-        Remove a component from this entity
-        NEVER TRY TO SUBCLASS THIS Method !!!
-        """
-        cp = self.removeComponent(ev.kind)  # type: List[BaseComponent]
-
-    def on_scene_stopped(self, ev, dispatch):
-        self._initialized = False
+    # def on_remove_component(self, ev: events.RemoveComponent, dispatch):
+    #     """
+    #     Remove a component from this entity
+    #     NEVER TRY TO SUBCLASS THIS Method !!!
+    #     """
+    #     cp = self.removeComponent(ev.kind)  # type: List[BaseComponent]
 
     def __init__(self, name: str = None, tag: str = None):
         if (tag is not None and not isinstance(tag, str)) or (name is not None and (not isinstance(name, str))):
@@ -118,9 +115,6 @@ class BaseEntity(EventMixin):
         # transform of the entity
         self._transform = Transform(entity=self)
         self.destoyed = False
-
-        # coroutines attached to this entity
-        self._coroutines = []  # type: List[Coroutine]
 
         # order in layer
         self.order_in_layer = 0
@@ -295,7 +289,7 @@ class BaseEntity(EventMixin):
         """
         return self._components
 
-    def start_coroutine(self, func: Callable, delay: float = .01, loop: bool = True, *args, **kwargs):
+    def start_coroutine(self, func: Callable, delay: float = .01, loop: bool = False, *args, **kwargs):
         """
         Start a coroutine
 
@@ -320,26 +314,30 @@ class BaseEntity(EventMixin):
         """
         c = coroutine(func, delay, loop)
         c(*args, **kwargs)
+
         # add coroutines
-        self._coroutines.append(c)
+        manager = kge.ServiceProvider.getEntityManager()
+        manager.addCoroutine(self, c)
 
-    def on_stop_scene(self, event: Event, dispatch: Callable[[Event], None]):
-        """
-        When scene get stopped, destroy self
-        """
-        self.on_destroy_entity(event, dispatch)
+    # def on_stop_scene(self, event: Event, dispatch: Callable[[Event], None]):
+    #     """
+    #     When scene get stopped, destroy self
+    #     """
+    #     print("Stop Scene")
+    #     self.on_destroy_entity(event, dispatch)
 
-    def on_destroy_entity(self, event, dispatch):
-        """
-        When entity gets destroyed,
-        pay attention when subclassing, you could break default behaviours
-        """
-        # Remove parent-child relation
-        if self.parent is not None:
-            self.parent.children.remove(self)
-            self.parent = None
-        for coroutine in self._coroutines:
-            coroutine.stop_loop()
+    # def on_destroy_entity(self, event, dispatch):
+    #     """
+    #     When entity gets destroyed,
+    #     pay attention when subclassing, you could break default behaviours
+    #     """
+    #     # Remove parent-child relation
+    #     if self.parent is not None:
+    #         self.parent.children.remove(self)
+    #         self.parent = None
+    #     for coroutine in self._coroutines:
+    #         coroutine.stop_loop()
+
 
     def getComponents(self, kind: Type[T]) -> Union[List[T]]:
         """
@@ -474,11 +472,12 @@ class BaseEntity(EventMixin):
         """
         Destroy this entity
         """
+        self.is_active = False
+
         manager = kge.ServiceProvider.getEntityManager()
 
         if manager:
             manager.destroy(self)
-            # self.destoyed = True
 
     def _deactivate(self):
         """
@@ -494,7 +493,6 @@ class BaseEntity(EventMixin):
 
         if manager:
             manager.disable(self)
-            # self.destoyed = True
 
     def _activate(self):
         """

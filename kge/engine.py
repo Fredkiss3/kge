@@ -316,10 +316,6 @@ class Engine(LoggerMixin, EventMixin):
             self._jobs.append(self._executor.submit(
                 self.__fire_event__, event, self.dispatch))
 
-        if self.current_scene is not None:
-            if self.current_scene.has_event(event):
-                self.current_scene.__fire_event__(event, self.dispatch)
-
         if on_main:
             # If action should be on main then run it on main
             for system in self.systems:

@@ -166,7 +166,7 @@ class RestartText(Text):
 
     def on_key_down(self, event: events.KeyDown, _):
         if event.key is Keys.R:
-            Scene.load(setup=setup)
+            Scene.load(setup_or_scene=setup)
 
 
 class Score(Text):

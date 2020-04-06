@@ -10,15 +10,9 @@ if sys.platform == "win32":
         import kge.extra.win64.Box2D as b2
     elif platform.architecture()[0] == "32bit":
         import kge.extra.win32.Box2D as b2
-elif sys.platform == "linux":
-    if platform.architecture()[0] == "64bit":
-        import kge.extra.linux64.Box2D as b2
-    else:
-        print("This package is only disponible on windows and Linux 64 bits")
-        exit(1)
 else:
-    print("This package is only disponible on windows and Linux 64 bits")
-    exit(1)
+    # TODO: make for linux
+    pass
 
 from kge.core.component import BaseComponent
 from kge.utils.vector import Vector

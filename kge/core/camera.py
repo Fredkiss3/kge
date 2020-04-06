@@ -1,8 +1,11 @@
 from typing import Union
 
 from kge.core import events
+from kge.physics import events as physics_events
 from kge.core.constants import DEFAULT_RESOLUTION, MAX_ZOOM, MIN_ZOOM, DEFAULT_PIXEL_RATIO
 from kge.core.entity import BaseEntity
+from kge.physics.colliders import CameraCollider
+from kge.physics.rigid_body import RigidBody, RigidBodyType
 from kge.utils.dotted_dict import DottedDict
 from kge.utils.vector import Vector
 
@@ -24,12 +27,72 @@ class Camera(BaseEntity):
         """
         super().__init__(name, tag)
         self._zoom = 1.0
-        self.resolution = DottedDict(width=resolution.x, height=resolution.y)
-        self.pixel_ratio_original = pixel_ratio
-        self.pixel_ratio = self.pixel_ratio_original * self._zoom
+        self._resolution = DottedDict(width=resolution.x, height=resolution.y)
+        self._pixel_ratio_original = pixel_ratio
+        self._pixel_ratio = self._pixel_ratio_original * self._zoom
 
-    # def on_window_resized(self, ev: events.WindowResized, dispatch: Callable[[Event], None]):
-    #     self.resolution = DottedDict(width=ev.new_size.x, height=ev.new_size.y)
+        # FIXME : IS THERE A BETTER WAY OF HANDLING THIS ?
+        self.addComponents(
+            RigidBody(body_type=RigidBodyType.KINEMATIC),
+            CameraCollider(
+                box=self.pixels_to_unit(resolution) + Vector.Unit() / 2,
+            ),
+        )
+
+    def on_collision_enter(self, ev: physics_events.CollisionEnter, dispatch):
+        # Track Position of entities that enter in camera sight
+        _ = lambda x: x
+        _(ev.collider.entity.position)
+
+    @property
+    def resolution(self):
+        """
+        Get the resolution of the camera
+        """
+        return Vector(self._resolution.width, self._resolution.height)
+
+    @resolution.setter
+    def resolution(self, val: Vector):
+        """
+        Set the resolution of the camera
+        """
+        if not isinstance(val, Vector):
+            raise TypeError("resolution should be a Vector")
+
+        self._resolution = DottedDict(width=val.x, height=val.y)
+        collider = self.getComponent(kind=CameraCollider)
+        if collider:
+            newBox = (self.pixels_to_unit(val) + Vector.Unit() / 2) * 1 / self.zoom
+            collider.setBox(newBox)
+
+    @property
+    def pixel_ratio(self):
+        """
+        Get the pixel ratio of the camera
+        """
+        return self._pixel_ratio_original
+
+    @property
+    def position(self):
+        # If there is a rigidBody
+        rb = self.getComponent(kind=RigidBody)
+
+        if rb is not None:
+            rbpos = Vector(rb.position.x, -rb.position.y)
+            if rb.body is not None and self._transform.position != rbpos:
+                self._transform.position = rbpos
+        return self._transform.position
+
+    @position.setter
+    def position(self, value: Vector):
+        if self._transform.position != value:
+            rb = self.getComponent(kind=RigidBody)
+
+            # Set position of the body
+            if rb is not None:
+                rb.position = Vector(value.x, -value.y)
+
+            self._transform.position = value
 
     @property
     def zoom(self):
@@ -45,9 +108,14 @@ class Camera(BaseEntity):
         if isinstance(value, (float, int)):
             if MIN_ZOOM <= float(value) <= MAX_ZOOM:
                 self._zoom = float(value)
-                self.pixel_ratio = self.pixel_ratio_original * self._zoom
+                self._pixel_ratio = self._pixel_ratio_original * self._zoom
+
+                collider = self.getComponent(kind=CameraCollider)
+                if collider:
+                    newBox = (self.pixels_to_unit(self.resolution) + Vector.Unit() / 2) * 1 / self.zoom
+                    collider.setBox(newBox)
         else:
-            raise TypeError("Zoom is a float or an int")
+            raise TypeError("Zoom should be a float or an int")
 
     @property
     def frame_top(self) -> float:
@@ -110,7 +178,7 @@ class Camera(BaseEntity):
 
         :return:
         """
-        return self.pixels_to_unit(self.resolution.height)
+        return self.pixels_to_unit(self._resolution.height)
 
     @property
     def frame_width(self) -> float:
@@ -119,7 +187,7 @@ class Camera(BaseEntity):
 
         :return:
         """
-        return self.pixels_to_unit(self.resolution.width)
+        return self.pixels_to_unit(self._resolution.width)
 
     @property
     def half_height(self) -> float:
@@ -216,7 +284,7 @@ class Camera(BaseEntity):
 
         :return:
         """
-        return pixels / self.pixel_ratio
+        return pixels / self._pixel_ratio
 
     def unit_to_pixels(self, unit: Union[float, Vector]) -> Union[float, Vector]:
         """
@@ -226,9 +294,9 @@ class Camera(BaseEntity):
         :return:
         """
         if isinstance(unit, (float, int)):
-            return unit * self.pixel_ratio
+            return unit * self._pixel_ratio
         elif isinstance(unit, Vector):
-            return Vector(unit * self.pixel_ratio)
+            return Vector(unit * self._pixel_ratio)
         else:
             raise TypeError("unit must be either a float value or a vector")
 

@@ -12,7 +12,7 @@ class EventDispatcher(System):
 
     def __fire_event__(self, event: events.Event, dispatch: Callable[[events.Event], None]) -> None:
         if self.engine.running and not isinstance(event, (events.Update, events.FixedUpdate, PhysicsUpdate)):
-            if event.scene:
+            if event.scene is not None:
                 if type(event).__name__ in event.scene.registered_events:
                     if event.onlyEntity is None:
 

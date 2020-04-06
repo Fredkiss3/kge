@@ -137,34 +137,52 @@ class BaseScene(EntityCollection, EventMixin):
     """
     A scene is a Level in the game.
 
-    In order to start a new scene, it is advised to use the method with setup function :
+    In order to start a new scene, you can use setup function :
         >>> def setup(scene):
         >>>     scene.setLayer(1, "Foreground") # set layer 1 as Foreground
         >>>     player = Sprite(name="player")  # Create the player
         >>>     scene.add(player, position=Vector(1, 1), layer="Foreground") # add player to the scene
         >>>
         >>> Scene.load(setup)
+
+    Or subclass the Scene class :
+        >>> class MenuScene(Scene):
+        >>>     def setup(self):
+        >>>         self.setLayer(1, "Foreground") # set layer 1 as Foreground
+        >>>         player = Sprite(name="player")  # Create the player
+        >>>         self.add(player, position=Vector(1, 1), layer="Foreground") # add player to the scene
+        >>>
+        >>> Scene.load(MenuScene)
+
     """
     nbItems = 0
     engine: "kge.Engine" = None
     resolution: Vector = Vector(*DEFAULT_RESOLUTION)
     pixel_ratio: int = DEFAULT_PIXEL_RATIO
 
+    def setup(self):
+        """
+        Subclass this method in order to setup the scene
+        """
+        pass
+
     @classmethod
-    def load(cls, setup: Callable[["BaseScene"], None]=None, scene_type: Type["BaseScene"] = None, **kwargs, ):
+    def load(cls, setup_or_scene: Union[Type["BaseScene"], Callable[["BaseScene"], None]], **kwargs, ):
         """
         Load a new scene
         """
+        if not isinstance(setup_or_scene, (Callable, type)):
+            raise TypeError("Only scene types or setup functions are accepted !")
 
         if cls.engine is not None:
-            new_scene = BaseScene
-            if scene_type is not None:
-                new_scene = scene_type
-
-            if setup is not None:
-                kwargs["set_up"] = setup
+            if isinstance(setup_or_scene, type):
+                new_scene = setup_or_scene
+            else:
+                new_scene = BaseScene
+                kwargs["set_up"] = setup_or_scene
 
             cur_scene = cls.engine.current_scene
+
             if cur_scene:
                 cur_scene.clear()
 
@@ -173,8 +191,7 @@ class BaseScene(EntityCollection, EventMixin):
                 kwargs=kwargs
             ), immediate=True)
         else:
-            raise AttributeError(
-                f"Engine")
+            raise AttributeError("Engine not started")
 
     @classmethod
     def pause(cls):
@@ -205,10 +222,10 @@ class BaseScene(EntityCollection, EventMixin):
 
     def __init__(self, set_up: Callable[["BaseScene"], None] = None, **kwargs):
         super(BaseScene, self).__init__()
-        self._event_map = dict()  # type: Dict[str, List[BaseEntity]]
-        Scene.nbItems += 1
+        self._event_map = dict()  # type: Dict[str, List[EventMixin]]
+        type(self).nbItems += 1
 
-        self.name = f"Scene {self.nbItems}"
+        self.name = f"New {'Scene' if type(self).__name__ == 'BaseScene' else type(self).__name__} {type(self).nbItems}"
 
         # Spatial Hash for querying visible elements
         self.spatial_hash = SpatialHash(2)
@@ -234,12 +251,15 @@ class BaseScene(EntityCollection, EventMixin):
 
         # set_up is callable for setting up the scene
         self._setup_function = set_up
-
+        self.register_events(self)
 
     def on_scene_started(self, ev: events.SceneStarted, dispatch):
         if self._setup_function is not None:
             self._setup_function(self)
+        else:
+            self.setup()
 
+        self.register_events(self.main_camera)
 
     def getLayer(self, layer: Union[int, str]):
         """
@@ -357,7 +377,7 @@ class BaseScene(EntityCollection, EventMixin):
         self._event_map = dict()
         self.spatial_hash = SpatialHash(2)
 
-    def registered_entities(self, event):
+    def registered_entities(self, event) -> List[EventMixin]:
         """
         Return registered entities for event
         """
@@ -378,7 +398,7 @@ class BaseScene(EntityCollection, EventMixin):
         self.unregister_events(entity)
         super(BaseScene, self).remove(entity)
 
-    def register_events(self, e: BaseEntity):
+    def register_events(self, e: EventMixin):
         """
         Map names of events to entities that need the event
         """
@@ -393,7 +413,7 @@ class BaseScene(EntityCollection, EventMixin):
                     else:
                         l.append(e)
 
-    def unregister_events(self, e: BaseEntity):
+    def unregister_events(self, e: EventMixin):
         """
         Remove entity from event map
         """
@@ -434,8 +454,10 @@ if __name__ == '__main__':
         pass
 
 
+    scene = BaseScene()
     scene1 = BaseScene()
     scene2 = BaseScene()
+    self = BaseScene
 
     # Scene.load(scene2)
 

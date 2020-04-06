@@ -19,7 +19,7 @@ def create_package_list(base_package):
 
 
 setup(
-    name="Kiss Game Engine",
+    name="kge",
     version=info.get("version", "1.0"),
     url="https://github.com/Fredkiss3/kge",
     author='Fredhel KISSIE',
@@ -27,6 +27,11 @@ setup(
     description='A 2D Game Engine Written in Python, running in Python and For Python Game Developpers',
     long_description=open('README.md').read(),
     packages=create_package_list("kge"),
+    # include_package_data=True,
+    package_data={
+        "kge.extra.win32.Box2D": ["_Box2D.cp37-win32.pyd"],
+        "kge.extra.win64.Box2D": ["_Box2D.cp37-win_amd64.pyd"],
+    },
     long_description_content_type='text/markdown',
     install_requires=requirements,
     zip_safe=True,
@@ -40,7 +45,5 @@ setup(
         'Topic :: Games/Entertainment',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    python_requires=">= 3.7, < 3.8",
-
+    python_requires=">= 3.7, < 3.8"
 )
-

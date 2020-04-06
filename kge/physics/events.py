@@ -9,15 +9,9 @@ if sys.platform == "win32":
         import kge.extra.win64.Box2D as b2
     elif platform.architecture()[0] == "32bit":
         import kge.extra.win32.Box2D as b2
-elif sys.platform == "linux":
-    if platform.architecture()[0] == "64bit":
-        import kge.extra.linux64.Box2D as b2
-    else:
-        print("This package is only disponible on windows and Linux 64 bits")
-        exit(1)
 else:
-    print("This package is only disponible on windows and Linux 64 bits")
-    exit(1)
+    # TODO: make for linux
+    pass
 
 import kge
 from kge.core.events import Event
@@ -82,7 +76,7 @@ class BodyCreated(Event):
     Fired when a body has been created for an entity
     """
     entity: 'kge.Entity'
-    body: 'b2.b2Body'
+    body: 'Box2D.b2Body'
     scene: 'kge.Scene' = None
 
 
@@ -111,5 +105,5 @@ class BodyDestroyed(Event):
     Fired when a body get destroyed
     """
     entity: 'kge.Entity'
-    body: 'b2.b2Body'
+    body: 'Box2D.b2Body'
     scene: 'kge.Scene' = None

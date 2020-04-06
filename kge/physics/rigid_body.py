@@ -20,20 +20,10 @@ if sys.platform == "win32":
             b2_kinematicBody,
             b2_staticBody,
         )
-elif sys.platform == "linux":
-    if platform.architecture()[0] == "64bit":
-        import kge.extra.linux64.Box2D as b2
-        from kge.extra.linux64.Box2D import (
-            b2_dynamicBody,
-            b2_kinematicBody,
-            b2_staticBody,
-        )
-    else:
-        print("This package is only disponible on windows and Linux 64 bits")
-        exit(1)
 else:
-    print("This package is only disponible on windows and Linux 64 bits")
-    exit(1)
+    # TODO: make for linux
+    pass
+
 
 import math
 

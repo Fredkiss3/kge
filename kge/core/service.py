@@ -6,5 +6,5 @@ from kge.core.system import System
 class Service:
     system_class: Type[System]
 
-    def __init__(self, instance: Type[System]):
+    def __init__(self, instance: System):
         self._system_instance = instance

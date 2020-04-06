@@ -1,4 +1,6 @@
 # import Box2D as b2
+# import Box2D as b2
+import platform
 import sys
 from typing import Union, Callable, List, Optional
 
@@ -11,24 +13,14 @@ from kge.core.entity import BaseEntity
 from kge.physics.rigid_body import RigidBody, RigidBodyType
 from kge.utils.vector import Vector
 
-# import Box2D as b2
-import platform
-import platform
 if sys.platform == "win32":
     if platform.architecture()[0] == "64bit":
         import kge.extra.win64.Box2D as b2
     elif platform.architecture()[0] == "32bit":
         import kge.extra.win32.Box2D as b2
-elif sys.platform == "linux":
-    if platform.architecture()[0] == "64bit":
-        import kge.extra.linux64.Box2D as b2
-    else:
-        print("This package is only disponible on windows and Linux 64 bits")
-        exit(1)
 else:
-    print("This package is only disponible on windows and Linux 64 bits")
-    exit(1)
-
+    # TODO: make for linux
+    pass
 
 from kge.core.events import Event
 from kge.physics.events import BodyCreated, BodyDestroyed, CreateBody
@@ -276,6 +268,44 @@ class BoxCollider(Collider):
         return b2.b2PolygonShape(box=(
             *self._box, (*self._offset,), 0
         ))
+
+    def setBox(self, box : Vector):
+        """
+        Change the 'Box' Value of the Collider
+        """
+        if not isinstance(box, Vector):
+            raise TypeError("Box Property should be a vector")
+
+        if self._fixture is not None:
+            while kge.ServiceProvider.getPhysics().world.locked:
+                continue
+
+            self._box = box
+            self._fixture.shape.box = *self._box,
+
+
+class CameraCollider(BoxCollider):
+    """
+    # NOTE : IS THIS THE BEST WAY ?
+    A Box collider attached to the camera
+    """
+
+    def __init__(self, box: Vector = None):
+        super().__init__(box, isSensor=True, offset=Vector.Zero(), bounciness=0, friction=0, density=1)
+        # set the entity
+        self._entity = None  # type: Union[kge.Camera, None]
+
+    @property
+    def entity(self) -> "kge.Camera":
+        return self._entity
+
+    @entity.setter
+    def entity(self, e: "kge.Camera"):
+        if e is not None and not isinstance(e, kge.Camera):
+            raise TypeError(f"Camera Collider can only be attached to a camera")
+
+        # set entity
+        self._entity = e
 
 
 class PassThroughCollider(BoxCollider):

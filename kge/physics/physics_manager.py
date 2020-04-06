@@ -15,10 +15,10 @@ from kge.core.constants import *
 from kge.core.entity import BaseEntity
 from kge.core.events import Event
 from kge.core.service import Service
-from kge.physics.colliders import Collider
+from kge.physics.colliders import Collider, CameraCollider
 from kge.physics.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, \
     PhysicsUpdate, CollisionBegin, CollisionEnd
-from kge.physics.rigid_body import RigidBody, RigidBodyType
+from kge.physics.rigid_body import RigidBody
 from kge.utils.vector import Vector
 
 # import Box2D as b2
@@ -28,15 +28,9 @@ if sys.platform == "win32":
         import kge.extra.win64.Box2D as b2
     elif platform.architecture()[0] == "32bit":
         import kge.extra.win32.Box2D as b2
-elif sys.platform == "linux":
-    if platform.architecture()[0] == "64bit":
-        import kge.extra.linux64.Box2D as b2
-    else:
-        print("This package is only disponible on windows and Linux 64 bits")
-        exit(1)
 else:
-    print("This package is only disponible on windows and Linux 64 bits")
-    exit(1)
+    # TODO: make for linux
+    pass
 
 
 class grBlended(pyglet.graphics.Group):
@@ -563,10 +557,6 @@ class RayCastInfo(b2.b2RayCastCallback):
                 self.hit = True
                 self.point = Vector(*point)
                 self.normal = Vector(*normal)
-        # NOTE: You will get this error:
-        #   "TypeError: Swig director type mismatch in output value of
-        #    type 'float32'"
-        # without returning a value
 
         if self.type == RayCastInfo.CLOSEST:
             return fraction
@@ -582,6 +572,7 @@ class RayCastInfo(b2.b2RayCastCallback):
 class PhysicsManager(ComponentSystem):
     """
     The system that handles movement, collision detection and can perform region queries and ray casts
+    FIXME : HANDLE DRAWING SHAPES FOR CAMERA & FOR INACTIVE BODIES, IF TOO HARD THEN CREATE A CUSTOM DRAWER
     """
     contact_listener: ContactListener = None
     destruction_listener: DestructionListener = None
@@ -601,7 +592,6 @@ class PhysicsManager(ComponentSystem):
                        type=OverlapInfo.MULTIPLE) -> OverlapInfo:
         """
         Query for colliders which are in a given circle region
-        Note: in reality this method does not query in a circle region but a squared region
 
         :param center: The center point of the circle to overlap
         :param radius: the radius of the circle to overlap
@@ -736,9 +726,6 @@ class PhysicsManager(ComponentSystem):
         # TODO : Implement layers in order to ignore collisions within different layers
         self.layers_to_ignore = {}
 
-        # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS
-        self._dynamic_pool = []  # type: List[RigidBody]
-
         # world
         self.world = None
 
@@ -760,13 +747,8 @@ class PhysicsManager(ComponentSystem):
                     self.create_body(rb, e)
                 self.new_bodies.clear()
 
-                # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS
-                _ = lambda c: c
-                for rb in self._dynamic_pool:
-                    _(rb.entity.position)
-                    pass
-
                 # Update the physics world
+                # FIXME : Sometimes this line bugs
                 self.world.Step(
                     FIXED_DELTA_TIME * event.time_scale, 10, 10)
                 self.world.ClearForces()
@@ -774,23 +756,6 @@ class PhysicsManager(ComponentSystem):
                 # Debug Draw only if debug is activated
                 if self.logger.getEffectiveLevel() == logging.DEBUG:
                     self._dispatch(events.DebugDraw())
-
-    def on_component_added(self, event: events.ComponentAdded, dispatch: Callable[[Event], None]):
-        super().on_component_added(event, dispatch)
-
-        # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS
-        if isinstance(event.component, RigidBody):
-            if event.component.type == RigidBodyType.DYNAMIC:
-                self._dynamic_pool.append(event.component)
-
-    def on_component_removed(self, event: events.ComponentRemoved, dispatch):
-        super().on_component_removed(event, dispatch)
-
-        # FIXME : FIND A BETTER WAY TO IMPLEMENT THIS
-        for component in event.components:
-            if isinstance(component, RigidBody):
-                if component.type == RigidBodyType.DYNAMIC:
-                    self._dynamic_pool.remove(component)
 
     def on_debug_draw(self, event: events.DebugDraw, dispatch: Callable[[Event], None]):
         self.debug_drawer.StartDraw()
@@ -847,7 +812,6 @@ class PhysicsManager(ComponentSystem):
     def on_scene_stopped(self, event: events.SceneStopped, dispatch):
         super(PhysicsManager, self).on_scene_stopped(event, dispatch)
         self.world = None
-        self._dynamic_pool.clear()
 
     def create_body(self, rb: RigidBody, e: BaseEntity):
         """
@@ -940,7 +904,21 @@ class PhysicsManager(ComponentSystem):
         if isinstance(rb_a, RigidBody) and isinstance(rb_b, RigidBody):
             if rb_a.is_active and rb_b.is_active:
                 # enable collision only for active rigid bodies
-                if isinstance(collider_a, Collider) and isinstance(collider_b, Collider):
+                if isinstance(collider_a, CameraCollider) or isinstance(collider_b, CameraCollider):
+                    # If entity is camera, then it never should dispatch "Collision
+                    if began:
+                        if isinstance(collider_a, CameraCollider):
+                            # camera is a
+                            c_ev_b = CollisionEnter(collider=collider_b)
+                            c_ev_b.onlyEntity = collider_a.entity
+                            self._dispatch(c_ev_b)
+                        else:
+                            # camera is b
+                            c_ev_a = CollisionEnter(collider=collider_a)
+                            c_ev_a.onlyEntity = collider_b.entity
+                            self._dispatch(c_ev_a)
+
+                elif isinstance(collider_a, Collider) and isinstance(collider_b, Collider):
                     if collider_a.isSensor or collider_b.isSensor:
                         if self._dispatch:
                             if began:
@@ -1101,23 +1079,40 @@ class Physics(Service):
 class DebugDrawService(Service):
     """
     The service that helps to draw custom shape and others
-    TODO : Custom Draw
     """
     system_class = PhysicsManager
     _system_instance: PhysicsManager
 
-    def __init__(self, instance: PhysicsManager):
+    def __init__(self, instance):
         super().__init__(instance)
-        self.debug = instance.debug_drawer
+        self.debug = self._system_instance.debug_drawer
 
     @property
     def flags(self):
         return self._system_instance.debug_drawer.flags
 
+    @property
+    def drawShapes(self):
+        return self._system_instance.debug_drawer.flags.get("drawShapes", False)
+
+
+    @drawShapes.setter
+    def drawShapes(self, val: bool):
+        """
+        If set to True, When engine is run in Debug Mode, it should
+        show Shapes, else, it won't show shapes
+        """
+        if not isinstance(val, bool):
+            raise TypeError("Draw Shapes should be a bool")
+
+        self._system_instance.debug_drawer.flags["drawShapes"] = val
+
+
+
     @flags.setter
     def flags(self, val: dict):
         """
-        Get the draw flags
+        Set the draw flags
         TODO : Annotate attributes
         """
         if not isinstance(val, dict):

@@ -207,7 +207,7 @@ class Renderer(ComponentSystem):
                 # if cell is not empty, then draw a filled square else, draw a hollow square
                 shape2 = None
                 if in_cells:
-                    shape2 = Square((0, 0, 255, 100))
+                    shape2 = Square((0, 0, 255, 50))
 
                 shape = OutLinedSquare((0, 255, 0, 255))
 
@@ -302,6 +302,7 @@ class Renderer(ComponentSystem):
 
             scene = self.engine.current_scene
 
+
             for entity in scene.entity_layers():  # type: Union[kge.Sprite]
                 # Render only sprites
                 element = entity.renderer.render(scene)
@@ -316,9 +317,8 @@ class Renderer(ComponentSystem):
             new_win_size = Vector(self.window.width, self.window.height)
             if self.window_size != new_win_size:
                 self.window_size = new_win_size
-                self.engine.current_scene.main_camera.resolution = DottedDict(width=new_win_size.x,
-                                                                              height=new_win_size.y)
-                self._dispatch(events.WindowResized(self.window_size))
+                self.engine.current_scene.main_camera.resolution = new_win_size
+                self._dispatch(events.WindowResized(new_size=self.window_size))
 
 
 class WindowService(Service):

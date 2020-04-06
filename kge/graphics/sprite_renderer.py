@@ -133,7 +133,7 @@ class SpriteRenderer(RenderComponent):
         # Sprite attributes
         self._next_image = None  # type: Union[Image, None]
         self._image = None  # type: Union[Image, None]
-        self._sprite = None  # type: Union[None, pyglet.sprite.Sprite]
+        self._sprite = None  # type: Union[pyglet.sprite.Sprite, None]
 
         # Color
         self._color = WHITE
@@ -213,17 +213,13 @@ class SpriteRenderer(RenderComponent):
             self._vlist.delete()
             self._vlist = None
         if self._sprite is not None:
-            if self._sprite.visible:
-                self._sprite.visible = False
-            # self._sprite = None
+            self._sprite.delete()
+            self._sprite = None
 
     def on_enable_entity(self, ev: events.EnableEntity, dispatch):
         if self._sprite is not None:
             if not self._sprite.visible:
                 self._sprite.visible = True
-        # else:
-        #     try:
-        #         if self.
 
     def on_destroy_entity(self, ev: events.DestroyEntity, dispatch):
         """
@@ -233,8 +229,7 @@ class SpriteRenderer(RenderComponent):
             self._vlist.delete()
             self._vlist = None
         if self._sprite is not None:
-            if self._sprite.visible:
-                self._sprite.visible = False
+            self._sprite.delete()
             self._sprite = None
 
     def on_scene_stopped(self, ev: events.SceneStopped, dispatch):
@@ -325,57 +320,58 @@ class SpriteRenderer(RenderComponent):
         """
         Render the sprite
         """
-        # get camera
-        camera = scene.main_camera
-        win = kge.ServiceProvider.getWindow()
-        batch = win.batch
-        # values
-        pos = camera.world_to_screen_point(self.entity.position)
+        if self.entity.is_active:
+            # get camera
+            camera = scene.main_camera
+            win = kge.ServiceProvider.getWindow()
+            batch = win.batch
+            # values
+            pos = camera.world_to_screen_point(self.entity.position)
 
-        if self.entity is None or not isinstance(self.entity, kge.Sprite):
-            raise AttributeError(
-                "Sprite renderer components should be attached to Sprites ('kge.Sprite')")
-        else:
-            if self._next_image is not None:
-                self.set_image()
-
-            if not camera.in_frame(self.entity):
-                # FIXME : CAMERA CULLING DROP THE FRAME RATE FOR SPRITES (... WEIRD :( )
-                # If not in camera sight then the sprite should be invisible
-                if self._sprite is not None and self._sprite.batch is not None:
-                    # self._sprite.visible = False
-                    self._sprite.batch = None
-                else:
-                    # If vertex list is not in camera sight then we should delete it
-                    if self._vlist is not None:
-                        self._vlist.delete()
-                        self._vlist = None
+            if self.entity is None or not isinstance(self.entity, kge.Sprite):
+                raise AttributeError(
+                    "Sprite renderer components should be attached to Sprites ('kge.Sprite')")
             else:
-                if self._sprite is None:
-                    if not self._visible:
+                if self._next_image is not None:
+                    self.set_image()
+
+                if not camera.in_frame(self.entity):
+                    # FIXME : CAMERA CULLING DROP THE FRAME RATE FOR SPRITES (... WEIRD :( )
+                    # If not in camera sight then the sprite should be invisible
+                    if self._sprite is not None and self._sprite.batch is not None:
+                        # self._sprite.visible = False
+                        self._sprite.batch = None
+                    else:
+                        # If vertex list is not in camera sight then we should delete it
                         if self._vlist is not None:
                             self._vlist.delete()
                             self._vlist = None
-                        return None
-                    else:
-                        return self.draw_shape(camera)
                 else:
-                    if not self._visible:
-                        if self._sprite.batch is not None:
-                            self._sprite.batch = None
+                    if self._sprite is None:
+                        if not self._visible:
+                            if self._vlist is not None:
+                                self._vlist.delete()
+                                self._vlist = None
+                            return None
+                        else:
+                            return self.draw_shape(camera)
                     else:
-                        if self._sprite.batch is None:
-                            self._sprite.batch = batch
+                        if not self._visible:
+                            if self._sprite.batch is not None:
+                                self._sprite.batch = None
+                        else:
+                            if self._sprite.batch is None:
+                                self._sprite.batch = batch
 
-                        if self._sprite.opacity != self._opacity:
-                            self._sprite.opacity = self._opacity
+                            if self._sprite.opacity != self._opacity:
+                                self._sprite.opacity = self._opacity
 
-                        if self._sprite.color != tuple(self._color[:3]):
-                            self._sprite.color = tuple(self._color[:3])
+                            if self._sprite.color != tuple(self._color[:3]):
+                                self._sprite.color = tuple(self._color[:3])
 
-                        self._sprite.update(pos.x, pos.y, -self.entity.transform.angle,
-                                            scale_x=self.entity.transform.scale.x * camera.zoom,
-                                            scale_y=self.entity.transform.scale.y * camera.zoom,
-                                            )
+                            self._sprite.update(pos.x, pos.y, -self.entity.transform.angle,
+                                                scale_x=self.entity.transform.scale.x * camera.zoom,
+                                                scale_y=self.entity.transform.scale.y * camera.zoom,
+                                                )
 
-                    return None
+                        return None

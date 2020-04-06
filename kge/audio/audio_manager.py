@@ -15,6 +15,7 @@ class AudioManager(System):
     """
     Audio System
     TODO : POSITIONNAL AUDIO WITH AUDIO SOURCE
+    FIXME : SOUND SOMETIMES BUGS
     """
     _players: List[pyglet.media.Player] = []
     _args: List[Tuple] = []

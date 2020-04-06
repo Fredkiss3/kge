@@ -8,7 +8,7 @@ It is built on top of the [pyglet](https://pyglet.org) library for rendering, an
 If you have any issue you can add an issue to the repository. I will be very pleased to help.
 
 ## Requirements
-kge runs under python 3.7 Being written in pure Python, it also works on other Python interpreters such as PyPy. Supported platforms are:
+kge runs under ``python 3.7`` Being written in pure Python, it also works on other Python interpreters such as PyPi. Supported platforms are:
    - Windows 7 or later
    - Linux, with the following libraries (most recent distributions will have these in a default installation):
         - OpenGL and GLX
@@ -17,7 +17,7 @@ kge runs under python 3.7 Being written in pure Python, it also works on other P
  
 ## Installation
 
-pyglet is installable from PyPI:
+kge is installable from PyPI:
 
     pip install --upgrade --user kge
     

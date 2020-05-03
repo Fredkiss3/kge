@@ -1,7 +1,7 @@
+import math
 import random
 from typing import Union, Sequence, Optional
 
-import math
 import pyglet
 from pyglet.gl import *
 
@@ -9,123 +9,43 @@ import kge
 from kge.core import events
 from kge.core.constants import (
     DEFAULT_SPRITE_RESOLUTION,
-    DEFAULT_PIXEL_RATIO, WHITE)
+    DEFAULT_PIXEL_RATIO, REFERENCE_PIXEL_RATIO)
 from kge.graphics.image import Image
 from kge.graphics.render_component import RenderComponent
+from kge.graphics.shapes import Shape, Circle, Square, Triangle
+from kge.utils.color import Color
 from kge.utils.vector import Vector
 
 
-class Shape:
-    """Shapes are drawing primitives that are good for rapid prototyping."""
+def make_pixelated(sprite: pyglet.sprite.Sprite):
+    """ Make the group of this sprite pixelated.
 
-    def __init__(self, color: Sequence[int]):
-        self.color = (color[0], color[1], color[2], color[3])
-        self.vertices = [Vector.Zero()]
-        self.mode = GL_POINTS
-        self.num_points = 1
-
-
-class Square(Shape):
+    :param sprite: pyglet.sprite.Sprite
+    :return: None
     """
-    A square image of a single color.
-    """
+    import types
 
-    def __init__(self, color: Sequence[int]):
-        super().__init__(color)
-        self.vertices = [
-            Vector(-1 / 2, 1 / 2),
-            Vector(1 / 2, 1 / 2),
-            Vector(1 / 2, -1 / 2),
-            Vector(-1 / 2, -1 / 2),
-        ]
+    def set_state(self):
+        glEnable(self.texture.target)
+        glBindTexture(self.texture.target, self.texture.id)
+        glPushAttrib(GL_COLOR_BUFFER_BIT)
+        glEnable(GL_BLEND)
+        glTexParameteri(self.texture.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glBlendFunc(self.blend_src, self.blend_dest)
 
-        self.mode = GL_QUADS
-        self.num_points = 4
-
-
-class OutLinedSquare(Square):
-    """
-    An outlined square of a single color.
-    """
-
-    def __init__(self, color: Sequence[int]):
-        super().__init__(color)
-
-        self.vertices = [
-            # Horizontal
-            Vector(-1 / 2, 1 / 2),
-            Vector(1 / 2, 1 / 2),
-            Vector(1 / 2, -1 / 2),
-            Vector(-1 / 2, -1 / 2),
-            # Vertical
-            Vector(-1 / 2, -1 / 2),
-            Vector(-1 / 2, 1 / 2),
-            Vector(1 / 2, 1 / 2),
-            Vector(1 / 2, -1 / 2),
-        ]
-        self.mode = GL_LINES
-        self.num_points = 8
-
-
-class Triangle(Shape):
-    """
-    A triangle image of a single color.
-    """
-
-    def __init__(self, color: Sequence[int]):
-        super(Triangle, self).__init__(color)
-        self.num_points = 3
-        self.vertices = [
-            Vector(0, 1 / 2),
-            Vector(1 / 2, -1 / 2),
-            Vector(-1 / 2, -1 / 2),
-        ]
-        self.mode = GL_TRIANGLES
-
-
-class OutlinedTriangle(Triangle):
-    def __init__(self, color: Sequence[int]):
-        super().__init__(color)
-        self.vertices = [
-            # First Line
-            Vector(0, 1 / 2),
-            Vector(1 / 2, -1 / 2),
-
-            # Second Line
-            Vector(1 / 2, -1 / 2),
-            Vector(-1 / 2, -1 / 2),
-
-            # Third Line
-            Vector(-1 / 2, -1 / 2),
-            Vector(0, 1 / 2),
-        ]
-        self.num_points = 6
-        self.mode = GL_LINES
-
-
-class Circle(Shape):
-    """
-    A circle image of a single color.
-    """
-
-    def __init__(self, color: Sequence[int], radius=None):
-        super().__init__(color)
-        self.center = Vector(0, 0)
-        self.radius = radius
-        self.mode = GL_TRIANGLE_FAN
-        self.num_points = 22
-
-
-class OutlinedCircle(Circle):
-    def __init__(self, color: Sequence[int], radius=1 / 2):
-        super().__init__(color, radius)
-        self.mode = GL_LINE_LOOP
+    group = sprite._group
+    group.set_state = types.MethodType(set_state, group)
 
 
 class SpriteRenderer(RenderComponent):
     """
     A component that holds the visual information of a sprite
     """
+
+    # Circle Cache
+    circle_segments = 40
+    circle_cache_tf = {}  # triangle fan (inside)
+    circle_cache_ll = {}  # line loop (border)
 
     def __init__(self, entity):
         super().__init__(entity)
@@ -136,8 +56,7 @@ class SpriteRenderer(RenderComponent):
         self._sprite = None  # type: Union[pyglet.sprite.Sprite, None]
 
         # Color
-        self._color = WHITE
-        self._opacity = 255
+        self._color = None  # type: Optional[Color]
         self._visible = True
 
         # generate shape
@@ -145,8 +64,11 @@ class SpriteRenderer(RenderComponent):
         r = random.randint(65, 255)
         g = random.randint(65, 255)
         b = random.randint(65, 255)
-        a = random.randint(65, 255)
-        self.shape = Square((r, g, b, a))
+        a = random.randint(65, 255) / 255
+
+        # Shape Color & Opacity (Temporary...)
+        self._shape_color = Color(r, g, b, a)
+        self.shape = Square()
 
         # Vertex List (if shape)
         self._vlist = None  # type: Optional[pyglet.graphics.vertexdomain.VertexList]
@@ -157,9 +79,104 @@ class SpriteRenderer(RenderComponent):
         self._h = DEFAULT_SPRITE_RESOLUTION[1] * \
                   abs(self.entity.transform.scale.y)
 
+    def _getLLCircleVertices(self, radius, points):
+        """
+        Get the line loop-style vertices for a given circle.
+        Drawn as lines.
+
+        "Line Loop" is used as that's how the C++ code draws the
+        vertices, with lines going around the circumference of the
+        circle (GL_LINE_LOOP).
+
+        This returns 'points' amount of lines approximating the
+        border of a circle.
+
+        (x1, y1, x2, y2, x3, y3, ...)
+        """
+        ret = []
+        step = 2 * math.pi / points
+        n = 0
+        for i in range(points):
+            ret.append((math.cos(n) * radius, math.sin(n) * radius))
+            n += step
+            ret.append((math.cos(n) * radius, math.sin(n) * radius))
+        return ret
+
+    def _getTFCircleVertices(self, radius, points):
+        """
+        Get the triangle fan-style vertices for a given circle.
+        Drawn as triangles.
+
+        "Triangle Fan" is used as that's how the C++ code draws the
+        vertices, with triangles originating at the center of the
+        circle, extending around to approximate a filled circle
+        (GL_TRIANGLE_FAN).
+
+        This returns 'points' amount of lines approximating the
+        circle.
+
+        (a1, b1, c1, a2, b2, c2, ...)
+        """
+        ret = []
+        step = 2 * math.pi / points
+        n = 0
+        for i in range(points):
+            ret.append((0.0, 0.0))
+            ret.append((math.cos(n) * radius, math.sin(n) * radius))
+            n += step
+            ret.append((math.cos(n) * radius, math.sin(n) * radius))
+        return ret
+
+    def getCircleVertices(self, camera: 'kge.Camera', center, radius, points, solid=True):
+        """
+        Returns the triangles that approximate the circle and
+        the lines that border the circles edges, given
+        (center, radius, points).
+
+        Caches the calculated LL/TF vertices, but recalculates
+        based on the center passed in.
+
+        Currently, there's only one point amount,
+        so the circle cache ignores it when storing. Could cause
+        some confusion if you're using multiple point counts as
+        only the first stored point-count for that radius will
+        show up.
+
+        Returns: (tf_vertices, ll_vertices)
+        """
+        if radius not in self.circle_cache_tf:
+            if solid:
+                self.circle_cache_tf[radius] = self._getTFCircleVertices(radius, points)
+            else:
+                self.circle_cache_ll[radius] = self._getLLCircleVertices(radius, points)
+
+        vertices = []
+
+        if solid:
+            for x, y in self.circle_cache_tf[radius]:
+                vertices.extend(
+                    (camera.world_to_screen_point(Vector(x + center[0], y + center[1]), ))
+                )
+        else:
+            for x, y in self.circle_cache_ll[radius]:
+                vertices.extend(
+                    (camera.world_to_screen_point(Vector(x + center[0], y + center[1]), ))
+                )
+        return vertices
+
     def draw_shape(self, camera: "kge.Camera"):
+        """
+        Draw a placeholder shape for the sprite
+        """
         scale = self.entity.transform.scale
         vertices = []
+
+        # Default Values when color not specified
+        if self._color is not None:
+            color = self._color
+        else:
+            color = self._shape_color
+
         if isinstance(self.shape, (Triangle, Square)):
             for v in self.shape.vertices:
                 vertices.extend(
@@ -185,9 +202,28 @@ class SpriteRenderer(RenderComponent):
                                                       ("v2d/stream",
                                                        tuple(vertices)),
                                                       ("c4Bn/dynamic",
-                                                       self.shape.color * self.shape.num_points))
-            # self._vlist.draw(self.shape.mode)
+                                                       tuple(color) * self.shape.num_points))
+            self._vlist.draw(self.shape.mode)
             return self._vlist, self.shape.mode
+
+            # FIXME: THIS DOES NOT WORK PROPERLY
+            # if self.shape.radius is None:
+            #     self.shape.radius = max(
+            #         self.entity.scale.x, self.entity.scale.y) / 2
+            #
+            # # real world position
+            # pos = self.entity.position
+            #
+            # solid = not isinstance(self.shape, OutlinedCircle)
+            # vertices = self.getCircleVertices(camera,
+            #                                   pos,
+            #                                   self.shape.radius,
+            #                                   self.circle_segments,
+            #                                   solid
+            #                                   )
+            #
+            # self.shape.num_points = len(vertices) // 2
+
         else:
             return
 
@@ -200,10 +236,11 @@ class SpriteRenderer(RenderComponent):
             self._vlist = batch.add(self.shape.num_points, self.shape.mode, layers[self.entity.layer],
                                     ("v2d/stream", tuple(vertices)),
                                     ("c4Bn/dynamic",
-                                     self.shape.color * self.shape.num_points))  # type: pyglet.graphics.vertexdomain.VertexList
+                                     tuple(color) * self.shape.num_points))  # type: pyglet.graphics.vertexdomain.VertexList
         else:
             # Update vertices
             self._vlist.vertices = vertices
+            self._vlist.colors = (*color,) * self.shape.num_points
 
     def on_disable_entity(self, ev: events.DisableEntity, dispatch):
         """
@@ -258,6 +295,9 @@ class SpriteRenderer(RenderComponent):
                 group=layers[self.entity.layer]
             )
 
+            # Make the sprite pixelated
+            make_pixelated(self._sprite)
+
             if self._vlist is not None:
                 self._vlist.delete()
                 self._vlist = None
@@ -287,13 +327,15 @@ class SpriteRenderer(RenderComponent):
                 f"image should be of type 'kge.Image' or 'kge.Shape'")
 
         if isinstance(val, Image):
-            self._next_image = val
+            # Set image only if next image is different
+            if self._image != val:
+                self._next_image = val
         else:
             self.shape = val
 
     @property
     def opacity(self):
-        return self._opacity
+        return self._shape_color.alpha if self._color is None else self._color.alpha
 
     @opacity.setter
     def opacity(self, val: float):
@@ -303,7 +345,9 @@ class SpriteRenderer(RenderComponent):
             if not 0 <= val <= 1:
                 raise ValueError("Sprite Opacity should be a float between 0 and 1")
 
-            self._opacity = val * 255
+            if self._color is None:
+                self._color = Color(self._shape_color.red, self._shape_color.green, self._shape_color.blue, val)
+            self._color.alpha = val
 
     @property
     def visible(self):
@@ -315,6 +359,31 @@ class SpriteRenderer(RenderComponent):
             raise TypeError("Sprite Visible Attribute should be a boolean")
 
         self._visible = val
+
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, val: Union[Sequence[int], Color]):
+        val = tuple(val)
+        if not isinstance(val, (tuple)):
+            raise TypeError(
+                "Sprite color should be a tuple of integers in form : (red, green, blue), example: (255, 255, 225)")
+
+        if not len(val) >= 3:
+            raise IndexError(
+                "Too little arguments for Sprite color !\n should be a tuple of integers in form : (red, green, blue), example: (255, 255, 225)")
+
+        r, g, b = val[:3]
+
+        if self._color is None:
+            self._color = Color(r, g, b, 1)
+            self._color.alpha = self._shape_color.alpha
+        else:
+            self._color.red = r
+            self._color.green = g
+            self._color.blue = b
 
     def render(self, scene: "kge.Scene", ):
         """
@@ -335,43 +404,42 @@ class SpriteRenderer(RenderComponent):
                 if self._next_image is not None:
                     self.set_image()
 
-                if not camera.in_frame(self.entity):
-                    # FIXME : CAMERA CULLING DROP THE FRAME RATE FOR SPRITES (... WEIRD :( )
-                    # If not in camera sight then the sprite should be invisible
-                    if self._sprite is not None and self._sprite.batch is not None:
-                        # self._sprite.visible = False
-                        self._sprite.batch = None
-                    else:
-                        # If vertex list is not in camera sight then we should delete it
+                shape = None
+                if self._sprite is None:
+                    if not self._visible:
                         if self._vlist is not None:
                             self._vlist.delete()
                             self._vlist = None
-                else:
-                    if self._sprite is None:
-                        if not self._visible:
-                            if self._vlist is not None:
-                                self._vlist.delete()
-                                self._vlist = None
-                            return None
-                        else:
-                            return self.draw_shape(camera)
                     else:
-                        if not self._visible:
-                            if self._sprite.batch is not None:
-                                self._sprite.batch = None
-                        else:
-                            if self._sprite.batch is None:
-                                self._sprite.batch = batch
+                        shape = self.draw_shape(camera)
+                else:
+                    if not self._visible:
+                        if self._sprite.batch is not None:
+                            self._sprite.batch = None
+                    else:
+                        if self._sprite.batch is None:
+                            self._sprite.batch = batch
 
-                            if self._sprite.opacity != self._opacity:
-                                self._sprite.opacity = self._opacity
+                        if self._color is not None and self._sprite.opacity != self._color[-1]:
+                            self._sprite.opacity = self._color[-1]
 
-                            if self._sprite.color != tuple(self._color[:3]):
-                                self._sprite.color = tuple(self._color[:3])
+                        if self._color is not None and self._sprite.color != tuple(self._color):
+                            self._sprite.color = self._color[:3]
 
-                            self._sprite.update(pos.x, pos.y, -self.entity.transform.angle,
-                                                scale_x=self.entity.transform.scale.x * camera.zoom,
-                                                scale_y=self.entity.transform.scale.y * camera.zoom,
-                                                )
+                        ratio = DEFAULT_PIXEL_RATIO / REFERENCE_PIXEL_RATIO
 
-                        return None
+                        self._sprite.update(pos.x, pos.y, -self.entity.transform.angle,
+                                            scale_x=self.entity.transform.scale.x * camera.zoom * ratio,
+                                            scale_y=self.entity.transform.scale.y * camera.zoom * ratio,
+                                            )
+
+                # Remove From 'dirties' only if it not a dynamic RigidBody
+                rb = self.entity.getComponent(kind=kge.RigidBody)
+                dirty = False
+                if rb is not None:
+                    if rb.body_type == kge.RigidBodyType.DYNAMIC:
+                        dirty = True
+
+                # mark/unmark as dirty
+                self.entity.dirty = dirty
+                return shape

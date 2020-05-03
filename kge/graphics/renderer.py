@@ -1,77 +1,146 @@
+import io
 import logging
+import sys
 import time
-from typing import Union, List, Sequence
+from typing import Union, List, Optional, Tuple
 
+import imgui
 import pyglet
-from math import ceil
+from imgui.integrations.pyglet import PygletRenderer
 from pyglet.gl import *
 
 import kge
 from kge.core import events
 from kge.core.component_system import ComponentSystem
 from kge.core.constants import DEFAULT_RESOLUTION, IS_FULLSCREEN, IS_RESIZABLE, DEFAULT_FPS, BLACK, \
-    MAX_LAYERS
+    MAX_LAYERS, RED, WHITE, YELLOW
 from kge.core.service import Service
 from kge.graphics.render_component import RenderComponent
-from kge.utils.dotted_dict import DottedDict
+from kge.utils.color import Color
 from kge.utils.vector import Vector
 
 
-class Square:
+class DebugConsole(object):
     """
-    FIXME : REMOVE THIS (?)
+    Console Used For DEBUG, it aims to wraps IMGUI calls
     """
+    input: str = ""
+    items: List[Tuple[str, Color]] = []
+    output_stream: io.StringIO = io.StringIO()
+    scroll_down: bool = False
 
-    def __init__(self, color: Sequence[int]):
-        self.color = (color[0], color[1], color[2], color[3])
+    def add_log(self, log: str):
+        self.items.append((log, YELLOW))
 
-        self.vertices = [
-            Vector(-1 / 2, 1 / 2),
-            Vector(1 / 2, 1 / 2),
-            Vector(1 / 2, -1 / 2),
-            Vector(-1 / 2, -1 / 2),
-        ]
+    def add_error(self, error):
+        self.items.append((error, RED))
 
-        self.mode = GL_QUADS
-        self.num_points = 4
+    def add_output(self, output: str):
+        self.items.append((output, WHITE))
 
+    def render(self, fps: str):
+        # Imgui Renderer
+        imgui.new_frame()
 
-class OutLinedSquare:
-    """
-    FIXME : REMOVE THIS (?)
-    """
+        imgui.begin("Debug Console", False, imgui.WINDOW_HORIZONTAL_SCROLLING_BAR)
 
-    def __init__(self, color: Sequence[int]):
-        self.color = (color[0], color[1], color[2], color[3])
+        # Show Everything
+        self._show_fps(fps)
+        self._show_input_line()
+        self._show_text_output()
 
-        self.vertices = [
-            # Horizontal
-            Vector(-1 / 2, 1 / 2),
-            Vector(1 / 2, 1 / 2),
-            Vector(1 / 2, -1 / 2),
-            Vector(-1 / 2, -1 / 2),
-            # Vertical
-            Vector(-1 / 2, -1 / 2),
-            Vector(-1 / 2, 1 / 2),
-            Vector(1 / 2, 1 / 2),
-            Vector(1 / 2, -1 / 2),
-        ]
-        self.mode = GL_LINES
-        self.num_points = 8
+        imgui.end()
+
+        # Render Imgui
+        imgui.render()
+
+    def _show_input_line(self):
+        # [SECTION] INPUT LINE
+        imgui.begin_child(
+            "INPUT LINE", height=40, border=True)
+
+        # CLear Button
+        if imgui.button('CLEAR', height=20, width=50):
+            self.items.clear()
+
+        # Set Same Line
+        imgui.same_line()
+
+        # Scroll Bottom Button
+        self.scroll_down = imgui.button('BOTTOM', height=20, width=50)
+
+        # Set Same Line
+        imgui.same_line()
+
+        # Show Filter TextField
+        changed, self.input = imgui.input_text(
+            'Filter',
+            self.input,
+            256
+        )
+
+        imgui.end_child()
+
+    def _show_text_output(self):
+        # [SECTION] LINE
+        imgui.begin_child(
+            "TEXT OUTPUT", border=True,
+            flags=imgui.WINDOW_HORIZONTAL_SCROLLING_BAR)
+
+        items = filter(lambda i: self.input.lower() in i[0], self.items)
+        for item, color in items:
+            # if self.input.lower() in item.lower():
+            imgui.text_colored(item, *[c / 255 for c in color])
+
+        if self.scroll_down or imgui.get_scroll_y() >= imgui.get_scroll_max_y():
+            imgui.set_scroll_here(1.0)
+
+        imgui.end_child()
+
+    def _show_fps(self, fps: str):
+        # [SECTION] FPS
+        imgui.begin_child(
+            "FPS", height=30, border=True, )
+
+        imgui.text(f"GAME FPS : {fps}")
+        imgui.end_child()
 
 
 class Renderer(ComponentSystem):
     """
     The system which task is to render all elements in a scene
     TODO:
+        - Show Console
+        - Set Pixel Ratio Dynamically
         - Set FullScreen by script
-        - Resize by script
-        - Make this system generic for all kinds of graphic elements
+        - Resize Window by script
+        - LOOK FOR 'pyglet Combining multiples images or textures into one'
+            -> For Tiling
+        - LOOK FOR 'pyglet Z ordering with Sprite' -> For Applying 'Order in layer' (?)
     """
 
-    def __init__(self, resolution=DEFAULT_RESOLUTION, fullscreen=IS_FULLSCREEN, resizable=IS_RESIZABLE, vsync=True,
+    def __init__(self,
+                 resolution=DEFAULT_RESOLUTION,
+                 show_console=False,
+                 console_output: io.StringIO = io.StringIO(),
+                 fullscreen=IS_FULLSCREEN, resizable=IS_RESIZABLE, vsync=False,
                  **_):
         super().__init__(**_)
+
+        # Show Debug Console
+        self.display_console = show_console
+
+        # String IO for console debugging
+        self.log_output = console_output
+        self.err_output = io.StringIO()
+        self.output = io.StringIO()
+
+        # Debug Console
+        self._console = DebugConsole()
+
+        # To Draw
+        self.to_draw = []
+
         self.components_supported = [RenderComponent]
         self.accumulated_time = 0
         self.last_tick = None
@@ -94,17 +163,36 @@ class Renderer(ComponentSystem):
         self.batch = None  # type: Union[pyglet.graphics.Batch, None]
         self.grid_batch = None  # type: Union[pyglet.graphics.Batch, None]
 
-        # FPS COUNTER
-        self.fps_display = None  # type: Union[pyglet.window.FPSDisplay, pyglet.text.Label, None]
-
         # layers
         self.layers = [pyglet.graphics.OrderedGroup(i) for i in range(MAX_LAYERS)]
-        # self.window_size = Vector.Zero()
-        self.to_draw = []  # Vertices to draw
 
         # Frame calculations
         self.fps = 0
+        self.FPS = 0
         self.last_step = time.monotonic()
+
+        # imgui implementation
+        self.imgui_impl = None  # type: Optional[PygletRenderer]
+
+        # TODO : UI Batch (?)
+        self.ui_batch = pyglet.graphics.Batch()
+        # TODO : TO REMOVE
+        self._loaded = False
+        self.loading_label = None  # type: Optional[pyglet.text.Label]
+
+
+    def on_window_resized(self, event: events.WindowResized, dispatch):
+        """
+        FIXME : IS IT PERFORMANT ENOUGH ?
+        :param event:
+        :param dispatch:
+        :return:
+        """
+        scene = self.engine.current_scene
+        if scene is not None:
+            for canvas in scene.entity_layers(kge.Canvas, renderable=False):  # type: kge.Canvas
+                canvas.renderer.delete()
+                canvas.dirty = True
 
     def on_disable_entity(self, event: events.DisableEntity, dispatch):
         if hasattr(event.entity, "renderer"):
@@ -128,7 +216,12 @@ class Renderer(ComponentSystem):
 
         # clear components & remake the batch
         self.batch = pyglet.graphics.Batch()
+
         self.window_size = Vector.Zero()
+
+        # keep camera zoom
+        self._zoom = 1
+
         super(Renderer, self).on_scene_stopped(event, dispatch)
 
     def __enter__(self):
@@ -141,30 +234,46 @@ class Renderer(ComponentSystem):
             caption=f"{self.engine.window_title}"
         )
 
+        # show console ?
+        if self.display_console:
+            sys.stdout = self.output
+            sys.stderr = self.err_output
+
+        # Minimum size only if resizable
+        if self._is_resizable:
+            self.window.set_minimum_size(200, 200)
+
         # Batch for drawing
-        # self.fps_display = pyglet.window.FPSDisplay(window=self.window)
-        self.fps_display = pyglet.text.Label(x=10, y=10,
-                                             font_size=24, bold=True,
-                                             color=(127, 127, 127, 200))
         self.batch = pyglet.graphics.Batch()
 
         # Window events
         self.window.on_draw = lambda: self.draw()
         self.window.on_close = lambda: self.close()
-        # self.window.on_resize = lambda w, h: self.resize_viewport(w, h)
-
-        # Keeping the resolution
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
         # Enable Alpha transparency
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        # create imgui context
+        imgui.create_context()
+        self.imgui_impl = PygletRenderer(self.window)
+
         # Schedule render update to the time step
         pyglet.clock.schedule(self.render)
 
+        # TODO : LOADING LABEL
+        self.loading_label = pyglet.text.Label(
+            'PREPARING ENTITIES...', font_size=20, bold=True,
+            x = 20,
+            y = 40,
+            batch=self.batch,
+            group=pyglet.graphics.OrderedGroup(100)
+        )
+
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.engine.event_loop.has_exit = True
+        self.imgui_impl.shutdown()
 
     def on_quit(self, ev: events.Quit, dispatch):
         if self.engine is not None:
@@ -173,117 +282,6 @@ class Renderer(ComponentSystem):
     def close(self):
         self._dispatch(events.Quit(), immediate=True)
         self.window.close()
-        return pyglet.event.EVENT_HANDLED
-
-    def display_grid(self):
-        """
-        FIXME : ONLY FOR DEV PURPOSES
-        """
-        hash = self.engine.current_scene.spatial_hash
-        camera = self.engine.current_scene.main_camera
-
-        # cell size
-        size = self.engine.current_scene.spatial_hash.cell_size
-        # size_pixels = camera.unit_to_pixels(self.engine.current_scene.spatial_hash.cell_size) # type: float
-
-        # Frame width & height
-        fw, fh = camera.frame_width, camera.frame_height
-
-        # number of columns & Lines
-        nb_cols = int(ceil(fw / size))
-        nb_lines = int(ceil(fh / size))
-
-        # the beginning positions
-        depX, depY = camera.frame_left + size / 2, camera.real_frame_bottom + size / 2
-        posY = depY
-
-        for i in range(nb_lines):
-            posX = depX
-            for j in range(nb_cols):
-                curPos = Vector(posX, posY)
-                # find if cells is not empty
-                in_cells = hash.search(curPos, Vector.Unit() * (size / 4))
-
-                # if cell is not empty, then draw a filled square else, draw a hollow square
-                shape2 = None
-                if in_cells:
-                    shape2 = Square((0, 0, 255, 50))
-
-                shape = OutLinedSquare((0, 255, 0, 255))
-
-                vertices = []
-
-                # calculate new vertices for the grid
-                for v in shape.vertices:
-                    vertices.extend(
-                        tuple(camera.world_to_screen_point(
-                            curPos + v * size
-                        ))
-                    )
-
-                self.grid_batch.add(
-                    shape.num_points, shape.mode, pyglet.graphics.OrderedGroup(25),
-                    ("v2d/stream", tuple(vertices)),
-                    ("c4Bn/dynamic",
-                     shape.color * shape.num_points)
-                )
-
-                if shape2 is not None:
-                    vertices = []
-                    # calculate new vertices for the grid
-                    for v in shape2.vertices:
-                        vertices.extend(
-                            tuple(camera.world_to_screen_point(
-                                curPos + v * size
-                            ))
-                        )
-
-                    self.grid_batch.add(
-                        shape2.num_points, shape2.mode, pyglet.graphics.OrderedGroup(24),
-                        ("v2d/stream", tuple(vertices)),
-                        ("c4Bn/dynamic",
-                         shape2.color * shape2.num_points)
-                    )
-
-                posX += size
-            posY += size
-
-    def draw(self):
-        """
-        Draw the window
-        """
-        now = time.monotonic()
-
-        if now - self.last_step >= 1:
-            self.fps_display.text = f"{self.fps} FPS"
-            self.last_step = time.monotonic()
-            self.fps = 0
-        self.fps += 1
-
-        # Clear the screen
-        self.window.clear()
-        glClearColor(*self._bgc, 1)
-
-        self.batch.draw()
-
-        if self.to_draw:
-            for shape, mode in self.to_draw:
-                shape.draw(mode)
-
-        # Draw physics data
-        if self.logger.getEffectiveLevel() == logging.DEBUG:
-            physX = kge.ServiceProvider.getPhysics()
-            physX.debug_drawer.batch.draw()
-
-        # display Grid
-        if self.engine.current_scene.show_grid == True:
-            # print(self.grid_batch.group_map)
-            self.grid_batch.draw()
-
-        # Display FPS
-        if self.engine.current_scene.display_fps == True:
-            self.fps_display.draw()
-
         return pyglet.event.EVENT_HANDLED
 
     def render(self, dt: float):
@@ -298,30 +296,128 @@ class Renderer(ComponentSystem):
                 unit / 255 for unit in scene.background_color[:3]
             )
 
-            self.to_draw = []
-
             scene = self.engine.current_scene
 
+            self.to_draw = []
+            dirties = set(scene.dirties)
+            i = 0
+            if not self._loaded:
+                self.loading_label.text = "RENDERING ENTITIES..."
 
-            for entity in scene.entity_layers():  # type: Union[kge.Sprite]
-                # Render only sprites
-                element = entity.renderer.render(scene)
-                if element is not None:
-                    self.to_draw.append(element)
+            # for entity in scene.entity_layers():  # type: Union[kge.Sprite, kge.Canvas]
+            for entity in dirties:  # type: Union[kge.Sprite, kge.Canvas]
+                # Render elements
+                shape = entity.renderer.render(scene)
+                if shape is not None:
+                    self.to_draw.append(shape)
 
-            # FIXME : ONLY FOR DEV PURPOSES
-            if self.engine.current_scene.show_grid:
-                self.grid_batch = pyglet.graphics.Batch()
-                self.display_grid()
+                i += 1
 
+            if not self._loaded and i > 0:
+                self._loaded = True
+                self.loading_label.delete()
+
+            cam = self.engine.current_scene.main_camera
             new_win_size = Vector(self.window.width, self.window.height)
-            if self.window_size != new_win_size:
-                self.window_size = new_win_size
-                self.engine.current_scene.main_camera.resolution = new_win_size
-                self._dispatch(events.WindowResized(new_size=self.window_size))
+            if self.window_size != new_win_size or self._zoom != cam.zoom:
+                self._zoom = cam.zoom
+
+                if self.window_size != new_win_size:
+                    self.window_size = new_win_size
+                    cam.resolution = new_win_size
+                    self._dispatch(events.WindowResized(new_size=self.window_size))
+
+                # TODO : IS THIS PERFORMANT ENOUGH ? -> NOT !!
+                # Set all flags to dirty in order to re-render it the next frame
+                # for e in scene:
+                #     e.dirty = True
+
+    def set2d(self):
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        gluOrtho2D(0, self.window.width, 0, self.window.height)
+        # glOrtho(0, window.width, 0, window.height, -1, 1)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+    def draw(self):
+        """
+        Draw the window
+        """
+        now = time.monotonic()
+        cam = self.engine.current_scene.main_camera
+
+        if now - self.last_step >= 1:
+            self.FPS = self.fps
+            self.last_step = time.monotonic()
+            self.fps = 0
+        self.fps += 1
+
+        # Clear the screen
+        self.window.clear()
+        glClearColor(*self._bgc, 1)
+
+        # Push the Matrix and Translate ViewPort
+        glPushMatrix()
+        self.set2d()
+        glScalef(cam.zoom, cam.zoom, 1.0)
+        glTranslatef(*cam.unit_to_pixels(Vector(
+            -cam.position.x,
+            cam.position.y,
+        )), 0)
+
+        # Draw the current Batch
+        self.batch.draw()
+        for shape, mode in self.to_draw:
+            glPointSize(2.0)
+            shape.draw(mode)
+            glPointSize(1.0)
+
+        # Draw physics data
+        if self.logger.getEffectiveLevel() == logging.DEBUG:
+            debug = kge.DebugDraw
+            debug.world_batch.draw()
+            debug.debug_batch.draw()
+
+        glPopMatrix()
+
+        # Display Debug Console
+        if self.display_console:
+            self.show_console(f"{self.FPS}")
+
+        self.imgui_impl.render(imgui.get_draw_data())
+
+        return pyglet.event.EVENT_HANDLED
+
+    def show_console(self, fps: str):
+        """
+        Show the console
+        """
+        # SIMPLE OUTPUT
+        val = self.output.getvalue()
+        if len(val) > 0:
+            self.output.truncate(0)
+            self.output.seek(0)
+            self._console.add_output(val)
+
+        # Log Output
+        val = self.log_output.getvalue()
+        if len(val) > 0:
+            self.log_output.truncate(0)
+            self.log_output.seek(0)
+            self._console.add_log(val)
+
+        # Error Output
+        val = self.err_output.getvalue()
+        if len(val) > 0:
+            self.err_output.truncate(0)
+            self.err_output.seek(0)
+            self._console.add_error(val)
+
+        self._console.render(fps)
 
 
-class WindowService(Service):
+class Window(Service):
     system_class = Renderer
     _system_instance: Renderer
 
@@ -329,7 +425,7 @@ class WindowService(Service):
     def window(self) -> pyglet.window.Window:
         return self._system_instance.window
 
-    # FIXME : FULLSCREEN NOT WORKING PROPERLY
+    # FIXME : FULLSCREEN NOT WORKING PROPERLY ?
     @property
     def fullscreen(self) -> bool:
         return self._system_instance.window.fullscreen
@@ -338,7 +434,7 @@ class WindowService(Service):
     def fullscreen(self, value: bool):
         if not isinstance(value, bool):
             raise TypeError("Fullscreen should be a bool")
-        self._system_instance.window.set_fullscreen(value)
+        self._system_instance.window.set_fullscreen(value, width=self.window.width, height=self.window.height)
 
     @property
     def batch(self) -> pyglet.graphics.Batch:

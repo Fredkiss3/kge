@@ -1,5 +1,6 @@
-from typing import List, Type, Dict
+from typing import List, Type, Dict, Set
 
+import kge
 from kge.core import events
 from kge.core.component import Component
 from kge.core.system import System
@@ -27,7 +28,8 @@ class ComponentSystem(System):
 
         # components types and components associated to this entity
         self.components_supported = []  # type: List[Type[Component]]
-        self._components = []  # type: List[Component]
+        self._components = set()  # type: Set[Component]
+        self._entities = set() # type: Set[kge.Entity]
 
         # the map between events and components in order to dispatch events
         # only to those which subscribed to the event
@@ -38,7 +40,8 @@ class ComponentSystem(System):
 
         for type_ in self.components_supported:
             if isinstance(component, type_):
-                self._components.append(component)
+                self._components.add(component)
+                self._entities.add(component.entity)
                 self.register_events(event.component)
                 event.component.__fire_event__(events.Init(event.scene), dispatch)
 
@@ -89,7 +92,10 @@ class ComponentSystem(System):
         for component in components:
             if component in self._components:
                 self._components.remove(component)
+                if component.entity in self._entities:
+                    self._entities.remove(component.entity)
                 self.unregister_events(component)
 
     def on_scene_stopped(self, event: events.SceneStopped, dispatch):
         self._components.clear()
+        self._entities.clear()

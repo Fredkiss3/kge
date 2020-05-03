@@ -4,8 +4,9 @@ import platform
 import sys
 from typing import Union, Callable, List, Optional
 
-import kge
 import pyglet
+
+import kge
 from kge.core import events
 from kge.core.component import BaseComponent
 from kge.core.entity import BaseEntity
@@ -27,7 +28,6 @@ from kge.physics.events import BodyCreated, BodyDestroyed, CreateBody
 class Collider(BaseComponent):
     """
     The only component that handles collisions
-    and can collide with other colliders
     """
 
     def __init__(self,
@@ -77,7 +77,10 @@ class Collider(BaseComponent):
                 "Vertices should be of type 'pyglet.graphics.vertexdomain.VertexList'")
 
     @property
-    def rigid_body_attached(self):
+    def rb_attached(self):
+        """
+        Get the RigidBody attached to the collider
+        """
         return self._rb
 
     @property
@@ -275,7 +278,7 @@ class BoxCollider(Collider):
             raise TypeError("Box Property should be a vector")
 
         if self._fixture is not None:
-            while kge.ServiceProvider.getPhysics().world.locked:
+            while kge.Physics.world.locked:
                 continue
 
             self._box = box
@@ -384,10 +387,19 @@ class CircleCollider(Collider):
         )
 
 
+class CapsuleCollider(Collider):
+    """
+    A capsule collider is a combination of three colliders :
+        One BoxCollider at the center
+        Two CircleColliders at the edges
+    TODO
+    """
+    pass
+
+
 class PolygonCollider(Collider):
     """
     A component that handles collision within in a polygon shape
-    FIXME : ADD A WAY TO AVOID ERRORS
     """
 
     def __init__(self,
@@ -470,13 +482,14 @@ class TriangleCollider(Collider):
         )
 
 
-class EdgeCollider(Collider):
+class LineCollider(Collider):
     """
     A component that handles collisions which occurs in a line segment shape
     """
 
     def __init__(self,
-                 vertices: List[Vector],
+                 point1: Vector,
+                 point2: Vector,
                  isSensor: bool = False,
                  bounciness: float = 0,
                  friction: float = 0,
@@ -487,18 +500,15 @@ class EdgeCollider(Collider):
 
         :param vertices: a list of points of the collider in this form :
             # each point is relative to the parent body
-            >>> collider = EdgeCollider(
-            >>>     vertices=[
-            >>>         Vector(-1, -1), Vector(1, 1)
-            >>> ])
+            >>> collider = LineCollider(
+            >>>         point1=Vector(-1, -1),
+            >>>         point2=Vector(1, 1)
+            >>> )
         """
         super().__init__(isSensor, Vector.Zero(), bounciness, friction, density)
 
-        if 2 <= len(vertices) <= 4:
-            # the vertices
-            self._vertices = vertices[:4]  # type: List[Vector]
-        else:
-            raise ValueError("Expected from 2 to 4 vertices.")
+        # the vertices
+        self._vertices = [point1, point2]
 
     @property
     def shape(self) -> b2.b2EdgeShape:
@@ -507,7 +517,7 @@ class EdgeCollider(Collider):
         )
 
 
-class LoopCollider(Collider):
+class EdgeCollider(Collider):
     """
     A component that handles collisions which occurs in a sequence of line segments that forms a circular list.
     """
@@ -525,7 +535,7 @@ class LoopCollider(Collider):
 
         :param vertices: a list of points of the collider in this form :
             # each point is relative to the parent body
-            >>> collider = EdgeCollider(
+            >>> collider = LineCollider(
             >>> vertices=[
             >>>   Vector(-1, -1), Vector(2, 2), Vector(1, 1)
             >>> ])

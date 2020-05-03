@@ -22,6 +22,18 @@ The events below are handled by user
 
 
 @dataclass
+class AnimChanged(Event):
+    """
+    Fired when the animation changes for an entity
+    """
+    previous: 'kge.Animation'
+    next: 'kge.Animation'
+    entity: 'kge.Entity'
+    scene: 'kge.Scene' = None
+
+
+
+@dataclass
 class MouseEnter(Event):
     """
     Fired when mouse enters the window
@@ -29,7 +41,6 @@ class MouseEnter(Event):
     position: Vector  # Scene position
     screen_position: Vector
     scene: 'kge.Scene' = None
-
 
 @dataclass
 class MouseLeave(Event):

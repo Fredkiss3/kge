@@ -1,10 +1,10 @@
 import logging
-# from kge.core.system import System
+import math
+import platform
 import sys
 from itertools import chain
 from typing import Callable, Union, List, Tuple, Sequence, Optional
 
-import math
 import pyglet
 from pyglet import gl
 
@@ -15,21 +15,21 @@ from kge.core.constants import *
 from kge.core.entity import BaseEntity
 from kge.core.events import Event
 from kge.core.service import Service
-from kge.physics.colliders import Collider, CameraCollider
+from kge.physics.colliders import Collider, CameraCollider, CircleCollider, TriangleCollider, PolygonCollider, \
+    BoxCollider, EdgeCollider, LineCollider
 from kge.physics.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, \
     PhysicsUpdate, CollisionBegin, CollisionEnd
+from kge.physics.joints import Joint
 from kge.physics.rigid_body import RigidBody
 from kge.utils.vector import Vector
 
-# import Box2D as b2
-import platform
 if sys.platform == "win32":
     if platform.architecture()[0] == "64bit":
         import kge.extra.win64.Box2D as b2
     elif platform.architecture()[0] == "32bit":
         import kge.extra.win32.Box2D as b2
 else:
-        import kge.extra.linux64.Box2D as b2
+    import kge.extra.linux64.Box2D as b2
 
 
 class grBlended(pyglet.graphics.Group):
@@ -107,21 +107,22 @@ class DebugDrawer(b2.b2Draw):
         super(DebugDrawer, self).__init__()
         # Draw on top of everything
         self.group = pyglet.graphics.OrderedGroup(MAX_LAYERS)
-        self.batch = None  # type: Optional[pyglet.graphics.Batch]
+        self.world_batch = None  # type: Optional[pyglet.graphics.Batch]
+        self.debug_batch = None  # type: Optional[pyglet.graphics.Batch]
         self.system = system
-        self.flags = dict(drawShapes=True,
-                          drawJoints=True,
-                          drawAABBs=False,
-                          # Transform
-                          drawCOMs=True,
-                          # convertVertices=True,
-                          )
+        self.flags = dict(
+            drawJoints=False,
+            drawShapes=True,
+            drawCOMs=False,
+        )
 
     def rebatch(self):
-        self.batch = pyglet.graphics.Batch()
+        self.world_batch = pyglet.graphics.Batch()
 
     def StartDraw(self):
-        self.rebatch()
+        if self.world_batch is None:
+            self.rebatch()
+        self.debug_batch = pyglet.graphics.Batch()
 
     def EndDraw(self):
         pass
@@ -245,9 +246,9 @@ class DebugDrawer(b2.b2Draw):
         ll_count = len(ll_vertices) // 2
 
         if color is not None:
-            self.batch.add(ll_count, gl.GL_LINES, self.group,
-                           ('v2f', ll_vertices),
-                           ('c4f', [color.r, color.g, color.b, 1.0] * ll_count))
+            self.debug_batch.add(ll_count, gl.GL_LINES, self.group,
+                                 ('v2f', ll_vertices),
+                                 ('c4f', [color.r, color.g, color.b, 1.0] * ll_count))
 
         # Return vertices
         return ll_vertices
@@ -260,19 +261,19 @@ class DebugDrawer(b2.b2Draw):
             center, radius, self.circle_segments)
         tf_count, ll_count = len(tf_vertices) // 2, len(ll_vertices) // 2
 
-        self.batch.add(tf_count, gl.GL_TRIANGLES, self.blended,
-                       ('v2f', tf_vertices),
-                       ('c4f', [0.5 * color.r, 0.5 * color.g, 0.5 * color.b, 0.5] * tf_count))
+        self.debug_batch.add(tf_count, gl.GL_TRIANGLES, self.blended,
+                             ('v2f', tf_vertices),
+                             ('c4f', [0.5 * color.r, 0.5 * color.g, 0.5 * color.b, 0.5] * tf_count))
 
-        self.batch.add(ll_count, gl.GL_LINES, self.group,
-                       ('v2f', ll_vertices),
-                       ('c4f', [color.r, color.g, color.b, 1.0] * (ll_count)))
+        self.debug_batch.add(ll_count, gl.GL_LINES, self.group,
+                             ('v2f', ll_vertices),
+                             ('c4f', [color.r, color.g, color.b, 1.0] * (ll_count)))
 
         p = Vector(center) + radius * Vector(axis)
         if color is not None:
-            self.batch.add(2, gl.GL_LINES, self.group,
-                           ('v2f', (center[0], center[1], p[0], p[1])),
-                           ('c3f', [1.0, 0.0, 0.0] * 2))
+            self.debug_batch.add(2, gl.GL_LINES, self.group,
+                                 ('v2f', (center[0], center[1], p[0], p[1])),
+                                 ('c3f', [1.0, 0.0, 0.0] * 2))
 
     def DrawPolygon(self, vertices, color=None):
         """
@@ -281,9 +282,9 @@ class DebugDrawer(b2.b2Draw):
         if len(vertices) == 2:
             vces = [*self.to_screen(vertices[0]), *self.to_screen(vertices[1]), ]
             if color is not None:
-                self.batch.add(2, gl.GL_LINES, self.group,
-                               ('v2f', vces),
-                               ('c3f', [color.r, color.g, color.b] * 2))
+                self.debug_batch.add(2, gl.GL_LINES, self.group,
+                                     ('v2f', vces),
+                                     ('c3f', [color.r, color.g, color.b] * 2))
             return vces
         else:
             ll_count, ll_vertices = self.line_loop([self.to_screen(v) for v in vertices])
@@ -291,9 +292,9 @@ class DebugDrawer(b2.b2Draw):
                 return
 
             if color is not None:
-                self.batch.add(ll_count, gl.GL_LINES, self.group,
-                               ('v2f', ll_vertices),
-                               ('c4f', [color.r, color.g, color.b, 1.0] * (ll_count)))
+                self.debug_batch.add(ll_count, gl.GL_LINES, self.group,
+                                     ('v2f', ll_vertices),
+                                     ('c4f', [color.r, color.g, color.b, 1.0] * (ll_count)))
             return ll_vertices
 
     def DrawSolidPolygon(self, vertices, color=None):
@@ -303,25 +304,25 @@ class DebugDrawer(b2.b2Draw):
         if len(vertices) == 2:
             p1, p2 = [self.to_screen(v) for v in vertices]
             if color is not None:
-                self.batch.add(2, gl.GL_LINES, self.group,
-                               ('v2f', (p1[0], p1[1], p2[0], p2[1])),
-                               ('c3f', [color.r, color.g, color.b] * 2))
+                self.debug_batch.add(2, gl.GL_LINES, self.group,
+                                     ('v2f', (p1[0], p1[1], p2[0], p2[1])),
+                                     ('c3f', [color.r, color.g, color.b] * 2))
 
         else:
             tf_count, tf_vertices = self.triangle_fan([self.to_screen(v) for v in vertices])
             if tf_count == 0:
                 return
 
-            self.batch.add(tf_count, gl.GL_TRIANGLES, self.blended,
-                           ('v2f', tf_vertices),
-                           ('c4f', [0.5 * color.r, 0.5 * color.g, 0.5 * color.b, 0.5] * (tf_count)))
+            self.debug_batch.add(tf_count, gl.GL_TRIANGLES, self.blended,
+                                 ('v2f', tf_vertices),
+                                 ('c4f', [0.5 * color.r, 0.5 * color.g, 0.5 * color.b, 0.5] * (tf_count)))
 
             ll_count, ll_vertices = self.line_loop([self.to_screen(v) for v in vertices])
 
             if color is not None:
-                self.batch.add(ll_count, gl.GL_LINES, self.group,
-                               ('v2f', ll_vertices),
-                               ('c4f', [color.r, color.g, color.b, 1.0] * ll_count))
+                self.debug_batch.add(ll_count, gl.GL_LINES, self.group,
+                                     ('v2f', ll_vertices),
+                                     ('c4f', [color.r, color.g, color.b, 1.0] * ll_count))
 
     def DrawSegment(self, p1, p2, color=None):
         """
@@ -330,9 +331,9 @@ class DebugDrawer(b2.b2Draw):
         vces = (*self.to_screen(p1), *self.to_screen(p2))
 
         if color is not None:
-            self.batch.add(2, gl.GL_LINES, self.group,
-                           ('v2f', vces),
-                           ('c3f', [color.r, color.g, color.b] * 2))
+            self.debug_batch.add(2, gl.GL_LINES, self.group,
+                                 ('v2f', vces),
+                                 ('c3f', [color.r, color.g, color.b] * 2))
         return vces
 
     def DrawTransform(self, xf):
@@ -348,9 +349,7 @@ class DebugDrawer(b2.b2Draw):
 
         vces = (p1[0], p1[1], p2[0], p2[1], p1[0], p1[1], p3[0], p3[1])
         # if color is not None:
-        self.batch.add(4, gl.GL_LINES, self.group,
-                       ('v2f', vces),
-                       ('c3f', [1.0, 0.0, 0.0] * 2 + [0.0, 1.0, 0.0] * 2))
+
         return vces
 
     def DrawPoint(self, p, size, color):
@@ -359,9 +358,9 @@ class DebugDrawer(b2.b2Draw):
         """
         p = self.to_screen(p)
         if color is not None:
-            self.batch.add(1, gl.GL_POINTS, grPointSize(size),
-                           ('v2f', (p[0], p[1])),
-                           ('c3f', [color.r, color.g, color.b]))
+            self.debug_batch.add(1, gl.GL_POINTS, grPointSize(size),
+                                 ('v2f', (p[0], p[1])),
+                                 ('c3f', [color.r, color.g, color.b]))
 
     def DrawAABB(self, aabb, color=None):
         """
@@ -378,10 +377,10 @@ class DebugDrawer(b2.b2Draw):
             *self.to_screen((aabb.lowerBound.x, aabb.lowerBound.y)),
         )
         if color is not None:
-            self.batch.add(len(vces) // 2, gl.GL_LINES, self.group,
-                           ('v2f', vces),
-                           ('c3f', [color.r, color.g, color.b] * (len(vces) // 2))
-                           )
+            self.debug_batch.add(len(vces) // 2, gl.GL_LINES, self.group,
+                                 ('v2f', vces),
+                                 ('c3f', [color.r, color.g, color.b] * (len(vces) // 2))
+                                 )
         return (
             vces
         )
@@ -392,6 +391,151 @@ class DebugDrawer(b2.b2Draw):
         """
         cam = self.system.engine.current_scene.main_camera
         return tuple(cam.world_to_screen_point(Vector(*point)))
+
+    def drawWorld(self, scene: 'kge.Scene'):
+        """
+        Draw the world
+        """
+        # Get Debuggable entities
+        entities = scene.entity_layers(kge.Entity, renderable=False, debuggable=True, check_active=False)
+
+        # Draw Debug Data
+        for e in set(entities):
+            drawn = False
+            if self.flags.get("drawShapes", False):
+                drawn = self.drawColliders(*e.getComponents(Collider))
+            if self.flags.get("drawJoints", False):
+                self.drawColliders(*e.getComponents(Joint))
+                drawn = True
+            if self.flags.get("drawCOMs", False):
+                self.drawEntity(e)
+                drawn = True
+
+            if drawn:
+                e.debuggable = False
+
+    def drawJoints(self, *joints: Joint):
+        """
+        Draw the colliders of the entity
+        TODO
+        """
+        for j in joints:
+            pass
+
+    def drawColliders(self, *colliders: Collider):
+        """
+        Draw the colliders of the entity
+        """
+        drawn = True
+        for col in colliders:
+            if col.rb_attached is not None:
+                if col.rb_attached.body is not None:
+                    xf = col.rb_attached.body.transform
+                    vertices, mode, colors = self.drawShape(col, xf)
+
+                    if not vertices:
+                        continue
+
+                    if col.vlist is None:
+                        # Add vertices to Batch
+                        count = len(vertices) // 2
+
+                        col.vlist = self.world_batch.add(count, mode, self.group,
+                                                         ('v2f/stream', vertices),
+                                                         ('c3f/dynamic', colors))
+                    else:
+                        # Update vertices
+                        col.vlist.vertices = vertices
+                else:
+                    drawn = False
+            else:
+                drawn = False
+
+        return drawn
+
+    def drawEntity(self, e: 'kge.Entity'):
+        """
+        Draw the boundaries of the entity
+        """
+        if not e.scale == Vector.Zero():
+            vces = [
+                # Horizontal
+                Vector(-1 / 2, 1 / 2),
+                Vector(1 / 2, 1 / 2),
+                Vector(1 / 2, -1 / 2),
+                Vector(-1 / 2, -1 / 2),
+                # Vertical
+                Vector(-1 / 2, -1 / 2),
+                Vector(-1 / 2, 1 / 2),
+                Vector(1 / 2, 1 / 2),
+                Vector(1 / 2, -1 / 2),
+            ]
+
+            vertices = self.DrawPolygon(
+                vertices=[
+                    Vector(v.x * e.size.width, v.y * e.size.height) * e.transform for v in vces
+                ]
+            )
+            xf_vertices = self.DrawTransform(e.transform.xf)
+
+            if e.vlist is None:
+                # Add vertices to Batch
+                count = len(vertices) // 2
+
+                e.vlist = self.world_batch.add(count, gl.GL_LINES, self.group,
+                                               ('v2f/stream', vertices),
+                                               ('c3f/dynamic', tuple(BLUE[:3]) * count))
+
+                e.xf_vlist = self.world_batch.add(4, gl.GL_LINES, self.group,
+                                                  ('v2f', xf_vertices),
+                                                  ('c3f', [1.0, 0.0, 0.0] * 2 + [0.0, 1.0, 0.0] * 2))
+            else:
+                # Update vertices
+                e.vlist.vertices = vertices
+                e.xf_vlist.vertices = xf_vertices
+
+    def drawShape(self, col: Collider, xf: b2.b2Transform) -> Tuple[List[int], int, List[int]]:
+        """
+        Draw a Shape
+        """
+        color = b2.b2Color(*[c / 255 for c in GREEN[:3]])
+        vertices = []
+        mode = gl.GL_LINES
+
+        if isinstance(col, CircleCollider):
+            center = xf * col.offset
+            radius = col.radius
+
+            vertices = self.DrawCircle(center, radius)
+
+        elif isinstance(col, (TriangleCollider, PolygonCollider, BoxCollider)):
+            count = col.shape.vertexCount
+            vces = col.shape.vertices
+            assert count <= b2.b2_maxPolygonVertices
+
+            for i in range(count):
+                vertices.append(xf * vces[i])
+
+            vertices = self.DrawPolygon(vertices)
+
+        elif isinstance(col, EdgeCollider):
+            count = col.shape.vertexCount
+            vces = col.shape.vertices
+
+            v1 = xf * vces[0]
+            for i in range(1, count):
+                v2 = xf * vces[i]
+                [vertices.append(v) for v in self.DrawSegment(v1, v2)]
+                v1 = v2
+
+        elif isinstance(col, LineCollider):
+            v1 = xf * col.shape.vertex1
+            v2 = xf * col.shape.vertex2
+
+            vertices = self.DrawSegment(v1, v2)
+
+        colors = [color.r, color.g, color.b] * (len(vertices) // 2)
+        return vertices, mode, colors
 
 
 class ContactListener(b2.b2ContactListener):
@@ -448,9 +592,6 @@ class DestructionListener(b2.b2DestructionListener):
 
 
 class OverlapInfo(b2.b2QueryCallback):
-    """
-    TODO : TO TEST
-    """
     MULTIPLE = 1
     ONE = 0
 
@@ -571,11 +712,15 @@ class RayCastInfo(b2.b2RayCastCallback):
 class PhysicsManager(ComponentSystem):
     """
     The system that handles movement, collision detection and can perform region queries and ray casts
-    FIXME : HANDLE DRAWING SHAPES FOR CAMERA & FOR INACTIVE BODIES, IF TOO HARD THEN CREATE A CUSTOM DRAWER
+    TODO :
+       - IGNORE LAYER COLLISIONS
+       - ONE WAY COLLISION
+       - JOINTS
+       - OVERLAPS CIRCLE
     """
     contact_listener: ContactListener = None
     destruction_listener: DestructionListener = None
-    world: Union[None, b2.b2World]
+    world: Optional[b2.b2World]
     pause: bool = False
     engine: "kge.Engine"
 
@@ -619,6 +764,7 @@ class PhysicsManager(ComponentSystem):
         # else:
         #     raise ValueError(
         #         "Overlap Type should be one of 'OverlapInfo.ONE or OverlapInfo.MULTIPLE'")
+        # TODO
         raise NotImplementedError("Not implemented yet !")
 
     def query_region(self, center: Vector, size: Vector, layer: Union[int, str] = None,
@@ -704,9 +850,6 @@ class PhysicsManager(ComponentSystem):
                 "RayCast Type should be one of 'RayCastInfo.MULTIPLE, RayCastInfo.CLOSEST, RayCastInfo.ANY'")
 
     def __init__(self, engine, **_):
-        """
-        TODO : Create And Destroy Joint
-        """
         super(PhysicsManager, self).__init__(engine)
 
         # state
@@ -747,7 +890,7 @@ class PhysicsManager(ComponentSystem):
                 self.new_bodies.clear()
 
                 # Update the physics world
-                # FIXME : Sometimes this line bugs
+                # FIXME : Sometimes this line bugs (WHY ?)
                 self.world.Step(
                     FIXED_DELTA_TIME * event.time_scale, 10, 10)
                 self.world.ClearForces()
@@ -761,7 +904,8 @@ class PhysicsManager(ComponentSystem):
         if self.world is not None:
             if not self.world.locked:
                 if self.engine.current_scene is not None:
-                    self.world.DrawDebugData()
+                    self.debug_drawer.drawWorld(event.scene)
+                    # self.world.DrawDebugData()
         self.debug_drawer.EndDraw()
 
     def on_disable_entity(self, event: events.DisableEntity, dispatch: Callable[[Event], None]):
@@ -803,10 +947,12 @@ class PhysicsManager(ComponentSystem):
         self.world = b2.b2World(gravity=(0, -10), doSleep=True)
         self.world.contactListener = self.contact_listener
         self.world.destructionListener = self.destruction_listener
-        self.world.renderer = self.debug_drawer
+        # self.world.renderer = self.debug_drawer
 
     def on_scene_started(self, ev: events.SceneStarted, dispatch: Callable[[Event], None]):
+        # self.debug_drawer = DebugDrawer(self)
         self.debug_drawer.cam = self.engine.current_scene.main_camera
+        self.debug_drawer.StartDraw()
 
     def on_scene_stopped(self, event: events.SceneStopped, dispatch):
         super(PhysicsManager, self).on_scene_stopped(event, dispatch)
@@ -900,9 +1046,10 @@ class PhysicsManager(ComponentSystem):
         rb_a = contact.fixtureA.body.userData  # type: RigidBody
         rb_b = contact.fixtureB.body.userData  # type: RigidBody
 
+
         if isinstance(rb_a, RigidBody) and isinstance(rb_b, RigidBody):
-            if rb_a.is_active and rb_b.is_active:
-                # enable collision only for active rigid bodies
+            if (collider_a.is_active and rb_a.is_active) and (rb_b.is_active and collider_b.is_active):
+                # enable collision only for active Colliders and RigidBodies
                 if isinstance(collider_a, CameraCollider) or isinstance(collider_b, CameraCollider):
                     # If entity is camera, then it never should dispatch "Collision
                     if began:
@@ -984,6 +1131,14 @@ class PhysicsManager(ComponentSystem):
                 body_component=rb
             )
             event.onlyEntity = ev.entity
+            if ev.entity.vlist is not None:
+                ev.entity.vlist.delete()
+                ev.entity.vlist = None
+
+            if ev.entity.xf_vlist is not None:
+                ev.entity.xf_vlist.delete()
+                ev.entity.xf_vlist = None
+
             dispatch(event, True)
 
     def on_destroy_body(self, ev: DestroyBody, dispatch):
@@ -1042,15 +1197,20 @@ class PhysicsManager(ComponentSystem):
 class Physics(Service):
     system_class = PhysicsManager
     _system_instance: PhysicsManager
+    instance: "Physics"
 
-    def ray_cast(self, origin: Vector, direction: Vector, distance: float, layer: Union[int, str, None] = None,
+    @classmethod
+    def ray_cast(cls, origin: Vector, direction: Vector, distance: float, layer: Union[int, str, None] = None,
                  type=RayCastInfo.CLOSEST) -> RayCastInfo:
-        return self._system_instance.ray_cast(origin, direction, distance, layer, type)
+        return cls._system_instance.ray_cast(origin, direction, distance, layer, type)
 
-    def overlap_circle(self, center: Vector, radius: float, layer: Union[int, str, None] = None,
-                       type=OverlapInfo.MULTIPLE) -> OverlapInfo:
-        return self._system_instance.overlap_circle(center, radius, layer, type)
+    # TODO
+    # @classmethod
+    # def overlap_circle(self, center: Vector, radius: float, layer: Union[int, str, None] = None,
+    #                    type=OverlapInfo.MULTIPLE) -> OverlapInfo:
+    #     return self._system_instance.overlap_circle(center, radius, layer, type)
 
+    @classmethod
     def query_region(self, center: Vector, size: Vector, layer: Union[int, str, None] = None,
                      type=RegionInfo.MULTIPLE) -> RegionInfo:
         return self._system_instance.query_region(center, size, layer, type)
@@ -1070,78 +1230,108 @@ class Physics(Service):
 
         self._system_instance.world.gravity = val
 
-    @property
-    def debug_drawer(self):
-        return self._system_instance.debug_drawer
 
-
-class DebugDrawService(Service):
+class DebugDraw(Service):
     """
     The service that helps to draw custom shape and others
     """
     system_class = PhysicsManager
     _system_instance: PhysicsManager
+    debug: DebugDrawer = None
 
     def __init__(self, instance):
         super().__init__(instance)
-        self.debug = self._system_instance.debug_drawer
+        type(self).debug = self._system_instance.debug_drawer
 
     @property
-    def flags(self):
-        return self._system_instance.debug_drawer.flags
+    def world_batch(self):
+        return self._system_instance.debug_drawer.world_batch
 
     @property
-    def drawShapes(self):
-        return self._system_instance.debug_drawer.flags.get("drawShapes", False)
+    def debug_batch(self):
+        return self._system_instance.debug_drawer.debug_batch
 
+    # @property
+    # def flags(self):
+    #     fl = self._system_instance.debug_drawer.flags
+    #     flags = dict(
+    #         drawAABBs=fl['drawAABBs'],
+    #         drawJoints=fl['drawJoints'],
+    #         drawTransforms=fl['drawCOMs'],
+    #         drawColliders=fl['drawShapes']
+    #     )
+    #     return flags
 
-    @drawShapes.setter
-    def drawShapes(self, val: bool):
-        """
-        If set to True, When engine is run in Debug Mode, it should
-        show Shapes, else, it won't show shapes
-        """
-        if not isinstance(val, bool):
-            raise TypeError("Draw Shapes should be a bool")
+    # @property
+    # def drawShapes(self):
+    #     return self._system_instance.debug_drawer.flags.get("drawShapes", False)
+    #
+    # @drawShapes.setter
+    # def drawShapes(self, val: bool):
+    #     """
+    #     If set to True, When engine is run in Debug Mode, it should
+    #     show Shapes, else, it won't show shapes
+    #     """
+    #     if not isinstance(val, bool):
+    #         raise TypeError("Draw Shapes should be a bool")
+    #
+    #     self._system_instance.debug_drawer.flags["drawShapes"] = val
 
-        self._system_instance.debug_drawer.flags["drawShapes"] = val
-
-
-
-    @flags.setter
-    def flags(self, val: dict):
+    @classmethod
+    def setFlags(self,
+                 drawColliders: bool = False,
+                 drawJoints: bool = False,
+                 drawEntities: bool = False,
+                 ):
         """
         Set the draw flags
-        TODO : Annotate attributes
+        :param drawColliders: Set to True to draw the colliders
+        :param drawJoints: Set to True to draw the joints
+        :param drawEntities: Set to True to draw the entities' centers and their boundaries
         """
-        if not isinstance(val, dict):
-            raise TypeError("Flags should be a dict")
-        self._system_instance.debug_drawer.flags = val
+        if not (isinstance(drawColliders, bool)
+                and isinstance(drawEntities, bool)
+                and isinstance(drawJoints, bool)
+        ):
+            raise TypeError('Flags should be booleans')
 
+        self._system_instance.debug_drawer.flags = dict(
+            drawShapes=drawColliders,
+            drawCOMs=drawEntities,
+            drawJoints=drawJoints,
+        )
+
+    @classmethod
     def to_screen(self, point: Vector) -> Tuple[float, float]:
         return tuple(self._system_instance.engine.current_scene.main_camera.world_to_screen_point(point))
 
+    @classmethod
     def to_pixels(self, unit: float):
         return self._system_instance.engine.current_scene.main_camera.unit_to_pixels(unit)
 
+    @classmethod
     def getColor(self, color: Sequence[int]):
         return b2.b2Color([c / 255 for c in color[:3]])
 
+    @classmethod
     def draw_circle(self, center: Vector, radius: float, color: Tuple[int, int, int, int], solid=False):
         if not solid:
             self.debug.DrawCircle(center, radius, self.getColor(color))
         else:
             self.debug.DrawSolidCircle(center, radius, Vector.Up(), self.getColor(color))
 
+    @classmethod
     def draw_segment(self, p1: Vector, p2: Vector, color: Tuple[int, int, int, int]):
         self.debug.DrawSegment(p1, p2, self.getColor(color))
 
+    @classmethod
     def draw_poly(self, vertices: List[Vector], color: Tuple[int, int, int, int], solid=False):
         if not solid:
             self.debug.DrawPolygon(vertices, self.getColor(color))
         else:
             self.debug.DrawSolidPolygon(vertices, self.getColor(color))
 
+    @classmethod
     def draw_box(self, center: Vector, size: Vector, color: Tuple[int, int, int, int], solid=False):
         aabb = b2.b2AABB(
             lowerBound=center - size / 2,
@@ -1163,22 +1353,10 @@ class DebugDrawService(Service):
             )
             self.debug.DrawSolidPolygon(vces, self.getColor(color))
 
+    @classmethod
     def draw_point(self, p: Vector, size: float, color: Tuple[int, int, int, int]):
         p = self.to_screen(p)
         self.debug.DrawPoint(p, size, color)
-
-    def Print(self, string: str, point: Vector, color=(229, 153, 153, 255)):
-        """
-        Draw some text, str, at screen coordinates (x, y).
-        """
-        win = kge.ServiceProvider.getWindow()
-        point = self.to_screen(point)
-        pyglet.text.Label(string,
-                          font_size=15, x=point[0], y=point[1],
-                          color=color,
-                          batch=self.debug.batch,
-                          group=grText(window=win.window)
-                          )
 
 
 if __name__ == '__main__':

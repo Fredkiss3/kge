@@ -1,37 +1,36 @@
-from typing import Union, Callable
+from typing import Union, Tuple
 
 import kge
-from kge.resources.events import AssetLoaded
-from kge.utils.dotted_dict import DottedDict
-
-from kge.core.events import Event
 from kge.core.entity import BaseEntity
-from kge.graphics.sprite_renderer import SpriteRenderer, Shape
 from kge.graphics.image import Image
+from kge.graphics.sprite_renderer import SpriteRenderer, Shape
+from kge.utils.color import Color
+from kge.utils.dotted_dict import DottedDict
 
 
 class Sprite(BaseEntity):
     """
     An entity that can be visualised
     """
-    def __init__(self, image: Union[Image, Shape] = None, name: str = None, tag: str = None, ):
-        super().__init__(name, tag)
+
+    def __new__(cls, *args, image: Union[Image, Shape] = None,
+                color: Color = None,
+                name: str = None, tag: str = None, **kwargs):
+        inst = super().__new__(cls, name=name, tag=tag)
 
         # image and renderer
-        self.renderer = SpriteRenderer(self)
+        inst.renderer = SpriteRenderer(inst)
 
         # Dispatch Component
         manager = kge.ServiceProvider.getEntityManager()
-        manager.dispatch_component_operation(self, self.renderer, added=True)
+        manager.dispatch_component_operation(inst, inst.renderer, added=True)
 
         if image is not None:
-            self.image = image
+            inst.image = image
+        if color is not None:
+            inst.color = color
 
-    def flipX(self):
-        self.transform.scale.x = -self.transform.scale.x
-
-    def flipY(self):
-        self.transform.scale.y = -self.transform.scale.y
+        return inst
 
     @property
     def size(self) -> DottedDict:
@@ -49,6 +48,9 @@ class Sprite(BaseEntity):
         if not isinstance(val, (Image, Shape)):
             raise TypeError(
                 f"image should be of type 'kge.Image' or 'kge.Shape'")
+
+        if self.renderer.image != val:
+            self.dirty = True
         self.renderer.image = val
 
     @property
@@ -57,6 +59,8 @@ class Sprite(BaseEntity):
 
     @opacity.setter
     def opacity(self, val: float):
+        if self.renderer.opacity != val:
+            self.dirty = True
         self.renderer.opacity = val
 
     @property
@@ -65,5 +69,16 @@ class Sprite(BaseEntity):
 
     @visible.setter
     def visible(self, val: bool):
+        if self.renderer.visible != val:
+            self.dirty = True
         self.renderer.visible = val
 
+    @property
+    def color(self):
+        return self.renderer.color
+
+    @color.setter
+    def color(self, val: Union[Tuple[int, int, int], Color]):
+        if self.renderer.color != val:
+            self.dirty = True
+        self.renderer.color = val

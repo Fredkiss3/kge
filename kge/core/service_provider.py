@@ -1,8 +1,10 @@
 from typing import Type, TypeVar
 
-from kge.graphics.renderer import WindowService
-from kge.inputs.input_manager import InputService
-from kge.physics.physics_manager import Physics, DebugDrawService
+from kge.core.system import System
+
+from kge.graphics.renderer import Window
+from kge.inputs.input_manager import Inputs
+from kge.physics.physics_manager import Physics, DebugDraw
 from kge.audio.audio_manager import Audio
 from kge.core.entity_manager import EntityManagerService
 from kge.core.service import Service
@@ -12,7 +14,6 @@ T = TypeVar("T")
 class ServiceProvider(object):
     """
     Class for providing services to users
-    TODO : ACCESS TO THIS SHOULD BE EASY
     """
     services = {}
 
@@ -29,16 +30,16 @@ class ServiceProvider(object):
         return cls.getService(EntityManagerService)
 
     @classmethod
-    def getInputs(cls) -> InputService:
-        return cls.getService(InputService)
+    def getInputs(cls) -> Inputs:
+        return cls.getService(Inputs)
 
     @classmethod
-    def getWindow(cls) -> WindowService:
-        return cls.getService(WindowService)
+    def getWindow(cls) -> Window:
+        return cls.getService(Window)
 
     @classmethod
-    def getDebug(cls) -> DebugDrawService:
-        return cls.getService(DebugDrawService)
+    def getDebug(cls) -> DebugDraw:
+        return cls.getService(DebugDraw)
 
     @classmethod
     def getService(cls, kind: Type[T]) -> T:
@@ -51,8 +52,9 @@ class ServiceProvider(object):
             raise KeyError(f"The service '{kind.__name__}' has not been provided.")
 
     @classmethod
-    def provide(cls, service: Service):
+    def provide(cls, service: Type[Service], system: System):
         """
         Provide a service
         """
+        service = service.createInstance(system)
         cls.services[type(service)] = service

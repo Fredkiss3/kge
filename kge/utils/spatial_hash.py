@@ -1,5 +1,6 @@
 import logging
-from typing import Any
+from collections import defaultdict
+from typing import Any, Type, Dict, Set
 
 from math import floor
 
@@ -19,6 +20,9 @@ class Box:
         self.x1, self.y1 = Vector(center - size / 2)
         self.x2, self.y2 = Vector(center + size / 2)
 
+    def __repr__(self):
+        return f'Box(center={self.center}, size={self.size})'
+
     def overlaps(self, other: "Box"):
         """
         Check if another box overlaps this one.
@@ -29,8 +33,8 @@ class Box:
         min_dist_x = size.x / 2 + abs(self.size.x) / 2
         min_dist_y = size.y / 2 + abs(self.size.y) / 2
 
-        # vector from the entity to the camera
-        distVec = point - Vector(self.center.x, -self.center.y)
+        # vector from the other box to self
+        distVec = point - Vector(self.center.x, self.center.y)
 
         # depth of the collision
         # Difference between the Min Distance before a collision occurs
@@ -48,12 +52,18 @@ class SpatialHash(object):
         self.cell_size = float(cell_size)
         self.table = {}
 
+        # types
+        self._kinds = defaultdict(set)
+
     def _add(self, cell_coord, o):
         """Add the object o to the cell at cell_coord."""
         try:
             self.table.setdefault(cell_coord, set()).add(o)
         except KeyError:
             self.table[cell_coord] = {o}
+
+        for kind in type(o).mro():
+            self._kinds[kind].add(o)
 
     def _cells_for_rect(self, r: Box):
         """Return a set of the cells into which r extends."""
@@ -91,7 +101,10 @@ class SpatialHash(object):
         # Delete the cell from the hash if it is empty.
         if cell is not None:
             if not cell:
-                del (self.table[cell_coord])
+                try:
+                   del (self.table[cell_coord])
+                except KeyError as e:
+                    logger.error(f"KeyError {e}: {cell, type(cell), cell_coord}")
 
     def remove(self, position: Vector, size: Vector, obj: Any):
         """Remove an object obj which had bounds r."""
@@ -104,8 +117,8 @@ class SpatialHash(object):
         for c in cells:
             self._remove(c, obj)
 
-    def search(self, position: Vector, size: Vector):
-        """Get a set of all objects that potentially intersect obj."""
+    def search(self, position: Vector, size: Vector, *type_: Type):
+        """Get a set of all objects in a certain area"""
         if not isinstance(position, Vector) or not isinstance(size, Vector):
             raise TypeError("Position & Size should be vectors")
 
@@ -115,6 +128,16 @@ class SpatialHash(object):
         found = set()
         for c in cells:
             found.update(self.table.get(c, set()))
+
+        # if type is given then intersect with the registered ones
+        f = set()
+        for t in type_:
+            if t in self._kinds:
+                f.update(found.intersection(self._kinds[t]))
+
+        if type_:
+            found = f
+
         return found
 
 
@@ -130,6 +153,17 @@ if __name__ == '__main__':
     #         self.x2, self.y2 = Vector(center + size / 2)
 
     # print(self.x1, self.y1, self.x2, self.y2, )
+
+    class Obj:
+        nb = 0
+
+        def __init__(self, box: Box):
+            self.box = box
+            type(self).nb += 1
+            self.name = f"Object {str(type(self).nb)}"
+
+        def __repr__(self):
+            return self.name
 
     class Entity:
         nb = 0
@@ -149,7 +183,10 @@ if __name__ == '__main__':
     e4 = Entity(Box(Vector(0, -1.5), Vector(2, 1)))
     e5 = Entity(Box(Vector(-3, 0), Vector(1, 2)))
 
-    ls = [e, e2, e3, e4, e5]
+    o1 = Obj(Box(Vector.Zero(), Vector.Unit()))
+    o2 = Obj(Box(Vector(-3, 0), Vector(1, 2)))
+
+    ls = [e, e2, e3, e4, e5, o2, o1]
 
     # e2 = Entity(Box(Vector.Unit() * 4, Vector(1, 1)))
     for e_ in ls:
@@ -162,4 +199,4 @@ if __name__ == '__main__':
         print(cell, ":", entities)
 
     region = Box(Vector(.5, .5), Vector.Unit() / 2)
-    print(hash.search(region.center, region.size))
+    print(hash.search(region.center, region.size, Entity, Obj))

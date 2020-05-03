@@ -32,6 +32,7 @@ class BaseComponent(EventMixin):
     def on_scene_stopped(self, ev, dispatch):
         self._initialized = False
 
+
     def __init__(self, entity=None):
         if entity is not None:
             if not isinstance(entity, kge.Entity):

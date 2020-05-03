@@ -24,14 +24,14 @@ class Updater(System):
         self.engine.append_job(
             self.update_entities, dt
         )
+        # self.update_entities(dt)
 
     def update_entities(self, time_delta: float):
         start = time.monotonic()
         dispatch = self._dispatch
         scene = self.engine.current_scene
         if self.engine.running:
-            # type: Union[events.Update, events.FixedUpdate]
-            event = self.event_to_dispatch.__call__(time_delta, scene)
+            event = self.event_to_dispatch.__call__(time_delta, scene)  # type: Union[events.Update, events.FixedUpdate]
 
             # Dispatch to behaviours
             self._dispatch(event)

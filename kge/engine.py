@@ -24,11 +24,13 @@ from kge.core.scene import BaseScene
 from kge.core.service import Service
 from kge.core.service_provider import ServiceProvider
 from kge.core.system import System
-from kge.graphics.renderer import Renderer, WindowService
-from kge.inputs.input_manager import InputManager, InputService
+from kge.graphics.anim_system import AnimSystem
+from kge.graphics.renderer import Renderer, Window
+from kge.inputs.input_manager import InputManager, Inputs
 from kge.physics.fixed_updater import FixedUpdater
-from kge.physics.physics_manager import PhysicsManager, Physics, DebugDrawService
+from kge.physics.physics_manager import PhysicsManager, Physics, DebugDraw
 from kge.resources.assetlib import AssetLoader
+from kge.ui.ui_manager import UIManager
 
 
 class Engine(LoggerMixin, EventMixin):
@@ -50,13 +52,22 @@ class Engine(LoggerMixin, EventMixin):
                          Renderer,
                          InputManager,
                          AssetLoader,
-                         AudioManager,
+                         # AudioManager,
+                         AnimSystem,
                          EntityManager,
                          BehaviourManager,
+                         UIManager,
                  ),
                  basic_services=(
-                         Physics, EntityManagerService, Audio, InputService,
-                         WindowService, DebugDrawService,
+                         # Inner Services
+                         EntityManagerService,
+
+                         # Services provided to users
+                         Audio,
+                         Inputs,
+                         Physics,
+                         Window,
+                         DebugDraw,
                  ),
                  systems=(), scene_kwargs=None, window_title: str = None, **kwargs):
         super(Engine, self).__init__()
@@ -158,8 +169,7 @@ class Engine(LoggerMixin, EventMixin):
         # Then provide services
         for service in self._services_classes:
             if service.system_class in kinds:
-                ServiceProvider.provide(service=service(
-                    instance=kinds[service.system_class]))
+                ServiceProvider.provide(service=service, system=kinds[service.system_class])
 
     def init(self):
         """

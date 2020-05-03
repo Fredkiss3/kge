@@ -1,24 +1,14 @@
 from dataclasses import dataclass
-from typing import Type
-
-# import Box2D
-import sys
-import platform
-if sys.platform == "win32":
-    if platform.architecture()[0] == "64bit":
-        import kge.extra.win64.Box2D as b2
-    elif platform.architecture()[0] == "32bit":
-        import kge.extra.win32.Box2D as b2
-else:
-    # TODO: make for linux
-    pass
 
 import kge
 from kge.core.events import Event
 
+# from typing import Type
+
 """
 User Managed events
 """
+
 
 @dataclass
 class CollisionBegin(Event):
@@ -27,6 +17,7 @@ class CollisionBegin(Event):
     """
     collider: "kge.Collider"
     scene: 'kge.Scene' = None
+
 
 @dataclass
 class CollisionEnd(Event):

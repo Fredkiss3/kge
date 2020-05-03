@@ -1,71 +1,110 @@
+from typing import Union
+
+import pyglet
+
 import kge
-from kge.core.entity import BaseEntity
-from kge.ui.gui_renderer import TextRenderer
-from kge.core.constants import WHITE
+from kge.ui.font import Font
+from kge.ui.ui_element import UIElement
+# from kge.utils.vector import Vector
 
 
-class Text(BaseEntity):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class Text(UIElement):
+    """
+    A text element
+    """
+
+    def __init__(self, value: str = '', font: Font = Font()):
+        """
+       Initialize a text
+       :param text: the text value of the text
+       :param font: the font applied to the text
+        """
+        super().__init__()
 
         # gui values
-        self._value = ""
-        self._font_size = 10
-        self._bold = False
-        self._color = WHITE
+        self._font = None
+        self._text = ""
 
-        # renderer component
-        self.renderer = TextRenderer(self)
+        # label for pyglet
+        self._widget = None  # type: Union[pyglet.text.Label, None]
 
+        # Set properties
+        self.text = value
+        self.font = font
 
-        # Dispatch Component
-        manager = kge.ServiceProvider.getEntityManager()
-        manager.dispatch_component_operation(self, self.renderer, added=True)
+    def delete(self):
+        if self._widget is not None:
+            self._widget.delete()
+            self._widget = None
 
+    def render(self, scene: 'kge.Scene'):
+        """
+        Render the text
+        """
+        super().render(scene)
 
-    def on_destroy_entity(self, event, dispatch):
-        super().on_destroy_entity(event, dispatch)
-        self.renderer.delete()
+        if self._visible:
+            # Get Positions
+            camera = scene.main_camera
+            pos = self.screen_position(camera)
+
+            # load font
+            self._font.load()
+
+            if self._widget is None:
+                renderer = kge.ServiceProvider.getWindow()
+                batch = renderer.batch
+                layer = renderer.render_layers[self.parent.layer]
+                self._widget = pyglet.text.Label(self.text,
+                                                 x=pos.x,
+                                                 y=pos.y,
+                                                 width=camera.unit_to_pixels(self.size.x),
+                                                 # height=camera.unit_to_pixels(self.size.y),
+                                                 font_name=self.font.name,
+                                                 align=self.font.align,
+                                                 font_size=self.font.size,
+                                                 bold=self.font.weight,
+                                                 italic=self.font.style,
+                                                 color=(*self.font.color,),
+                                                 multiline=True,
+                                                 batch=batch,
+                                                 group=layer,
+                                                 anchor_x='center',
+                                                 anchor_y='center',
+                                                 )
+            else:
+                self._widget.text = self.text
+                self._widget.x = pos.x
+                self._widget.y = pos.y
+                self._widget.font_size = self.font.size * camera.zoom
+                self._widget.color = (*self.font.color,)
+                self._widget.bold = self.font.weight
+                self._widget.italic = self.font.style
+                self._widget.align = self.font.align
+                self._widget.width = camera.unit_to_pixels(self.size.x)
+                # self._widget.height = camera.pixels_to_unit(self.size.y)
+                self._widget.font_name = self.font.name
 
     @property
-    def value(self):
-        return self._value
+    def text(self):
+        return self._text
 
-    @value.setter
-    def value(self, val: str):
+    @text.setter
+    def text(self, val: str):
         if not isinstance(val, str):
-            raise TypeError("Value should be a string")
-        self._value = val
+            raise TypeError("The value of the property 'text' should be a string")
+
+        self._text = val
+        self.append_to_render_list()
 
     @property
-    def font_size(self):
-        return self._font_size
+    def font(self):
+        return self._font
 
-    @font_size.setter
-    def font_size(self, val: float):
-        if not isinstance(val, (int, float)):
-            raise TypeError("Font Size should be a number")
-        self._font_size = val
+    @font.setter
+    def font(self, val: Font):
+        if not isinstance(val, Font):
+            raise TypeError("The value of the property 'font' should be of type Font (kge.Font)")
 
-    @property
-    def bold(self):
-        return self._bold
-
-    @bold.setter
-    def bold(self, val: bool):
-        if not isinstance(val, bool):
-            raise TypeError("Bold should be a boolean")
-        self._bold = val
-
-    @property
-    def color(self):
-        return self._color
-
-    @color.setter
-    def color(self, val: tuple):
-        if not isinstance(val, tuple):
-            raise TypeError("Color should be a tuple of 4 integer values (R, G, B, A). Example : (125, 125, 125, 125)")
-        elif isinstance(val, tuple) and not len(val) == 4:
-            raise TypeError("Color should be a tuple of 4 integer values (R, G, B, A). Example : (125, 125, 125, 125)")
-
-        self._color = val
+        self._font = val
+        self.append_to_render_list()

@@ -1,7 +1,7 @@
 import traceback
-from typing import List, Union, Type, Dict, Tuple, Callable, TypeVar
+from typing import List, Union, Type, Tuple, Callable, TypeVar, Optional, Set
 
-import math
+import pyglet
 
 import kge
 from kge.core import events
@@ -9,7 +9,7 @@ from kge.core.component import BaseComponent
 from kge.core.eventlib import EventMixin
 from kge.core.events import Event
 from kge.core.transform import Transform
-from kge.utils.coroutines import coroutine, Coroutine
+from kge.utils.coroutine import coroutine
 from kge.utils.dotted_dict import DottedDict
 from kge.utils.vector import Vector
 
@@ -23,7 +23,7 @@ class BaseEntity(EventMixin):
 
     In order to add a behavior to an entity (like moving the player for example),
     we must use event handlers and behaviours.
-    look for
+
     Their signatures are :
 
     def on_{event_name}(self, event_type, dispatch_function):
@@ -32,7 +32,7 @@ class BaseEntity(EventMixin):
     Where :
         - event_name is the name of the event in snake_case
         - event_type is the event, you should use that, it contains a lot of important parameters
-        - dispatch_function is a function to call in order to send messages, in practice, you won't use it so much
+        - dispatch_function is a function to call in order to send custom events, in practice, you won't use it so much
 
     Example of an event handler :
 
@@ -41,10 +41,14 @@ class BaseEntity(EventMixin):
         >>>         print("Updating the player...")
 
     If you want to know a list of all events, you should see in module ``kge.core.events``
-
     """
     # Number of items created for that type
     nbItems = 0
+    scene: "kge.Scene"
+    _children: Set["BaseEntity"]
+    _parent: Optional["BaseEntity"]
+    vlist: pyglet.graphics.vertexdomain.VertexList
+    xf_vlist: pyglet.graphics.vertexdomain.VertexList
 
     def __fire_event__(self, event: Event, dispatch: Callable[[Event], None]):
         if event.scene is not None:
@@ -66,58 +70,105 @@ class BaseEntity(EventMixin):
                     if isinstance(event, events.Init):
                         self._initialized = True
 
-    # def on_add_component(self, ev: events.AddComponent, dispatch):
-    #     """
-    #     Add a component to this entity
-    #     NEVER TRY TO SUBCLASS THIS Method !!!
-    #     """
-    #     self.addComponent(component=ev.component)
-
-    # def on_remove_component(self, ev: events.RemoveComponent, dispatch):
-    #     """
-    #     Remove a component from this entity
-    #     NEVER TRY TO SUBCLASS THIS Method !!!
-    #     """
-    #     cp = self.removeComponent(ev.kind)  # type: List[BaseComponent]
-
-    def __init__(self, name: str = None, tag: str = None):
+    def __new__(cls,
+                *args,
+                name: str = None,
+                tag: str = None,
+                **kwargs, ):
         if (tag is not None and not isinstance(tag, str)) or (name is not None and (not isinstance(name, str))):
             raise TypeError("name and tags should be strings")
 
+        inst = super().__new__(cls)
+
         # Update number of items
-        type(self).nbItems += 1
+        cls.nbItems += 1
 
         # The components attached to the object
-        self._components = {}  # type: Dict[str, BaseComponent]
-        self.name = self.name = f"new {type(self).__name__} {type(self).nbItems}"
-        self._tag = tag
+        inst._components = {}
+        inst.name = inst.name = f"new {type(inst).__name__} {cls.nbItems}"
+        inst._tag = tag
 
         # is this entity initialized ?
-        self._initialized = False
+        inst._initialized = False
 
         # Set the name and tags of the entity
         if name is not None:
-            self.name = name
+            inst.name = name
 
         # the scene in which this entity is in
-        self.scene = None  # type: #Union[BaseScene, None]
+        inst.scene = None
 
         # children and parent
-        self._children = []  # type: List[BaseEntity]
-        self._parent = None  # type: Union[BaseEntity, None]
+        inst._children = set()
+        inst._parent = None
 
         # is active ? (if False, it will not render or receive events)
-        self._is_active = True
+        inst._is_active = True
 
         # the layer in which the entity is in
-        self.layer = 0
+        inst.layer = 0
 
         # transform of the entity
-        self._transform = Transform(entity=self)
-        self.destoyed = False
+        inst._transform = Transform(entity=inst)
+        inst.destroyed = False
 
-        # order in layer
-        self.order_in_layer = 0
+        # vertex lists for debug draw
+        inst.vlist = None
+        inst.xf_vlist = None
+
+        return inst
+
+    # def __init__(self, name: str = None, tag: str = None):
+    #     pass
+
+    # def __call__(self, *args, **kwargs):
+    #     pass
+
+    def flipX(self):
+        self.transform.scale.x = -self.transform.scale.x
+
+    def flipY(self):
+        self.transform.scale.y = -self.transform.scale.y
+
+    @property
+    def debuggable(self):
+        """
+        This property is used to mark an entiy as to be re-rendered on debug
+        """
+        if self.scene is None:
+            return False
+        else:
+            return self in self.scene.debuggable
+
+    @debuggable.setter
+    def debuggable(self, val: bool):
+        if not isinstance(val, bool):
+            raise TypeError("Only boolean values allowed for 'debuggable' Flag")
+        if self.scene is not None:
+            if val:
+                self.scene.mark_as_debuggable(self)
+            elif self.debuggable:
+                self.scene.debuggable.remove(self)
+
+    @property
+    def dirty(self):
+        """
+        This property is used to mark an entiy as to be re-rendered
+        """
+        if self.scene is None:
+            return False
+        else:
+            return self in self.scene.dirties
+
+    @dirty.setter
+    def dirty(self, val: bool):
+        if not isinstance(val, bool):
+            raise TypeError("Only boolean values allowed for 'dirty' Flag")
+        if self.scene is not None:
+            if val:
+                self.scene.mark_as_dirty(self)
+            elif self.dirty:
+                self.scene.dirties.remove(self)
 
     @property
     def size(self) -> DottedDict:
@@ -129,42 +180,6 @@ class BaseEntity(EventMixin):
         :return:
         """
         return DottedDict(width=abs(self.transform.scale.x), height=abs(self.transform.scale.y))
-
-    @property
-    def left(self):
-        """
-        Left world position in units
-
-        :return:
-        """
-        return (self.position.x - self.size.width / 2) * abs(self.transform.scale.x)
-
-    @property
-    def right(self):
-        """
-        right world position in units
-
-        :return:
-        """
-        return (self.position.x + self.size.width / 2) * abs(self.transform.scale.x)
-
-    @property
-    def top(self):
-        """
-        Up world position in units
-
-        :return:
-        """
-        return (self.position.y + self.size.height / 2) * abs(self.transform.scale.y)
-
-    @property
-    def bottom(self):
-        """
-        Down world position in units
-
-        :return:
-        """
-        return (self.position.y - self.size.height / 2) * abs(self.transform.scale.y)
 
     @property
     def transform(self):
@@ -183,11 +198,16 @@ class BaseEntity(EventMixin):
 
         if rb is not None:
             if rb.body is not None and self._transform.position != rb.position:
-                if self.scene is not None:
-                    self.scene.spatial_hash.remove(self._transform.position, Vector(self.size.width, self.size.height),
-                                                   self)
-                    self.scene.spatial_hash.add(rb.position, Vector(self.size.width, self.size.height), self)
+                if not isinstance(self, kge.Camera):
+                    if self.scene is not None:
+                        self.scene.spatial_hash.remove(self._transform.position,
+                                                       Vector(self.size.width, self.size.height),
+                                                       self)
+                        self.scene.spatial_hash.add(rb.position, Vector(self.size.width, self.size.height), self)
 
+                    # When position get changed, mark as 'dirty'
+                    self.dirty = True
+                    self.debuggable = True
                 self._transform.position = rb.position
         return self._transform.position
 
@@ -197,19 +217,19 @@ class BaseEntity(EventMixin):
             rb = self.getComponent(kind=kge.RigidBody)
 
             # Set position of the body
-
             if rb is not None:
-                rb.position = value
-                # raise AttributeError(
-                #     "You should not use position to move the entity when a RigidBody is attached, instead use RigidBody to set position")
-            # else:
+                rb.position = Vector(value)
 
             if self.scene is not None:
+                # set as dirty
+                self.dirty = True
+                self.debuggable = True
+
                 self.scene.spatial_hash.remove(self._transform.position, Vector(self.size.width, self.size.height),
                                                self)
                 self.scene.spatial_hash.add(value, Vector(self.size.width, self.size.height), self)
 
-            self._transform.position = value
+            self._transform.position = Vector(value)
 
     @property
     def scale(self):
@@ -223,6 +243,9 @@ class BaseEntity(EventMixin):
         """
         Set the scale of the entity
         """
+        if self.scale != value:
+            self.dirty = True
+            self.debuggable = True
         self._transform.scale = value
 
     @property
@@ -233,7 +256,11 @@ class BaseEntity(EventMixin):
         rb = self.getComponent(kind=kge.RigidBody)
         if rb is not None:
             if rb.body is not None:
-                self._transform.angle = math.degrees(rb.body.angle)
+                self.dirty = True
+                if rb.angle != self._transform.angle:
+                    self.dirty = True
+                    self.debuggable = True
+                    self._transform.angle = rb.angle
         return self._transform.angle
 
     @angle.setter
@@ -247,11 +274,18 @@ class BaseEntity(EventMixin):
         if rb is not None:
             rb.angle = value
 
+        if value != self._transform.angle:
+            self.dirty = True
+            self.debuggable = True
         self._transform.angle = value
 
     @property
     def tag(self):
         return self._tag
+
+    @tag.setter
+    def tag(self, val: str):
+        self._tag = val
 
     @property
     def children(self):
@@ -263,13 +297,13 @@ class BaseEntity(EventMixin):
 
     @parent.setter
     def parent(self, value: "BaseEntity"):
-        """
-        TODO : Parent-Child relation with rigid body constraints
-        """
         if isinstance(value, BaseEntity):
-            self._parent = value
-            value.children.append(self)
-            self._transform.parent = value.transform
+            if value.parent is not self:
+                self._parent = value
+                value.children.add(self)
+                self._transform.parent = value.transform
+            else:
+                raise ValueError(f"{value} cannot be parent of {self} because {self} is already the parent of {value}")
         elif value is None:
             # remove self from children
             self._parent.children.remove(self)
@@ -291,6 +325,7 @@ class BaseEntity(EventMixin):
 
     def start_coroutine(self, func: Callable, delay: float = .01, loop: bool = False, *args, **kwargs):
         """
+        TODO: Reformat Coroutines to generators function
         Start a coroutine
 
         when setting a function as coroutine, your function should not have an infinite loop in it
@@ -337,7 +372,6 @@ class BaseEntity(EventMixin):
     #         self.parent = None
     #     for coroutine in self._coroutines:
     #         coroutine.stop_loop()
-
 
     def getComponents(self, kind: Type[T]) -> Union[List[T]]:
         """
@@ -463,6 +497,10 @@ class BaseEntity(EventMixin):
         if not isinstance(val, bool):
             raise TypeError("Is active should be a bool !")
 
+        if val != self._is_active:
+            self.dirty = True
+            self.debuggable = True
+
         if val:
             self._activate()
         else:
@@ -507,7 +545,7 @@ class BaseEntity(EventMixin):
 
         if manager:
             manager.enable(self)
-            # self.destoyed = True
+            # self.destroyed = True
 
 
 Entity = BaseEntity

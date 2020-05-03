@@ -3,7 +3,7 @@ from typing import List, Tuple, Callable, Dict
 import pyglet
 import pyglet_ffmpeg2
 
-# FIXME: AUDIO ERRORS WITH OPENAL
+
 from kge.audio.sound import Sound
 from kge.core import events
 from kge.core.events import Event
@@ -14,8 +14,9 @@ from kge.core.system import System
 class AudioManager(System):
     """
     Audio System
-    TODO : POSITIONNAL AUDIO WITH AUDIO SOURCE
-    FIXME : SOUND SOMETIMES BUGS
+    Note that, we can only use 'wav' and 'ogg' format for sounds
+    TODO : POSITIONNAL AUDIO WITH AUDIO SOURCE & OPENAL (?)
+    FIXME : SOUND SOMETIMES BUGS WHEN SPAMMING MULTI
     """
     _players: List[pyglet.media.Player] = []
     _args: List[Tuple] = []
@@ -49,9 +50,6 @@ class AudioManager(System):
         self.logger.debug(f"Calling ON_EOS function with {len(self._players)} players left")
 
     def play(self, snd: Sound, volume: float = 10, loop: bool = False, pitch: float = 1):
-        """
-        FIXME : SOUND MAKE THE APP BUGGY
-        """
         sound = snd.load()  # type: pyglet.media.Source
         if sound is not None:
             # Create player with pitch and volume
@@ -86,9 +84,13 @@ class AudioManager(System):
         self._args.clear()
 
 class Audio(Service):
+    """
+    Note that, we can only use 'wav' and 'ogg' format for sounds
+    """
     system_class = AudioManager
     _system_instance: AudioManager
 
+    @classmethod
     def play(self, snd: Sound, volume: float = 10, loop: bool = False, pitch: float = 1):
         if not (isinstance(volume, (int, float)) and isinstance(pitch, (int, float)) and isinstance(loop, bool)):
             raise TypeError("Volume should be a number and loop should be a bool")

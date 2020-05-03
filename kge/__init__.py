@@ -5,56 +5,81 @@ Copyright (C) 2020-2021 Fredhel KISSIE
 
 THIS GAME ENGINE USE A COMBINATION OF GAME ENGINES :
     - PYGLET : FOR RENDERING AND SOUND SYSTEM
+    - PYGAME : FOR JOYSTICK CONTROL
 
 inspired by PPB ENGINE:
 Checkout the repository :  https://github.com/ppb/pursuedpybear/
 """
 #: The release version
-version = '1.0.1'
+import io
 
-import pyglet_ffmpeg2
+version = '1.1'
+
 import logging
 from typing import Callable
 
-from kge.core.service_provider import ServiceProvider
-from kge.core.scene import Scene
-from kge.core.entity import Entity
-from kge.core.component import Component
+from kge.audio.audio_manager import Audio
+from kge.audio.sound import Sound
+from kge.core import events
 from kge.core.behaviour import Behaviour
+from kge.core.camera import Camera
+from kge.core.component import Component
+from kge.core.constants import *
+from kge.core.entity import Entity
+from kge.core.events import Event
+from kge.core.scene import Scene
+from kge.core.service_provider import ServiceProvider
+from kge.engine import Engine
+from kge.graphics.animation import Animation, Frame
+from kge.graphics.animator import Animator, ANY
+from kge.graphics.image import Image, TiledImage
+from kge.graphics.renderer import Window
+from kge.graphics.shapes import (Circle, Triangle, Square, Shape, OutlinedCircle, OutLinedSquare,
+                                 OutlinedTriangle)
+from kge.graphics.sprite import Sprite
+from kge.inputs import keys as Keys
+from kge.inputs import mouse as Mouse
+from kge.inputs.input_manager import Inputs
+from kge.physics import events as physics_events
+from kge.physics.colliders import (
+    Collider, BoxCollider, CircleCollider, PolygonCollider, LineCollider, TriangleCollider,
+    EdgeCollider
+)
 from kge.physics.physics_manager import (
-    RayCastInfo, OverlapInfo
+    RayCastInfo, OverlapInfo, Physics, DebugDraw
 )
 from kge.physics.rigid_body import RigidBody, RigidBodyType
-from kge.physics.colliders import (
-    Collider, BoxCollider, CircleCollider, PolygonCollider, EdgeCollider, TriangleCollider,
-    LoopCollider
-)
-from kge.core import events
-from kge.physics import events as physics_events
-from kge.audio import events as audio_events
-from kge.core.events import Event
-from kge.utils.vector import Vector
-from kge.resources.assetlib import Asset
-from kge.audio.sound import Sound
-from kge.graphics.image import Image
-from kge.graphics.sprite import Sprite
-from kge.graphics.tilegrid import TileGrid
-from kge.graphics.sprite_renderer import (Circle, Triangle, Square, Shape, OutlinedCircle, OutLinedSquare,
-                                          OutlinedTriangle)
-from kge.core.camera import Camera
-from kge.inputs import keys as Keys
-from kge.core.constants import *
-from kge.inputs import mouse as Mouse
+from kge.ui.button import Button, ButtonStyle
+from kge.ui.canvas import Canvas
+from kge.ui.font import Font
+from kge.ui.panel import Panel
 from kge.ui.text import Text
-from kge.core.color import Color
-
-from .engine import Engine
+from kge.utils.color import Color
+from kge.utils.condition import Condition, C
+from kge.utils.spatial_hash import Box
+from kge.utils.vector import Vector
 
 __all__ = [
+    # Services
+    "Physics",
+    "Audio",
+    "Window",
+    "Inputs",
+    "DebugDraw",
+
+    # Animation
+    "Frame",
+    "Animation",
+    "Animator",
+    "ANY",
+
+    # Conditions (Mostly used for animations)
+    "C",
+    "Condition",
+    "ALWAYS",
+
     # Core elements
     "Scene",
-    "Entity",
-    "Empty",
     "Behaviour",
     "Component",
     "Camera",
@@ -65,7 +90,6 @@ __all__ = [
     "audio",
     "events",
     "physics_events",
-    "audio_events",
 
     # event class
     "Event",
@@ -78,9 +102,10 @@ __all__ = [
     "Vector",
 
     # Assets
-    "Asset",
     "Sound",
     "Image",
+    "TiledImage",
+    "Box",
 
     # Physics Components & Utils
     "RigidBody",
@@ -90,28 +115,36 @@ __all__ = [
     "PolygonCollider",
     "CircleCollider",
     "TriangleCollider",
+    "LineCollider",
     "EdgeCollider",
-    "LoopCollider",
     "RayCastInfo",
     "OverlapInfo",
 
     # Service Locator
     "ServiceProvider",
 
-    # Sprite Entity
+    # Entity Types
     "Sprite",
-    "TileGrid",
+    "Canvas",
+    "Entity",
+    "Empty",
 
     # UI elements
     "Text",
+    "Button",
+    "Panel",
+
+    # UI Assets
+    "Font",
+    "ButtonStyle",
 
     # Shapes
-    "Circle",
     "Shape",
     "Square",
     "Triangle",
     "OutLinedSquare",
     "OutlinedTriangle",
+    "Circle",
     "OutlinedCircle",
 
     # Colors
@@ -124,17 +157,25 @@ __all__ = [
     "MAGENTA",
     "GREY",
     "YELLOW",
+    "LIGHTGREY",
+    "DARKGREY",
+    "PURPLE",
+    "DEFAULT_PIXEL_RATIO",
 ]
 
 
 class Empty(Entity):
     """
-    To Create an empty entity
+    To Create an empty entity (Entity Which have zero for scale)
     """
 
-    def __init__(self):
-        super().__init__(name="Empty Entity")
-        self.transform.scale = Vector.Zero()
+    def __new__(cls, *args,
+                name: str = None,
+                tag: str = None,
+                **kwargs):
+        inst = super().__new__(cls, name=name, tag=tag)
+        inst.scale = Vector.Zero()
+        return inst
 
 
 def _make_kwargs(setup, title, engine_opts):
@@ -145,13 +186,23 @@ def _make_kwargs(setup, title, engine_opts):
         "window_title": title,
         **engine_opts
     }
+    # print(kwargs)
     return kwargs
 
 
-def run(setup: Callable[[Scene], None] = None, *, log_level=logging.WARNING,
-        starting_scene=Scene, title="Kiss Game Engine", **engine_opts):
+def run(
+        setup: Callable[[Scene], None] = None, *,
+        log_level=logging.WARNING,
+        starting_scene=Scene,
+        title="Kiss Game Engine",
+        resizable=True,
+        show_console=False,
+        resolution=DEFAULT_RESOLUTION,
+        fullscreen=False,
+        vsync=False,
+        pixel_ratio=DEFAULT_PIXEL_RATIO,
+        **engine_opts):
     """
-    # TODO : ADD NOTICE FOR ARGUMENTS
     Run a game.
 
     The resolution will be 1000 pixels wide by 700 pixels be default.
@@ -163,9 +214,22 @@ def run(setup: Callable[[Scene], None] = None, *, log_level=logging.WARNING,
 
     starting_scene let's you change the scene used by the engine.
     """
-    logging.basicConfig(level=log_level, )
+    output = None
+    if show_console:
+        output = io.StringIO()
+    logging.basicConfig(level=log_level, stream=output)
 
-    with make_engine(setup, starting_scene=starting_scene, title=title, **engine_opts) as eng:
+    with make_engine(setup,
+                     starting_scene=starting_scene,
+                     title=title,
+                     pixel_ratio=pixel_ratio,
+                     fullscreen=fullscreen,
+                     resizable=resizable,
+                     show_console=show_console,
+                     console_output=output,
+                     vsync=vsync,
+                     resolution=resolution,
+                     **engine_opts) as eng:
         eng.run()
 
 

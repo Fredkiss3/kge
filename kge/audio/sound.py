@@ -3,10 +3,6 @@ from typing import Union
 
 import pyglet
 
-# FIXME: AUDIO DRIVER ERRORS ON LINUX
-# pyglet.options['audio'] = ('pulse', 'openal', 'directsound', 'silent')
-# print(pyglet.media.drivers.get_audio_driver())
-
 import kge
 from kge.resources.assetlib import AbstractAsset
 

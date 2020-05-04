@@ -23,7 +23,7 @@ class Cadre(Entity):
             vertices=[
                 v * scale_factor for v in Vector.Box()
             ],
-            isSensor=True
+            sensor=True
         ))
 
     def on_collision_enter(self, ev: physics_events.CollisionEnter, _):
@@ -52,7 +52,7 @@ class Bullet(Sprite):
         self.rb.gravity_scale = 0
         self.rb.velocity = direction.normalized() * self.speed
         self.addComponent(self.rb)
-        self.addComponent(CircleCollider(isSensor=True))
+        self.addComponent(CircleCollider(sensor=True))
 
 
 class Aim(Sprite):
@@ -91,7 +91,7 @@ class Player(Sprite):
         self.rb = RigidBody()  # this helps for applying movement to the game object 
         self.rb.gravity_scale = 0  # We don't want our game object to be fall on gravity
         self.addComponent(self.rb)  # Add rigid body
-        self.addComponent(CircleCollider(isSensor=True))  # This helps for responding to collisions
+        self.addComponent(CircleCollider(sensor=True))  # This helps for responding to collisions
 
         # bullet sound & score
         self.sound = Sound("assets/laser1.ogg")
@@ -203,7 +203,7 @@ class Enemy(Sprite):
         self.rb = RigidBody()
         self.rb.gravity_scale = 0
         self.addComponent(self.rb)
-        self.addComponent(TriangleCollider(isSensor=True))
+        self.addComponent(TriangleCollider(sensor=True))
 
         # the target of the enemy
         self.target = None  # type: Union[Player, None]

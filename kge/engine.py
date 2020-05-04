@@ -283,6 +283,7 @@ class Engine(LoggerMixin, EventMixin):
         Destroy an entity
         """
         ev.entity.is_active = False
+        ev.scene.remove(ev.entity)
 
         # dispatch the event
         self.dispatch(events.EntityDestroyed(

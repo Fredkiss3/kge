@@ -1,6 +1,6 @@
 from collections import deque
 # from enum import Enum, auto
-from typing import Deque
+from typing import Deque, Set
 
 from dataclasses import dataclass
 
@@ -47,6 +47,7 @@ class Canvas(BaseEntity):
     _event_set: Deque[UIElement]
     _to_render: Deque[UIElement]
     fixed: bool
+    elements: Set[UIElement]
 
     def __new__(cls, *args,
                 name: str = None,
@@ -86,7 +87,12 @@ class Canvas(BaseEntity):
 
         # hover list & Click list
         inst._event_set = deque()
+        inst._elements = set()
         return inst
+
+    @property
+    def elements(self):
+        return self._elements
 
     @property
     def position(self):
@@ -124,6 +130,7 @@ class Canvas(BaseEntity):
 
             # Add element to spatial hash
             self.spatial_hash.add(position, element.size, element)
+            self._elements.add(element)
         else:
             raise IndexError("Cannot add an element out of the canvas")
 
@@ -133,6 +140,7 @@ class Canvas(BaseEntity):
         :param element: the element to remove
         """
         self.spatial_hash.remove(element.position, element.size, element)
+        self._elements.remove(element)
 
     def dispatch(self, e: CanvasEvent):
         """

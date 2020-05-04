@@ -21,8 +21,7 @@ if sys.platform == "win32":
 else:
     import kge.extra.linux64.Box2D as b2
 
-from kge.core.events import Event
-from kge.physics.events import BodyCreated, BodyDestroyed, CreateBody
+from kge.core.events import Event, BodyCreated, BodyDestroyed, CreateBody
 
 
 class Collider(BaseComponent):
@@ -31,18 +30,18 @@ class Collider(BaseComponent):
     """
 
     def __init__(self,
-                 isSensor: bool = False,
+                 sensor: bool = False,
                  offset: Vector = Vector.Zero(),
                  bounciness: float = 0,
                  friction: float = 0,
                  density: float = 1,
                  ):
         super().__init__(None)
-        if not isinstance(isSensor, bool):
+        if not isinstance(sensor, bool):
             raise TypeError("Sensor should be a bool")
 
         # does this collider pass through objects ?
-        self.isSensor = isSensor
+        self.isSensor = sensor
 
         # the real fixture
         self._fixture = None  # type: Union[b2.b2Fixture, None]
@@ -179,7 +178,7 @@ class Collider(BaseComponent):
     #         Events           #
     ############################
 
-    def on_body_created(self, ev: BodyCreated, dispatch):
+    def on_body_created(self, ev: BodyCreated, _):
         if ev.entity == self.entity:
             rb = self.entity.getComponent(kind=RigidBody)  # type: RigidBody
             if rb is not None:
@@ -187,9 +186,9 @@ class Collider(BaseComponent):
 
             # create a fixture for this body
             if self._fixture is None:
-                self.__create(body=ev.body)
+                self.__create(body=ev.rb.body)
 
-    def on_body_destroyed(self, ev: BodyDestroyed, dispatch):
+    def on_body_destroyed(self, ev: BodyDestroyed, _):
         if ev.entity == self.entity:
             manager = kge.ServiceProvider.getEntityManager()
             manager.remove_component(self.entity, kind=Collider)
@@ -217,7 +216,7 @@ class Collider(BaseComponent):
             rb.is_ghost = True
             event = CreateBody(
                 entity=self.entity,
-                body_component=rb
+                rb=rb
             )
 
             event.onlyEntity = self.entity
@@ -231,7 +230,7 @@ class BoxCollider(Collider):
 
     def __init__(self,
                  box: Vector = None,
-                 isSensor: bool = False,
+                 sensor: bool = False,
                  offset: Vector = Vector.Zero(),
                  bounciness: float = 0,
                  friction: float = 0,
@@ -239,10 +238,11 @@ class BoxCollider(Collider):
         """
         initialize the collider
 
-        :param box: a vector which describes the box of the collider in form of Vector(width, height) default is set to entity size
+        :param box: a vector which describes the box of the collider in form of Vector(width, height)
+                    default is set to entity size
         :param offset: The position of the collider relative to the parent body
         """
-        super().__init__(isSensor, offset, bounciness, friction, density)
+        super().__init__(sensor, offset, bounciness, friction, density)
 
         if box is not None and not isinstance(box, Vector):
             raise TypeError("Box should be a vector")
@@ -292,7 +292,7 @@ class CameraCollider(BoxCollider):
     """
 
     def __init__(self, box: Vector = None):
-        super().__init__(box, isSensor=True, offset=Vector.Zero(), bounciness=0, friction=0, density=1)
+        super().__init__(box, sensor=True, offset=Vector.Zero(), bounciness=0, friction=0, density=1)
         # set the entity
         self._entity = None  # type: Union[kge.Camera, None]
 
@@ -320,7 +320,7 @@ class PassThroughCollider(BoxCollider):
                  pass_left: bool = False,
                  pass_right: bool = False,
                  box: Vector = None,
-                 isSensor: bool = False,
+                 sensor: bool = False,
                  offset: Vector = Vector.Zero(),
                  bounciness: float = 0,
                  friction: float = 0,
@@ -332,7 +332,7 @@ class PassThroughCollider(BoxCollider):
         :param box: a vector which describes the box of the collider in form of Vector(width, height)
         :param offset: The position of the collider relative to the parent body
         """
-        super().__init__(box, isSensor, offset, bounciness, friction, density)
+        super().__init__(box, sensor, offset, bounciness, friction, density)
 
         # Pass directions
         self.pass_up = pass_up
@@ -349,7 +349,7 @@ class CircleCollider(Collider):
     def __init__(self,
                  radius: float = None,
                  center: Vector = Vector.Zero(),
-                 isSensor: bool = False,
+                 sensor: bool = False,
                  bounciness: float = 0,
                  friction: float = 0,
                  density: float = 1.0,
@@ -360,7 +360,7 @@ class CircleCollider(Collider):
         :param radius: the radius of the collider
         :param center: The position of the center of the collider relative to the parent body
         """
-        super().__init__(isSensor, center, bounciness, friction, density)
+        super().__init__(sensor, center, bounciness, friction, density)
 
         if radius is not None and not isinstance(radius, (float, int)):
             raise TypeError("Radius should be a number")
@@ -404,7 +404,7 @@ class PolygonCollider(Collider):
 
     def __init__(self,
                  vertices: List[Vector],
-                 isSensor: bool = False,
+                 sensor: bool = False,
                  bounciness: float = 0,
                  friction: float = 0,
                  density: float = 1,
@@ -416,7 +416,7 @@ class PolygonCollider(Collider):
             vertices=[Vector(-1, -1), Vector(2, 2), Vector(1, 1)].
             each point is relative to the parent body
         """
-        super().__init__(isSensor, Vector.Zero(), bounciness, friction, density)
+        super().__init__(sensor, Vector.Zero(), bounciness, friction, density)
 
         if len(vertices) < 3:
             raise ValueError(
@@ -437,18 +437,16 @@ class TriangleCollider(Collider):
     A component that handles collisions in a triangle shape
     """
 
-    def __init__(self, vertices: List[Vector] = None, center: Vector = Vector.Zero(), isSensor: bool = False,
+    def __init__(self, vertices: List[Vector] = None, center: Vector = Vector.Zero(), sensor: bool = False,
                  bounciness: float = 0,
                  friction: float = 0, density: float = 1.0):
         """
         initialize the collider
 
         :param center: The position of the center of the collider relative to the parent body
-        :param p1: the first point of the triangle
-        :param p2: the second point of the triangle
-        :param p3: the third point of the triangle
+        :param vertices: The vertices of the collider relative to the parent body
         """
-        super().__init__(isSensor, center, bounciness, friction, density)
+        super().__init__(sensor, center, bounciness, friction, density)
 
         if vertices is not None and len(vertices) < 3:
             raise ValueError("Triangle Collider accepts three vertices")
@@ -490,7 +488,7 @@ class LineCollider(Collider):
     def __init__(self,
                  point1: Vector,
                  point2: Vector,
-                 isSensor: bool = False,
+                 sensor: bool = False,
                  bounciness: float = 0,
                  friction: float = 0,
                  density: float = 1,
@@ -498,14 +496,15 @@ class LineCollider(Collider):
         """
         initialize the collider
 
-        :param vertices: a list of points of the collider in this form :
+        :param point1: The origin point relative to the parent
+        :param point2: The destination point relative to the parent
             # each point is relative to the parent body
             >>> collider = LineCollider(
             >>>         point1=Vector(-1, -1),
             >>>         point2=Vector(1, 1)
             >>> )
         """
-        super().__init__(isSensor, Vector.Zero(), bounciness, friction, density)
+        super().__init__(sensor, Vector.Zero(), bounciness, friction, density)
 
         # the vertices
         self._vertices = [point1, point2]
@@ -524,7 +523,7 @@ class EdgeCollider(Collider):
 
     def __init__(self,
                  vertices: List[Vector],
-                 isSensor: bool = False,
+                 sensor: bool = False,
                  bounciness: float = 0,
                  friction: float = 0,
                  density: float = 1,
@@ -540,7 +539,7 @@ class EdgeCollider(Collider):
             >>>   Vector(-1, -1), Vector(2, 2), Vector(1, 1)
             >>> ])
         """
-        super().__init__(isSensor, Vector.Zero(), bounciness, friction, density)
+        super().__init__(sensor, Vector.Zero(), bounciness, friction, density)
 
         # the vertices
         self._vertices = vertices  # type: List[Vector]
@@ -563,6 +562,6 @@ if __name__ == '__main__':
         Vector(1, 1), Vector(2, 2), Vector(3, 3),
     ])
     print(c.entity)
-    p.addComponent("collider1", c)
+    p.addComponent(c)
     print(c.entity)
     print(c.isSensor)

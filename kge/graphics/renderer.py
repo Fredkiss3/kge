@@ -42,7 +42,7 @@ class DebugConsole(object):
         # Imgui Renderer
         imgui.new_frame()
 
-        imgui.begin("Debug Console", False, imgui.WINDOW_HORIZONTAL_SCROLLING_BAR)
+        imgui.begin("Debug Console", False, imgui.WINDOW_NO_FOCUS_ON_APPEARING)
 
         # Show Everything
         self._show_fps(fps)
@@ -87,7 +87,7 @@ class DebugConsole(object):
             "TEXT OUTPUT", border=True,
             flags=imgui.WINDOW_HORIZONTAL_SCROLLING_BAR)
 
-        items = filter(lambda i: self.input.lower() in i[0], self.items)
+        items = filter(lambda i: self.input.lower() in i[0].lower(), self.items)
         for item, color in items:
             # if self.input.lower() in item.lower():
             imgui.text_colored(item, *[c / 255 for c in color])
@@ -106,17 +106,84 @@ class DebugConsole(object):
         imgui.end_child()
 
 
+class LoadingFeedBack(object):
+    def __init__(self):
+        self.loaded = False
+
+        # The loading Label
+        self.loading_label = None  # type: Optional[pyglet.text.Label]
+
+        # Our Brand
+        self.brand = None  # type: Optional[pyglet.text.Label]
+
+        # Entered ?
+        self.entered = False
+
+    @property
+    def text(self):
+        return '' if self.loading_label is None else self.loading_label.text
+
+    @text.setter
+    def text(self, val: str):
+        if self.loading_label is not None:
+            self.loading_label.text = f"{val}"
+
+    def __enter__(self):
+        # The loading Label
+        self.loading_label = pyglet.text.Label(
+            'PREPARING ENTITIES...', font_size=10, bold=True,
+            x=40,
+            y=20,
+        )
+
+        # Our Brand
+        self.brand = pyglet.text.Label(
+            'KISS GAME ENGINE', font_size=20, bold=True,
+            x=40,
+            y=40,
+        )
+
+        self.entered = True
+
+    def __exit__(self, *_, **__):
+        pass
+
+    def draw(self, window: "pyglet.window.Window"):
+        if self.loading_label is not None and self.brand is not None:
+            gl.glMatrixMode(gl.GL_MODELVIEW)
+            gl.glPushMatrix()
+            gl.glLoadIdentity()
+
+            gl.glMatrixMode(gl.GL_PROJECTION)
+            gl.glPushMatrix()
+            gl.glLoadIdentity()
+            gl.glOrtho(0, window.width, 0, window.height, -1, 1)
+
+            self.loading_label.draw()
+            self.brand.draw()
+
+            gl.glPopMatrix()
+
+            gl.glMatrixMode(gl.GL_MODELVIEW)
+            gl.glPopMatrix()
+
+    def delete(self):
+        self.loading_label.delete()
+        self.brand.delete()
+        self.loading_label = None
+        self.brand = None
+
+
 class Renderer(ComponentSystem):
     """
     The system which task is to render all elements in a scene
     TODO:
-        - Show Console
         - Set Pixel Ratio Dynamically
         - Set FullScreen by script
         - Resize Window by script
-        - LOOK FOR 'pyglet Combining multiples images or textures into one'
-            -> For Tiling
         - LOOK FOR 'pyglet Z ordering with Sprite' -> For Applying 'Order in layer' (?)
+        - Camera Jittering :
+            -> glScalef not synced with camera position ?
     """
 
     def __init__(self,
@@ -160,8 +227,8 @@ class Renderer(ComponentSystem):
         self._bgc = tuple(unit / 255 for unit in BLACK[:3])
 
         # batch
-        self.batch = None  # type: Union[pyglet.graphics.Batch, None]
-        self.grid_batch = None  # type: Union[pyglet.graphics.Batch, None]
+        self.batch = None  # type: Optional[pyglet.graphics.Batch]
+        self.grid_batch = None  # type: Optional[pyglet.graphics.Batch]
 
         # layers
         self.layers = [pyglet.graphics.OrderedGroup(i) for i in range(MAX_LAYERS)]
@@ -176,23 +243,23 @@ class Renderer(ComponentSystem):
 
         # TODO : UI Batch (?)
         self.ui_batch = pyglet.graphics.Batch()
-        # TODO : TO REMOVE
-        self._loaded = False
-        self.loading_label = None  # type: Optional[pyglet.text.Label]
 
+        # Loading FeedBack
+        self._load_feedback = None  # type: Optional[LoadingFeedBack]
 
     def on_window_resized(self, event: events.WindowResized, dispatch):
         """
-        FIXME : IS IT PERFORMANT ENOUGH ?
+        FIXME : CHANGE THIS
         :param event:
         :param dispatch:
         :return:
         """
-        scene = self.engine.current_scene
-        if scene is not None:
-            for canvas in scene.entity_layers(kge.Canvas, renderable=False):  # type: kge.Canvas
-                canvas.renderer.delete()
-                canvas.dirty = True
+        # scene = self.engine.current_scene
+        # if scene is not None:
+        #     for canvas in scene.entity_layers(kge.Canvas, renderable=False):  # type: kge.Canvas
+        #         canvas.renderer.delete()
+        #         canvas.dirty = True
+        pass
 
     def on_disable_entity(self, event: events.DisableEntity, dispatch):
         if hasattr(event.entity, "renderer"):
@@ -216,6 +283,8 @@ class Renderer(ComponentSystem):
 
         # clear components & remake the batch
         self.batch = pyglet.graphics.Batch()
+        with LoadingFeedBack() as l:
+            self._load_feedback = l
 
         self.window_size = Vector.Zero()
 
@@ -258,18 +327,12 @@ class Renderer(ComponentSystem):
         imgui.create_context()
         self.imgui_impl = PygletRenderer(self.window)
 
+        # Loading FeedBack
+        with LoadingFeedBack() as l:
+            self._load_feedback = l
+
         # Schedule render update to the time step
         pyglet.clock.schedule(self.render)
-
-        # TODO : LOADING LABEL
-        self.loading_label = pyglet.text.Label(
-            'PREPARING ENTITIES...', font_size=20, bold=True,
-            x = 20,
-            y = 40,
-            batch=self.batch,
-            group=pyglet.graphics.OrderedGroup(100)
-        )
-
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.engine.event_loop.has_exit = True
@@ -289,6 +352,8 @@ class Renderer(ComponentSystem):
         Render calculations
         """
         scene = self.engine.current_scene
+        if not scene.started:
+            return
 
         if scene is not None:
             # set scene color
@@ -296,26 +361,26 @@ class Renderer(ComponentSystem):
                 unit / 255 for unit in scene.background_color[:3]
             )
 
-            scene = self.engine.current_scene
-
+            # Shapes to draw (MOSTLY CIRCLES)
             self.to_draw = []
             dirties = set(scene.dirties)
-            i = 0
-            if not self._loaded:
-                self.loading_label.text = "RENDERING ENTITIES..."
 
-            # for entity in scene.entity_layers():  # type: Union[kge.Sprite, kge.Canvas]
+            if self._load_feedback is not None:
+                if not self._load_feedback.loaded:
+                    self._load_feedback.text = "RENDERING ENTITIES..."
+                    self._load_feedback.loaded = True
+                    return
+
             for entity in dirties:  # type: Union[kge.Sprite, kge.Canvas]
                 # Render elements
                 shape = entity.renderer.render(scene)
                 if shape is not None:
                     self.to_draw.append(shape)
 
-                i += 1
-
-            if not self._loaded and i > 0:
-                self._loaded = True
-                self.loading_label.delete()
+            if self._load_feedback is not None:
+                if self._load_feedback.loaded:
+                    self._load_feedback.delete()
+                    self._load_feedback = None
 
             cam = self.engine.current_scene.main_camera
             new_win_size = Vector(self.window.width, self.window.height)
@@ -327,15 +392,12 @@ class Renderer(ComponentSystem):
                     cam.resolution = new_win_size
                     self._dispatch(events.WindowResized(new_size=self.window_size))
 
-                # TODO : IS THIS PERFORMANT ENOUGH ? -> NOT !!
-                # Set all flags to dirty in order to re-render it the next frame
-                # for e in scene:
-                #     e.dirty = True
-
-    def set2d(self):
+    def set2d(self, ):
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluOrtho2D(0, self.window.width, 0, self.window.height)
+        # gluOrtho2D(0, self.window.width, 0, self.window.height)
+        width, height = self.window.width, self.window.height
+        glOrtho(-width / 2, width / 2, -height / 2, height / 2, -255, 255)
         # glOrtho(0, window.width, 0, window.height, -1, 1)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
@@ -360,11 +422,14 @@ class Renderer(ComponentSystem):
         # Push the Matrix and Translate ViewPort
         glPushMatrix()
         self.set2d()
-        glScalef(cam.zoom, cam.zoom, 1.0)
+        # FIXME : NOT SYNCED WITH CAMERA POSITION ?
+        # print(f"Camera Pos (Draw: {time.monotonic()})", cam.position)
         glTranslatef(*cam.unit_to_pixels(Vector(
             -cam.position.x,
             cam.position.y,
         )), 0)
+        # Set ZOOM
+        glScalef(cam.zoom, cam.zoom, cam.zoom)
 
         # Draw the current Batch
         self.batch.draw()
@@ -384,6 +449,10 @@ class Renderer(ComponentSystem):
         # Display Debug Console
         if self.display_console:
             self.show_console(f"{self.FPS}")
+
+        # Draw the feedback
+        if self._load_feedback is not None:
+            self._load_feedback.draw(self.window)
 
         self.imgui_impl.render(imgui.get_draw_data())
 

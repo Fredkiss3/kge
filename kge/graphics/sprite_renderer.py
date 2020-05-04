@@ -236,7 +236,8 @@ class SpriteRenderer(RenderComponent):
             self._vlist = batch.add(self.shape.num_points, self.shape.mode, layers[self.entity.layer],
                                     ("v2d/stream", tuple(vertices)),
                                     ("c4Bn/dynamic",
-                                     tuple(color) * self.shape.num_points))  # type: pyglet.graphics.vertexdomain.VertexList
+                                     tuple(
+                                         color) * self.shape.num_points))  # type: pyglet.graphics.vertexdomain.VertexList
         else:
             # Update vertices
             self._vlist.vertices = vertices
@@ -297,6 +298,9 @@ class SpriteRenderer(RenderComponent):
 
             # Make the sprite pixelated
             make_pixelated(self._sprite)
+
+            # Set debuggable
+            self.entity.debuggable = True
 
             if self._vlist is not None:
                 self._vlist.delete()
@@ -396,7 +400,6 @@ class SpriteRenderer(RenderComponent):
             batch = win.batch
             # values
             pos = camera.world_to_screen_point(self.entity.position)
-
             if self.entity is None or not isinstance(self.entity, kge.Sprite):
                 raise AttributeError(
                     "Sprite renderer components should be attached to Sprites ('kge.Sprite')")
@@ -429,8 +432,8 @@ class SpriteRenderer(RenderComponent):
                         ratio = DEFAULT_PIXEL_RATIO / REFERENCE_PIXEL_RATIO
 
                         self._sprite.update(pos.x, pos.y, -self.entity.transform.angle,
-                                            scale_x=self.entity.transform.scale.x * camera.zoom * ratio,
-                                            scale_y=self.entity.transform.scale.y * camera.zoom * ratio,
+                                            scale_x=self.entity.transform.scale.x * ratio,
+                                            scale_y=self.entity.transform.scale.y * ratio,
                                             )
 
                 # Remove From 'dirties' only if it not a dynamic RigidBody

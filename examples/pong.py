@@ -212,7 +212,7 @@ class Goal(Entity):
         self.scale = Vector(1, 20)  # the size of the goal is 1 in width and 20 in height
         self.addComponent(
             BoxCollider(
-                isSensor=True  # for collisions, isSensor means that the ball should not bounce on it
+                sensor=True  # for collisions, isSensor means that the ball should not bounce on it
             )
         )
 

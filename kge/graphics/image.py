@@ -16,7 +16,7 @@ class Image(AbstractAsset):
     """
     Asset for image
     """
-    root_folder = None
+    root_folder = ''
     _cache = {}  # type: Dict[str, pyglet.image.AbstractImage]
 
     def __init__(self, path: str):
@@ -24,7 +24,7 @@ class Image(AbstractAsset):
         self._size = None
 
     def is_loaded(self):
-        return self.name in Image._cache
+        return self.name in Image._cache and self._size is not None
 
     def load(self, **kwargs) -> pyglet.image.AbstractImage:
         file = kwargs.get('file', None)  # type: Optional[io.StringIO]
@@ -33,7 +33,7 @@ class Image(AbstractAsset):
         if file is None and self.name in self._cache:
             return self._cache[self.name]
 
-        if Image.root_folder is not None:
+        if Image.root_folder:
             name = f"{Image.root_folder}/{self.name}"
         else:
             name = self.name
@@ -89,7 +89,7 @@ class Image(AbstractAsset):
 
     @property
     def size(self):
-        return self._size
+        return self._size if self._size is not None else Vector.Zero()
 
     @size.setter
     def size(self, size: Vector):
@@ -101,7 +101,8 @@ class Image(AbstractAsset):
         self._size = Vector(size)
 
     def __repr__(self):
-        return f"<{type(self).__name__} name={self.name!r}{' loaded' if self.is_loaded() else ''} size={self.size}>"
+        return f"<{type(self).__name__} name={self.root_folder}{self.name!r}  size=({self.size.x}X{self.size.y}) " \
+               f"{'' if self.is_loaded() else 'Not '}loaded>"
 
 
 class SlicedImage(Image):
@@ -113,20 +114,20 @@ class SlicedImage(Image):
         super().__init__(path)
         self._sliced = False
         self._origin = region.origin
-        self._size = region.size
+        self._area = region.size
 
     def load(self) -> pyglet.image.AbstractImage:
         img = super().load()
 
-        if self._origin.x + self._size.x > img.width \
-                or self._origin.y + self._size.y > img.height:
+        if self._origin.x + self._area.x > img.width \
+                or self._origin.y + self._area.y > img.height:
             raise ValueError(f"The image {self} is out of the image !")
 
         img = img.get_region(
             self._origin.x,
             self._origin.y,
-            self._size.x,
-            self._size.y,
+            self._area.x,
+            self._area.y,
         )
 
         img.anchor_x = img.width // 2
@@ -136,7 +137,8 @@ class SlicedImage(Image):
     def __repr__(self):
         return \
             f"""<{type(
-                self).__name__} name={self.name!r} region=(origin={self._origin}, size={self._size}) {' loaded' if self.is_loaded() else ''}>"""
+                self).__name__} name={self.root_folder}{self.name!r} region=(origin={self._origin}, area={self._area}) """ \
+            f"""size=({self.size.x}X{self.size.y}) {'' if self.is_loaded() else 'Not '}loaded>"""
 
 
 class TiledImage(Image):
@@ -160,12 +162,11 @@ class TiledImage(Image):
         if not (size.x > 0 and size.y > 0):
             raise ValueError("Size should be a Vector of integers greater than zero")
 
-        self.tiles = size
+        self._tiles = size
 
     def load(self) -> pyglet.image.AbstractImage:
         from PIL import Image
 
-        # if f"tiled {self.name}" not in self._cache:
         try:
             im1 = PIL.Image.open(self.name)
             im2 = PIL.Image.open(self.name)
@@ -174,12 +175,12 @@ class TiledImage(Image):
             import traceback
             return super().load()
         else:
-            for j in range(int(self.tiles.x - 1)):
+            for j in range(int(self._tiles.x - 1)):
                 im3 = self._get_concat_h(im3, im2)
 
-            for i in range(int(self.tiles.y - 1)):
+            for i in range(int(self._tiles.y - 1)):
                 im4 = im1
-                for j in range(int(self.tiles.x - 1)):
+                for j in range(int(self._tiles.x - 1)):
                     im4 = self._get_concat_h(im4, im2)
                 im3 = self._get_concat_v(im4, im3)
 
@@ -208,4 +209,4 @@ class TiledImage(Image):
     def __repr__(self):
         return \
             f"""<{type(
-                self).__name__} name={self.name!r} region=(size={self._size})>"""
+                self).__name__} name={self.root_folder}{self.name!r} tiles={self._tiles}, size=({self.size.x}X{self.size.y}) {'' if self.is_loaded() else 'Not '}loaded>"""

@@ -28,7 +28,7 @@ class CanvasRenderer(RenderComponent):
                         element = self.entity.to_render.popleft()
                         element.render(scene)
                 else:
-                    self.delete()
+                    self.delete(redraw=True)
             else:
                 in_frame = scene.main_camera.in_frame(self.entity)
                 if in_frame:
@@ -36,7 +36,7 @@ class CanvasRenderer(RenderComponent):
                                                              self.entity.scale + Vector.Unit() / 3):  # type: UIElement
                         e.render(scene)
                 else:
-                    self.delete()
+                    self.delete(redraw=True)
         else:
             self.delete()
 
@@ -84,7 +84,8 @@ class CanvasRenderer(RenderComponent):
         super(CanvasRenderer, self).on_scene_stopped(ev, dispatch)
         self.delete()
 
-    def delete(self):
-        for e in self.entity.spatial_hash.search(Vector.Zero(), self.entity.scale):  # type: UIElement
+    def delete(self, redraw: bool = False):
+        for e in self.entity.elements:  # type: UIElement
             e.delete()
-            e.append_to_render_list()
+            if redraw:
+                e.append_to_render_list()

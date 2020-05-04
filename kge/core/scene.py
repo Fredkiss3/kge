@@ -258,14 +258,17 @@ class BaseScene(EntityCollection, EventMixin):
         self._debug_list = set()  # type: Set[BaseEntity]
 
         # renderables types
-        # TODO : For debugging
         self._renderables = [kge.Sprite, kge.Canvas]
+
+        # TODO : IS IT GOOD ?
+        self.started  = False
 
     def mark_as_debuggable(self, e: BaseEntity):
         """
         Mark an element as to be redrawn on debug
         """
-        self._debug_list.add(e)
+        if e.is_active:
+            self._debug_list.add(e)
 
     @property
     def debuggable(self):
@@ -280,7 +283,7 @@ class BaseScene(EntityCollection, EventMixin):
         Add an entity to the render list
         """
         for type_ in self._renderables:
-            if (isinstance(e, type_)):
+            if (isinstance(e, type_)) and e.is_active:
                 self._render_list.add(e)
 
     def on_scene_started(self, ev: events.SceneStarted, dispatch):
@@ -289,9 +292,11 @@ class BaseScene(EntityCollection, EventMixin):
                 self._setup_function(self)
             else:
                 self.setup()
-        except Exception as e:
+        except Exception:
             import traceback
             traceback.print_exc()
+        finally:
+            self.started = True
 
         self.register_events(self.main_camera)
 
@@ -433,7 +438,7 @@ class BaseScene(EntityCollection, EventMixin):
         return sorted(
             filter(filter_c,
                    entities, ),
-            key=lambda s: getattr(s, "layer_order", 0)
+            key=lambda s: getattr(s, "layer_order", -255)
         )
 
     def clear(self):
@@ -462,6 +467,11 @@ class BaseScene(EntityCollection, EventMixin):
         """
         Remove an entity, and its events
         """
+        if entity in self.dirties:
+            self.dirties.remove(entity)
+        if entity in self.debuggable:
+            self.debuggable.remove(entity)
+
         self.spatial_hash.remove(entity.position, Vector(entity.size.width, entity.size.height), entity)
         self.unregister_events(entity)
         super(BaseScene, self).remove(entity)

@@ -4,6 +4,8 @@ import platform
 import sys
 from typing import Union, Tuple, Set
 
+import kge
+
 if sys.platform == "win32":
     if platform.architecture()[0] == "64bit":
         import kge.extra.win64.Box2D as b2
@@ -97,6 +99,10 @@ class Transform(BaseComponent):
                 "Position should be either a tuple of Numbers or a vector")
 
         offset = vec - self._position
+
+        if isinstance(self.entity, kge.Camera):
+            offset = Vector(offset.x, -offset.y)
+
         self._position = vec
         self._t.position = *vec,
 

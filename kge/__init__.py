@@ -40,7 +40,6 @@ from kge.graphics.sprite import Sprite
 from kge.inputs import keys as Keys
 from kge.inputs import mouse as Mouse
 from kge.inputs.input_manager import Inputs
-from kge.physics import events as physics_events
 from kge.physics.colliders import (
     Collider, BoxCollider, CircleCollider, PolygonCollider, LineCollider, TriangleCollider,
     EdgeCollider
@@ -89,7 +88,6 @@ __all__ = [
     "utils",
     "audio",
     "events",
-    "physics_events",
 
     # event class
     "Event",

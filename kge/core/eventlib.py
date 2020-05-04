@@ -74,7 +74,7 @@ class EventMixin:
 
         if callable(meth):
             try:
-                elog.debug(f"Calling handler {meth} for {name}")
+                elog.debug(f"Calling handler {meth} for {event}")
                 meth(event, dispatch)
             except TypeError as ex:
                 from inspect import signature

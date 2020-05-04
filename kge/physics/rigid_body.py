@@ -44,7 +44,7 @@ from kge.core.component import BaseComponent
 
 from kge.core.entity import BaseEntity
 from kge.core import events
-from kge.physics.events import Event, DestroyBody, BodyCreated, CreateBody
+from kge.core.events import Event, DestroyBody, BodyCreated, CreateBody
 
 
 class RigidBodyType(Enum):
@@ -395,9 +395,9 @@ class RigidBody(BaseComponent):
         """
         if ev.entity == self.entity:
             # set the real body
-            self._body = ev.body
+            self._body = ev.rb.body
 
-    def on_body_destroyed(self, ev, dispatch):
+    def on_body_destroyed(self, ev, _):
         if ev.entity == self.entity:
             self._body = None
             manager = kge.ServiceProvider.getEntityManager()
@@ -420,14 +420,14 @@ class RigidBody(BaseComponent):
                     # delete the real body in the world
                     ev_ = DestroyBody(
                         entity=self.entity,
-                        body_component=ghost_body
+                        rb=ghost_body
                     )
                     ev_.onlyEntity = self.entity
                     dispatch(ev_)
 
             ev_ = CreateBody(
                 entity=self.entity,
-                body_component=self
+                rb=self
             )
 
             # create the real body
@@ -504,6 +504,15 @@ class RigidBody(BaseComponent):
         vel = (angle - self.entity.angle) / FIXED_DELTA_TIME
         self.angular_velocity = vel
 
+    @body.setter
+    def body(self, value: b2.b2Body):
+        if not isinstance(value, b2.b2Body):
+            raise TypeError("Body should be of type (Box2D.b2Body)")
+        if self._body is not None:
+            raise AttributeError("Can only set Body Property once")
+
+        self._body = value
+
 
 if __name__ == '__main__':
     class Player(BaseEntity):
@@ -515,7 +524,7 @@ if __name__ == '__main__':
     p = Player()
     rb = RigidBody(body_type=RigidBodyType.DYNAMIC)
     print(rb.entity)
-    p.addComponent('rigidbody', rb)
+    p.addComponent(rb)
     print(rb.entity)
     print(p.components)
     # rb.velocity = (5, 5)

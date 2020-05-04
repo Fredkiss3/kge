@@ -17,10 +17,10 @@ from kge.core.events import Event
 from kge.core.service import Service
 from kge.physics.colliders import Collider, CameraCollider, CircleCollider, TriangleCollider, PolygonCollider, \
     BoxCollider, EdgeCollider, LineCollider
-from kge.physics.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, \
+from kge.core.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, \
     PhysicsUpdate, CollisionBegin, CollisionEnd
 from kge.physics.joints import Joint
-from kge.physics.rigid_body import RigidBody
+from kge.physics.rigid_body import RigidBody, RigidBodyType
 from kge.utils.vector import Vector
 
 if sys.platform == "win32":
@@ -114,14 +114,18 @@ class DebugDrawer(b2.b2Draw):
             drawJoints=False,
             drawShapes=True,
             drawCOMs=False,
+            convertVertices=True,
         )
 
     def rebatch(self):
         self.world_batch = pyglet.graphics.Batch()
 
-    def StartDraw(self):
-        if self.world_batch is None:
+    def StartDraw(self, rebatch=False):
+        if rebatch:
             self.rebatch()
+        else:
+            if self.world_batch is None:
+                self.rebatch()
         self.debug_batch = pyglet.graphics.Batch()
 
     def EndDraw(self):
@@ -397,7 +401,7 @@ class DebugDrawer(b2.b2Draw):
         Draw the world
         """
         # Get Debuggable entities
-        entities = scene.entity_layers(kge.Entity, renderable=False, debuggable=True, check_active=False)
+        entities = scene.debuggable #scene.entity_layers(kge.Entity, renderable=False, debuggable=True, check_active=False)
 
         # Draw Debug Data
         for e in set(entities):
@@ -412,7 +416,10 @@ class DebugDrawer(b2.b2Draw):
                 drawn = True
 
             if drawn:
-                e.debuggable = False
+                if e.getComponent(RigidBody) is None:
+                    e.debuggable = False
+                elif e.getComponent(RigidBody).body_type is not RigidBodyType.DYNAMIC:
+                    e.debuggable = False
 
     def drawJoints(self, *joints: Joint):
         """
@@ -905,7 +912,6 @@ class PhysicsManager(ComponentSystem):
             if not self.world.locked:
                 if self.engine.current_scene is not None:
                     self.debug_drawer.drawWorld(event.scene)
-                    # self.world.DrawDebugData()
         self.debug_drawer.EndDraw()
 
     def on_disable_entity(self, event: events.DisableEntity, dispatch: Callable[[Event], None]):
@@ -920,6 +926,15 @@ class PhysicsManager(ComponentSystem):
                 entity=event.entity
             )
             ev.onlyEntity = event.entity
+
+            if ev.entity.vlist is not None:
+                ev.entity.vlist.delete()
+                ev.entity.vlist = None
+
+            if ev.entity.xf_vlist is not None:
+                ev.entity.xf_vlist.delete()
+                ev.entity.xf_vlist = None
+
             dispatch(ev)
 
     def on_enable_entity(self, event: events.EnableEntity, dispatch: Callable[[Event], None]):
@@ -952,11 +967,12 @@ class PhysicsManager(ComponentSystem):
     def on_scene_started(self, ev: events.SceneStarted, dispatch: Callable[[Event], None]):
         # self.debug_drawer = DebugDrawer(self)
         self.debug_drawer.cam = self.engine.current_scene.main_camera
-        self.debug_drawer.StartDraw()
+        self.debug_drawer.StartDraw(rebatch=True)
 
     def on_scene_stopped(self, event: events.SceneStopped, dispatch):
         super(PhysicsManager, self).on_scene_stopped(event, dispatch)
         self.world = None
+
 
     def create_body(self, rb: RigidBody, e: BaseEntity):
         """
@@ -980,6 +996,7 @@ class PhysicsManager(ComponentSystem):
                 )
             )  # type: b2.b2Body
         except Exception as e:
+            print(f"ERROR ON CREATING BODY: {e}")
             import traceback
             traceback.print_exc()
             self.logger.error(e)
@@ -991,14 +1008,14 @@ class PhysicsManager(ComponentSystem):
             body.linearDamping = rb.drag
             body.inertia = rb.inertia
             body.angle = math.radians(rb.angle)
+            rb.body = body
 
             # the body has been created
             event = BodyCreated(
                 entity=e,
-                body=body
+                rb=rb
             )
             event.onlyEntity = e
-            self.logger.debug(f"Body {rb} Created !")
 
             self._dispatch(event)
 
@@ -1006,12 +1023,14 @@ class PhysicsManager(ComponentSystem):
         """
         Create a body
         """
-        rb = ev.body_component
+        rb = ev.rb
         e = ev.entity
 
         if rb.is_ghost:
             manager = kge.ServiceProvider.getEntityManager()
             manager.add_component(e, rb)
+
+        self.logger.debug(f"Body {rb} Created !")
 
         self.new_bodies.append((rb, ev.entity))
 
@@ -1045,7 +1064,6 @@ class PhysicsManager(ComponentSystem):
 
         rb_a = contact.fixtureA.body.userData  # type: RigidBody
         rb_b = contact.fixtureB.body.userData  # type: RigidBody
-
 
         if isinstance(rb_a, RigidBody) and isinstance(rb_b, RigidBody):
             if (collider_a.is_active and rb_a.is_active) and (rb_b.is_active and collider_b.is_active):
@@ -1128,7 +1146,7 @@ class PhysicsManager(ComponentSystem):
             # Then destroy the Body
             event = DestroyBody(
                 entity=ev.entity,
-                body_component=rb
+                rb=rb
             )
             event.onlyEntity = ev.entity
             if ev.entity.vlist is not None:
@@ -1145,22 +1163,22 @@ class PhysicsManager(ComponentSystem):
         """
         Destroy a body
         """
-        if ev.body_component.body is not None:
+        if ev.rb.body is not None:
             while self.world.locked:
                 continue
 
-            ev.body_component.is_active = False
+            ev.rb.is_active = False
             colliders = ev.entity.getComponents(kind=Collider)
             for col in colliders:
                 col.is_active = False
 
             # Put the bodies into garbage collector
-            self.garbage_bodies.append(ev.body_component.body)
+            self.garbage_bodies.append(ev.rb.body)
 
             # set user data to none in order to free it
-            ev.body_component.body.userData = None
+            ev.rb.body.userData = None
             event = BodyDestroyed(
-                body=ev.body_component.body,
+                rb=ev.rb,
                 entity=ev.entity
             )
             event.onlyEntity = ev.entity
@@ -1282,6 +1300,7 @@ class DebugDraw(Service):
                  drawColliders: bool = False,
                  drawJoints: bool = False,
                  drawEntities: bool = False,
+                 drawStuff: bool = False
                  ):
         """
         Set the draw flags
@@ -1292,6 +1311,7 @@ class DebugDraw(Service):
         if not (isinstance(drawColliders, bool)
                 and isinstance(drawEntities, bool)
                 and isinstance(drawJoints, bool)
+                and isinstance(drawStuff, bool)
         ):
             raise TypeError('Flags should be booleans')
 
@@ -1299,6 +1319,7 @@ class DebugDraw(Service):
             drawShapes=drawColliders,
             drawCOMs=drawEntities,
             drawJoints=drawJoints,
+            convertVertices=drawStuff
         )
 
     @classmethod
@@ -1322,41 +1343,45 @@ class DebugDraw(Service):
 
     @classmethod
     def draw_segment(self, p1: Vector, p2: Vector, color: Tuple[int, int, int, int]):
-        self.debug.DrawSegment(p1, p2, self.getColor(color))
+        if self.debug.flags["convertVertices"]:
+            self.debug.DrawSegment(p1, p2, self.getColor(color))
 
     @classmethod
     def draw_poly(self, vertices: List[Vector], color: Tuple[int, int, int, int], solid=False):
-        if not solid:
-            self.debug.DrawPolygon(vertices, self.getColor(color))
-        else:
-            self.debug.DrawSolidPolygon(vertices, self.getColor(color))
+        if self.debug.flags["convertVertices"]:
+            if not solid:
+                self.debug.DrawPolygon(vertices, self.getColor(color))
+            else:
+                self.debug.DrawSolidPolygon(vertices, self.getColor(color))
 
     @classmethod
     def draw_box(self, center: Vector, size: Vector, color: Tuple[int, int, int, int], solid=False):
-        aabb = b2.b2AABB(
-            lowerBound=center - size / 2,
-            upperBound=center + size / 2,
-        )
-
-        if not solid:
-            self.debug.DrawAABB(aabb, self.getColor(color))
-        else:
-            vces = (
-                (aabb.lowerBound.x, aabb.lowerBound.y),
-                (aabb.upperBound.x, aabb.lowerBound.y),
-                (aabb.upperBound.x, aabb.lowerBound.y),
-                (aabb.upperBound.x, aabb.upperBound.y),
-                (aabb.upperBound.x, aabb.upperBound.y),
-                (aabb.lowerBound.x, aabb.upperBound.y),
-                (aabb.lowerBound.x, aabb.upperBound.y),
-                (aabb.lowerBound.x, aabb.lowerBound.y),
+        if self.debug.flags["convertVertices"]:
+            aabb = b2.b2AABB(
+                lowerBound=center - size / 2,
+                upperBound=center + size / 2,
             )
-            self.debug.DrawSolidPolygon(vces, self.getColor(color))
+
+            if not solid:
+                self.debug.DrawAABB(aabb, self.getColor(color))
+            else:
+                vces = (
+                    (aabb.lowerBound.x, aabb.lowerBound.y),
+                    (aabb.upperBound.x, aabb.lowerBound.y),
+                    (aabb.upperBound.x, aabb.lowerBound.y),
+                    (aabb.upperBound.x, aabb.upperBound.y),
+                    (aabb.upperBound.x, aabb.upperBound.y),
+                    (aabb.lowerBound.x, aabb.upperBound.y),
+                    (aabb.lowerBound.x, aabb.upperBound.y),
+                    (aabb.lowerBound.x, aabb.lowerBound.y),
+                )
+                self.debug.DrawSolidPolygon(vces, self.getColor(color))
 
     @classmethod
     def draw_point(self, p: Vector, size: float, color: Tuple[int, int, int, int]):
-        p = self.to_screen(p)
-        self.debug.DrawPoint(p, size, color)
+        if self.debug.flags["convertVertices"]:
+            p = self.to_screen(p)
+            self.debug.DrawPoint(p, size, color)
 
 
 if __name__ == '__main__':

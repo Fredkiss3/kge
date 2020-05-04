@@ -9,7 +9,7 @@ from kge.core.component import BaseComponent
 from kge.core.eventlib import EventMixin
 from kge.core.events import Event
 from kge.core.transform import Transform
-from kge.utils.coroutine import coroutine
+from kge.utils.coroutine import coroutine, Coroutine
 from kge.utils.dotted_dict import DottedDict
 from kge.utils.vector import Vector
 
@@ -49,6 +49,8 @@ class BaseEntity(EventMixin):
     _parent: Optional["BaseEntity"]
     vlist: pyglet.graphics.vertexdomain.VertexList
     xf_vlist: pyglet.graphics.vertexdomain.VertexList
+    _order_in_layer: int
+    coroutines: Set[Coroutine]
 
     def __fire_event__(self, event: Event, dispatch: Callable[[Event], None]):
         if event.scene is not None:
@@ -108,6 +110,10 @@ class BaseEntity(EventMixin):
         # the layer in which the entity is in
         inst.layer = 0
 
+        # order in layer
+        # TODO : REVIEW
+        inst.layer_order = 0
+
         # transform of the entity
         inst._transform = Transform(entity=inst)
         inst.destroyed = False
@@ -116,13 +122,27 @@ class BaseEntity(EventMixin):
         inst.vlist = None
         inst.xf_vlist = None
 
+        # Coroutines
+        inst.coroutines = set()
+
         return inst
 
-    # def __init__(self, name: str = None, tag: str = None):
-    #     pass
+    @property
+    def layer_order(self):
+        """
+        Get layer order of the entity,
+        there are only 510 layers, so make sure to not go over
+        TODO : REVIEW
+        """
+        return self._order_in_layer + 255
 
-    # def __call__(self, *args, **kwargs):
-    #     pass
+    @layer_order.setter
+    def layer_order(self, val: int):
+        # TODO : REVIEW
+        if not isinstance(val, (int, float)):
+            raise TypeError("Layer Order should be a number")
+
+        self._order_in_layer = int(val) - 255
 
     def flipX(self):
         self.transform.scale.x = -self.transform.scale.x
@@ -299,6 +319,10 @@ class BaseEntity(EventMixin):
     def parent(self, value: "BaseEntity"):
         if isinstance(value, BaseEntity):
             if value.parent is not self:
+                if self._parent is not None:
+                    self._transform.parent = None
+                    self._parent.children.remove(self)
+
                 self._parent = value
                 value.children.add(self)
                 self._transform.parent = value.transform
@@ -353,6 +377,7 @@ class BaseEntity(EventMixin):
         # add coroutines
         manager = kge.ServiceProvider.getEntityManager()
         manager.addCoroutine(self, c)
+        self.coroutines.add(c)
 
     # def on_stop_scene(self, event: Event, dispatch: Callable[[Event], None]):
     #     """
@@ -498,6 +523,7 @@ class BaseEntity(EventMixin):
             raise TypeError("Is active should be a bool !")
 
         if val != self._is_active:
+            self._is_active = val
             self.dirty = True
             self.debuggable = True
 

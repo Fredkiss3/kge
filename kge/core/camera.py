@@ -1,8 +1,8 @@
 from typing import Union
 
+from kge.core import events
 from kge.core.constants import DEFAULT_RESOLUTION, MAX_ZOOM, MIN_ZOOM, DEFAULT_PIXEL_RATIO
 from kge.core.entity import BaseEntity
-from kge.physics import events as physics_events
 from kge.physics.colliders import CameraCollider
 from kge.physics.rigid_body import RigidBody, RigidBodyType
 from kge.utils.dotted_dict import DottedDict
@@ -44,7 +44,7 @@ class Camera(BaseEntity):
 
         return inst
 
-    def on_collision_enter(self, ev: physics_events.CollisionEnter, dispatch):
+    def on_collision_enter(self, ev: events.CollisionEnter, dispatch):
         # Track Position of entities that enter in camera sight
         _ = lambda x: x
         _(ev.collider.entity.position)
@@ -79,23 +79,17 @@ class Camera(BaseEntity):
 
     @property
     def position(self):
-        # If there is a rigidBody
-        rb = self.getComponent(kind=RigidBody)
-
-        if rb is not None:
-            rbpos = Vector(rb.position.x, -rb.position.y)
-            if rb.body is not None and self._transform.position != rbpos:
-                self._transform.position = rbpos
         return self._transform.position
 
     @position.setter
     def position(self, value: Vector):
+        rb = self.getComponent(kind=RigidBody)
+        if rb is not None:
+            rb.velocity = Vector.Zero()
         if self._transform.position != value:
-            rb = self.getComponent(kind=RigidBody)
-
             # Set position of the body
             if rb is not None:
-                rb.position = Vector(value.x, -value.y)
+                rb.move_position(Vector(value.x, -value.y))
 
             self._transform.position = value
 
@@ -112,13 +106,19 @@ class Camera(BaseEntity):
     def zoom(self, value: Union[float, int]):
         if isinstance(value, (float, int)):
             if MIN_ZOOM <= float(value) <= MAX_ZOOM:
-                self._zoom = float(value)
-                self._pixel_ratio = self._pixel_ratio_original * self._zoom
+                if value != self._zoom:
+                    # FIXME : TO REMOVE
+                    # if self.scene is not None:
+                    #     for e in self.scene:
+                    #         e.dirty = True
+                    #         e.debuggable = True
+                    self._zoom = float(value)
+                    self._pixel_ratio = self._pixel_ratio_original * self._zoom
 
-                collider = self.getComponent(kind=CameraCollider)
-                if collider:
-                    newBox = (self.pixels_to_unit(self.resolution) + Vector.Unit() / 2) * 1 / self.zoom
-                    collider.setBox(newBox)
+                    collider = self.getComponent(kind=CameraCollider)
+                    if collider:
+                        newBox = (self.pixels_to_unit(self.resolution) + Vector.Unit() / 2) * 1 / self.zoom
+                        collider.setBox(newBox)
         else:
             raise TypeError("Zoom should be a float or an int")
 
@@ -279,22 +279,25 @@ class Camera(BaseEntity):
         """
 
         # 1. Reposition based on frame edges
-        vector = Vector(point.x - self.frame_left, self.frame_top + point.y)
+        vector = Vector(point.x, point.y)
         # openGL offset 
-        GL_offset = self.unit_to_pixels(Vector(self.position.x, -self.position.y, ))
+        # GL_offset = self.unit_to_pixels(Vector(-self.position.x / 2, self.position.y / 2, ))
+        GL_offset = Vector.Zero()
         # 2. Scale from game units to pixels
-        return Vector(self.unit_to_pixels(vector) + GL_offset)
+        return Vector(self.unit_to_pixels(vector) + GL_offset) * 1 / self._zoom
 
     def fixed_world_to_screen_point(self, point: Vector) -> Vector:
         """
         Get real screen pixels coordinates of the point.
         Used to retrieve the position in which we should draw the point
+        FIXME : SET FOR UI
         """
 
         # 1. Reposition based on frame edges
-        vector = Vector(point.x + self.half_width, self.half_height + point.y)
+        vector = Vector(point.x, point.y)
         # openGL offset 
-        GL_offset = self.unit_to_pixels(Vector(self.position.x, -self.position.y, ))
+        # GL_offset = self.unit_to_pixels(Vector(self.position.x, -self.position.y, ))
+        GL_offset = Vector.Zero()
 
         # 2. Scale from game units to pixels
         return Vector(self.unit_to_pixels(vector) + GL_offset)

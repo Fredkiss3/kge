@@ -30,7 +30,7 @@ from kge.inputs.input_manager import InputManager, Inputs
 from kge.physics.fixed_updater import FixedUpdater
 from kge.physics.physics_manager import PhysicsManager, Physics, DebugDraw
 from kge.resources.assetlib import AssetLoader
-from kge.ui.ui_manager import UIManager
+# from kge.ui.ui_manager import UIManager
 
 
 class Engine(LoggerMixin, EventMixin):
@@ -45,18 +45,18 @@ class Engine(LoggerMixin, EventMixin):
 
     def __init__(self, first_scene: Type[BaseScene], *,
                  basic_systems=(
-                         Updater,
-                         PhysicsManager,
-                         FixedUpdater,
-                         EventDispatcher,
-                         Renderer,
-                         InputManager,
-                         AssetLoader,
-                         # AudioManager,
                          AnimSystem,
-                         EntityManager,
+                         # AssetLoader,
+                         # AudioManager,
                          BehaviourManager,
-                         UIManager,
+                         EntityManager,
+                         EventDispatcher,
+                         FixedUpdater,
+                         InputManager,
+                         PhysicsManager,
+                         Renderer,
+                         # UIManager,
+                         Updater,
                  ),
                  basic_services=(
                          # Inner Services
@@ -106,6 +106,9 @@ class Engine(LoggerMixin, EventMixin):
         # Executor for multi threading
         self._executor = futures.ThreadPoolExecutor()
         self._jobs = deque()
+
+        # Time deltas for update, fixed_update & render
+        self.update_dt, self.fixed_dt, self.render_dt,  = 1, 1, 1
 
     def append_job(self, func: Callable, *args, **kwargs):
         """
@@ -226,7 +229,7 @@ class Engine(LoggerMixin, EventMixin):
         """
         The main loop
         """
-        pyglet.clock.schedule_interval(self.loop_once, 1 / 10_000)
+        pyglet.clock.schedule(self.loop_once)
         # Flush the jobs created
         pyglet.clock.schedule_interval(self.flush_jobs, 1 / 10)
         self.event_loop.run()
@@ -337,7 +340,7 @@ class Engine(LoggerMixin, EventMixin):
                 if isinstance(system, Renderer):
                     system.__fire_event__(event, self.dispatch)
                     continue
-                elif isinstance(event, events.DebugDraw) and isinstance(system, (
+                elif isinstance(event, events.DrawDebug) and isinstance(system, (
                         PhysicsManager, BehaviourManager, EventDispatcher)):
                     system.__fire_event__(event, self.dispatch)
                     continue

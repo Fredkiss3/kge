@@ -17,6 +17,7 @@ from kge.core.constants import DEFAULT_RESOLUTION, IS_FULLSCREEN, IS_RESIZABLE, 
 from kge.core.service import Service
 from kge.graphics.render_component import RenderComponent
 from kge.utils.color import Color
+from kge.utils.dotted_dict import DottedDict
 from kge.utils.vector import Vector
 
 
@@ -38,16 +39,46 @@ class DebugConsole(object):
     def add_output(self, output: str):
         self.items.append((output, WHITE))
 
-    def render(self, fps: str):
+    def render(self, metrics: str, window: pyglet.window.Window, console: bool):
         # Imgui Renderer
-        imgui.new_frame()
 
+        #TODO : Update Imgui to newer version '1.1.0'
+        imgui.set_next_window_position(0, 18)
+        imgui.set_next_window_size(window.width, window.height-18)
+        imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 0)
+        imgui.push_style_var(imgui.STYLE_WINDOW_BORDERSIZE, 0)
+        imgui.push_style_var(imgui.STYLE_WINDOW_PADDING, (0, 0))
+        imgui.push_style_var(imgui.STYLE_ALPHA, 0.01)
+        window_flags = imgui.WINDOW_NO_TITLE_BAR | imgui.WINDOW_NO_COLLAPSE | \
+        imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE | \
+        imgui.WINDOW_NO_BRING_TO_FRONT_ON_FOCUS | imgui.WINDOW_NO_NAV_FOCUS | \
+        imgui.WINDOW_NO_DOCKING
+        imgui.begin('DockSpace', True, window_flags)
+        imgui.pop_style_var(4)
+        imgui.push_style_var(imgui.STYLE_ALPHA, 1)
+        imgui.dock_space("Window Dock Space", 0., 0., 1 << 3)
+        imgui.pop_style_var(1)
+
+
+        imgui.begin("Debug Console", False, imgui.WINDOW_NO_FOCUS_ON_APPEARING)
+        if imgui.begin_main_menu_bar():
+            # first menu dropdown
+            if imgui.begin_menu('File'):
+                clicked, _ = imgui.menu_item('Close')
+                if clicked:
+                    window.close()
+                imgui.end_menu()
+
+            imgui.end_main_menu_bar()
+        imgui.new_frame()
         imgui.begin("Debug Console", False, imgui.WINDOW_NO_FOCUS_ON_APPEARING)
 
         # Show Everything
-        self._show_fps(fps)
-        self._show_input_line()
-        self._show_text_output()
+        if metrics is not None:
+            self._show_metrics(metrics)
+        if console:
+            self._show_input_line()
+            self._show_text_output()
 
         imgui.end()
 
@@ -76,7 +107,7 @@ class DebugConsole(object):
         changed, self.input = imgui.input_text(
             'Filter',
             self.input,
-            256
+            100
         )
 
         imgui.end_child()
@@ -97,12 +128,11 @@ class DebugConsole(object):
 
         imgui.end_child()
 
-    def _show_fps(self, fps: str):
+    def _show_metrics(self, metrics: str):
         # [SECTION] FPS
         imgui.begin_child(
-            "FPS", height=30, border=True, )
-
-        imgui.text(f"GAME FPS : {fps}")
+            "METRICS", height=80, border=True, )
+        imgui.text(f"{metrics}")
         imgui.end_child()
 
 
@@ -172,6 +202,8 @@ class LoadingFeedBack(object):
         self.brand.delete()
         self.loading_label = None
         self.brand = None
+        self.entered = False
+        self.loaded = False
 
 
 class Renderer(ComponentSystem):
@@ -183,22 +215,24 @@ class Renderer(ComponentSystem):
         - Resize Window by script
         - LOOK FOR 'pyglet Z ordering with Sprite' -> For Applying 'Order in layer' (?)
         - Camera Jittering :
-            -> glScalef not synced with camera position ?
+            -> Clocks Out of sync
     """
 
     def __init__(self,
                  resolution=DEFAULT_RESOLUTION,
-                 show_console=False,
-                 console_output: io.StringIO = io.StringIO(),
+                 show_output=False,
+                 show_fps=False,
+                 # console_output: io.StringIO = io.StringIO(),
                  fullscreen=IS_FULLSCREEN, resizable=IS_RESIZABLE, vsync=False,
                  **_):
         super().__init__(**_)
 
         # Show Debug Console
-        self.display_console = show_console
+        self.display_log = show_output
+        self.display_fps = show_fps
 
         # String IO for console debugging
-        self.log_output = console_output
+        # self.log_output = console_output
         self.err_output = io.StringIO()
         self.output = io.StringIO()
 
@@ -247,6 +281,13 @@ class Renderer(ComponentSystem):
         # Loading FeedBack
         self._load_feedback = None  # type: Optional[LoadingFeedBack]
 
+        # Camera Position
+        self.cam_transform = DottedDict(zoom=1, pos=Vector.Zero())
+
+        # Mean of renders
+        self.sum = 0
+        self.n_render = 0
+
     def on_window_resized(self, event: events.WindowResized, dispatch):
         """
         FIXME : CHANGE THIS
@@ -283,8 +324,11 @@ class Renderer(ComponentSystem):
 
         # clear components & remake the batch
         self.batch = pyglet.graphics.Batch()
-        with LoadingFeedBack() as l:
-            self._load_feedback = l
+
+        # Load the feedback
+        self._load_feedback = LoadingFeedBack()
+        with self._load_feedback:
+            pass
 
         self.window_size = Vector.Zero()
 
@@ -304,7 +348,7 @@ class Renderer(ComponentSystem):
         )
 
         # show console ?
-        if self.display_console:
+        if self.display_log:
             sys.stdout = self.output
             sys.stderr = self.err_output
 
@@ -316,7 +360,7 @@ class Renderer(ComponentSystem):
         self.batch = pyglet.graphics.Batch()
 
         # Window events
-        self.window.on_draw = lambda: self.draw()
+        self.window.on_draw = lambda: self.on_draw()
         self.window.on_close = lambda: self.close()
 
         # Enable Alpha transparency
@@ -328,10 +372,12 @@ class Renderer(ComponentSystem):
         self.imgui_impl = PygletRenderer(self.window)
 
         # Loading FeedBack
-        with LoadingFeedBack() as l:
-            self._load_feedback = l
+        self._load_feedback = LoadingFeedBack()
+        with self._load_feedback:
+            pass
 
         # Schedule render update to the time step
+        # pyglet.clock.schedule_interval(self.render, self.time_step)
         pyglet.clock.schedule(self.render)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -351,9 +397,16 @@ class Renderer(ComponentSystem):
         """
         Render calculations
         """
+        # print(f"RENDER TIME {dt}")
         scene = self.engine.current_scene
         if not scene.started:
             return
+
+        if scene.rendered:
+            # Calculate Mean Between 'render' calls
+            self.n_render += 1
+            self.sum += dt
+            self.engine.render_dt = self.sum / self.n_render
 
         if scene is not None:
             # set scene color
@@ -378,11 +431,14 @@ class Renderer(ComponentSystem):
                     self.to_draw.append(shape)
 
             if self._load_feedback is not None:
+                scene.rendered = True
                 if self._load_feedback.loaded:
                     self._load_feedback.delete()
                     self._load_feedback = None
 
             cam = self.engine.current_scene.main_camera
+            self.cam_transform.zoom = cam.zoom
+            self.cam_transform.pos = cam.unit_to_pixels(Vector(-cam.position.x, cam.position.y))
             new_win_size = Vector(self.window.width, self.window.height)
             if self.window_size != new_win_size or self._zoom != cam.zoom:
                 self._zoom = cam.zoom
@@ -392,22 +448,27 @@ class Renderer(ComponentSystem):
                     cam.resolution = new_win_size
                     self._dispatch(events.WindowResized(new_size=self.window_size))
 
+            if self.logger.getEffectiveLevel() == logging.DEBUG:
+                debug = kge.DebugDraw
+                debug.rebatch()
+                self._dispatch(events.DrawDebug())
+
     def set2d(self, ):
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
+        # width, height = self.window.width, self.window.height
+        # glOrtho(-self.window.width / 2, self.window.width / 2, -self.window.height / 2, self.window.height / 2, -1, 1)
+        gluOrtho2D(-self.window.width / 2, self.window.width / 2, -self.window.height / 2, self.window.height / 2)
         # gluOrtho2D(0, self.window.width, 0, self.window.height)
-        width, height = self.window.width, self.window.height
-        glOrtho(-width / 2, width / 2, -height / 2, height / 2, -255, 255)
         # glOrtho(0, window.width, 0, window.height, -1, 1)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
-    def draw(self):
+    def on_draw(self):
         """
         Draw the window
         """
         now = time.monotonic()
-        cam = self.engine.current_scene.main_camera
 
         if now - self.last_step >= 1:
             self.FPS = self.fps
@@ -423,15 +484,15 @@ class Renderer(ComponentSystem):
         glPushMatrix()
         self.set2d()
         # FIXME : NOT SYNCED WITH CAMERA POSITION ?
-        # print(f"Camera Pos (Draw: {time.monotonic()})", cam.position)
-        glTranslatef(*cam.unit_to_pixels(Vector(
-            -cam.position.x,
-            cam.position.y,
-        )), 0)
+        # print("Translating...")
+        glTranslatef(*self.cam_transform.pos, 0)
+
         # Set ZOOM
-        glScalef(cam.zoom, cam.zoom, cam.zoom)
+        # print("Zooming...")
+        glScalef(self.cam_transform.zoom, self.cam_transform.zoom, 0)
 
         # Draw the current Batch
+        # print("DRAWING BATCH")
         self.batch.draw()
         for shape, mode in self.to_draw:
             glPointSize(2.0)
@@ -441,14 +502,23 @@ class Renderer(ComponentSystem):
         # Draw physics data
         if self.logger.getEffectiveLevel() == logging.DEBUG:
             debug = kge.DebugDraw
+            # self.batch._draw_list
+            # print(debug.debug_batch.group_map,debug.debug_batch._draw_list,)
             debug.world_batch.draw()
             debug.debug_batch.draw()
+            # debug.rebatch()
 
         glPopMatrix()
 
         # Display Debug Console
-        if self.display_console:
-            self.show_console(f"{self.FPS}")
+        if self.display_log or self.display_fps:
+            # print("DRAWING CONSOLE...")
+            self.show_console(f"""DRAW FPS : {self.FPS}
+UPDATE TIME : {self.engine.update_dt:.4f} ms -> {1 / self.engine.update_dt:.2f} FPS
+FIXED UPDATE TIME : {self.engine.fixed_dt:.4f} ms -> {1 / self.engine.fixed_dt:.2f} FPS
+RENDER TIME : {self.engine.render_dt:.4f} ms -> {1 / self.engine.render_dt:.2f} FPS
+"""
+                              if self.display_fps else None)
 
         # Draw the feedback
         if self._load_feedback is not None:
@@ -458,7 +528,7 @@ class Renderer(ComponentSystem):
 
         return pyglet.event.EVENT_HANDLED
 
-    def show_console(self, fps: str):
+    def show_console(self, metrics: str):
         """
         Show the console
         """
@@ -469,12 +539,12 @@ class Renderer(ComponentSystem):
             self.output.seek(0)
             self._console.add_output(val)
 
-        # Log Output
-        val = self.log_output.getvalue()
-        if len(val) > 0:
-            self.log_output.truncate(0)
-            self.log_output.seek(0)
-            self._console.add_log(val)
+        # # Log Output
+        # val = self.log_output.getvalue()
+        # if len(val) > 0:
+        #     self.log_output.truncate(0)
+        #     self.log_output.seek(0)
+        #     self._console.add_log(val)
 
         # Error Output
         val = self.err_output.getvalue()
@@ -483,7 +553,7 @@ class Renderer(ComponentSystem):
             self.err_output.seek(0)
             self._console.add_error(val)
 
-        self._console.render(fps)
+        self._console.render(metrics, self.window, self.display_log)
 
 
 class Window(Service):

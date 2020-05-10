@@ -16,21 +16,36 @@ class Updater(System):
 
         self.time_step = time_step
 
+        # Mean between updates
+        self.n_updates = 0
+        self.sum = 0
+
     def __enter__(self):
-        pyglet.clock.schedule_interval_soft(
-            self.update, self.time_step)
+        if type(self) != Updater:
+            pyglet.clock.schedule_interval_soft(
+                self.update, self.time_step)
+        else:
+            pyglet.clock.schedule(self.update)
 
     def update(self, dt):
         self.engine.append_job(
             self.update_entities, dt
         )
-        # self.update_entities(dt)
 
     def update_entities(self, time_delta: float):
         start = time.monotonic()
         dispatch = self._dispatch
         scene = self.engine.current_scene
-        if self.engine.running:
+        if self.engine.running and scene.rendered:
+            # Calculate the mean
+            self.n_updates += 1
+            self.sum += time_delta
+            mean = self.sum / self.n_updates
+            if type(self) != Updater:
+                self.engine.fixed_dt = mean
+            else:
+                self.engine.update_dt = mean
+
             event = self.event_to_dispatch.__call__(time_delta, scene)  # type: Union[events.Update, events.FixedUpdate]
 
             # Dispatch to behaviours

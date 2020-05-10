@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any, Tuple, Set, Callable, Union
 import kge
 from kge.core.component import BaseComponent
 from kge.core.constants import ALWAYS
-from kge.core.events import Event, AnimChanged
+from kge.core.events import Event, AnimChanged, Init
 from kge.graphics.animation import Animation
 from kge.utils.condition import Condition
 
@@ -185,6 +185,13 @@ class Animator(BaseComponent):
 
     def __repr__(self):
         return f"component Animator({self.animations}) of entity '{self.entity}'"
+
+    def on_init(self, ev: Init, dispatch):
+        """
+        Start Animations
+        TODO
+        """
+
 
     def add_transition(self, from_: Union[Animation, AnimState], to: Animation, forward_condition: Condition = ALWAYS,
                        back_condition: Condition = None):

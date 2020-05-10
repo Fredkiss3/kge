@@ -1,5 +1,6 @@
 import traceback
-from typing import List, Union, Type, Tuple, Callable, TypeVar, Optional, Set
+from collections import defaultdict
+from typing import List, Union, Type, Tuple, Callable, TypeVar, Optional, Set, Dict
 
 import pyglet
 
@@ -44,12 +45,14 @@ class BaseEntity(EventMixin):
     """
     # Number of items created for that type
     nbItems = 0
-    scene: "kge.Scene"
+    scene: Optional['kge.Scene']
     _children: Set["BaseEntity"]
     _parent: Optional["BaseEntity"]
     vlist: pyglet.graphics.vertexdomain.VertexList
     xf_vlist: pyglet.graphics.vertexdomain.VertexList
     _order_in_layer: int
+    pending: List['BaseComponent']
+    _components: Dict[Type, Set[BaseComponent]]
     coroutines: Set[Coroutine]
 
     def __fire_event__(self, event: Event, dispatch: Callable[[Event], None]):
@@ -61,16 +64,10 @@ class BaseEntity(EventMixin):
                     super(BaseEntity, self).__fire_event__(events.Init(scene=event.scene), dispatch)
                     self._initialized = True
 
-                try:
-                    super(BaseEntity, self).__fire_event__(event, dispatch)
-                except Exception:
-                    print(
-                        f"""An Error Happened in {self} (Components : {list(
-                            self.components.values())}) for event : {event}. """)
-                    traceback.print_exc()
-                else:
-                    if isinstance(event, events.Init):
-                        self._initialized = True
+                # Fire the event
+                super(BaseEntity, self).__fire_event__(event, dispatch)
+                if isinstance(event, events.Init):
+                    self._initialized = True
 
     def __new__(cls,
                 *args,
@@ -86,7 +83,7 @@ class BaseEntity(EventMixin):
         cls.nbItems += 1
 
         # The components attached to the object
-        inst._components = {}
+        inst._components = defaultdict(set)
         inst.name = inst.name = f"new {type(inst).__name__} {cls.nbItems}"
         inst._tag = tag
 
@@ -124,6 +121,9 @@ class BaseEntity(EventMixin):
 
         # Coroutines
         inst.coroutines = set()
+
+        # Pending Components that needs to be dispatched
+        inst.pending = []
 
         return inst
 
@@ -402,7 +402,7 @@ class BaseEntity(EventMixin):
         """
         get components of type given
 
-        You can call it either with type (a subtype of component) to get all components
+        You can call it with a  type (a subtype of component) to get all components
         of type given, that are in the entity :
             >>> player.getComponents(Transform)
             >>> ["transform component1", "transform component2"]
@@ -411,12 +411,16 @@ class BaseEntity(EventMixin):
         :return:
         """
         if isinstance(kind, type):
-            return [component for component in self._components.values() if isinstance(component, kind)]
+            if BaseComponent in kind.mro():
+                return self._components[kind] if kind in self._components else []
+            else:
+                raise TypeError(
+                    "kind argument should be a type or a subtype of 'kge.BaseComponent'")
         else:
             raise TypeError(
                 "kind argument should be a type or a subtype of 'kge.BaseComponent'")
 
-    def getComponent(self, kind: Type[T]) -> Union[T, None]:
+    def getComponent(self, kind: Type[T]) -> Optional[T]:
         """
         return the first component whose key is 'kind' or type is 'kind'.
 
@@ -430,16 +434,16 @@ class BaseEntity(EventMixin):
         :return: the component OF type requested or None if there is no component of type requested
         """
         if isinstance(kind, type):
-            cp = None
-            for component in self._components.values():
-                if isinstance(component, kind):
-                    cp = component
-                    break
-            return cp
+            if BaseComponent in kind.mro():
+                return list(self._components[kind])[0] if kind in self._components else None
+            else:
+                raise TypeError(
+                    "kind argument should be a type or a subtype of 'kge.BaseComponent'")
         else:
-            return None
+            raise TypeError(
+                "kind argument should be a type or a subtype of 'kge.BaseComponent'")
 
-    def removeComponent(self, kind: Union[Type[T]]) -> Union[List[T]]:
+    def removeComponent(self, kind: Union[Type[T], T]) -> None:
         """
         remove components of type given
 
@@ -451,19 +455,43 @@ class BaseEntity(EventMixin):
         :param kind: the kind of component to retrieve
         """
         if isinstance(kind, type):
-            cp = [(k, component) for k, component in self._components.items() if
-                  isinstance(component, kind)]
+            if BaseComponent in kind.mro():
+                if not kind in self._components:
+                    raise KeyError(
+                        f"Component of type {kind} not found in {self}")
+                else:
+                    cp = [] # type: List[BaseComponent]
+                    for t in kind.mro():
+                        if t in self._components:
+                            cp += list(self._components.pop(t))
 
-            for k, c in cp:
-                cp_ = self._components.pop(k)
-                cp_.is_active = False
+                    for c in cp:
+                        c.is_active = False
 
-            cp = list(filter(lambda c: c[1], cp))  # type: List[T]
+                    # Dispatch component removed event
+                    manager = kge.ServiceProvider.getEntityManager()
+                    manager.dispatch_component_operation(self, cp, added=False)
+            else:
+                raise TypeError(
+                    "kind must be or a subclass of 'kge.BaseComponent or kge.Behaviour'")
+        elif isinstance(kind, BaseComponent):
+            t_ = type(kind)
+            if not t_ in self._components:
+                raise KeyError(
+                    f"Component of type {t_} not found in {self}")
+            else:
+                removed = False
+                for t in t_.mro():
+                    fil = self._components[t]
 
-            # Dispatch component removed event
-            manager = kge.ServiceProvider.getEntityManager()
-            manager.dispatch_component_operation(self, cp, added=False)
-            return cp
+                    if kind in fil:
+                        removed = True
+                        fil.remove(kind)
+                        kind.is_active = False
+                if removed:
+                    # Dispatch component removed event
+                    manager = kge.ServiceProvider.getEntityManager()
+                    manager.dispatch_component_operation(self, [kind], added=False)
         else:
             raise TypeError(
                 "kind must be or a subclass of 'kge.BaseComponent or kge.Behaviour'")
@@ -481,13 +509,17 @@ class BaseEntity(EventMixin):
                     "Cannot add transform manually to an entity")
 
             # set component entity and activate it
-            key = hash(component)
             component.entity = self
             component.is_active = True
-            self._components[key] = component
 
-            manager = kge.ServiceProvider.getEntityManager()
-            manager.dispatch_component_operation(self, component, added=True)
+            for kind in type(component).mro():
+                self._components[kind].add(component)
+
+            if self.scene is not None:
+                manager = kge.ServiceProvider.getEntityManager()
+                manager.dispatch_component_operation(self, component, added=True)
+            else:
+                self.pending.append(component)
         else:
             # must be a subtype of BaseComponent
             raise TypeError(
@@ -551,7 +583,8 @@ class BaseEntity(EventMixin):
 
         # Deactivate also components
         for cp in self._components.values():
-            cp.is_active = False
+            for c in cp:
+                c.is_active = False
 
         manager = kge.ServiceProvider.getEntityManager()
 
@@ -566,7 +599,8 @@ class BaseEntity(EventMixin):
 
         # Activate also components
         for cp in self._components.values():
-            cp.is_active = True
+            for c in cp:
+                c.is_active = True
         manager = kge.ServiceProvider.getEntityManager()
 
         if manager:

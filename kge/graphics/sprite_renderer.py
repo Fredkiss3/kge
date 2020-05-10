@@ -1,5 +1,7 @@
 import math
+import platform
 import random
+import sys
 from typing import Union, Sequence, Optional
 
 import pyglet
@@ -15,6 +17,14 @@ from kge.graphics.render_component import RenderComponent
 from kge.graphics.shapes import Shape, Circle, Square, Triangle
 from kge.utils.color import Color
 from kge.utils.vector import Vector
+
+if sys.platform == "win32":
+    if platform.architecture()[0] == "64bit":
+        import kge.extra.win64.Box2D as b2
+    elif platform.architecture()[0] == "32bit":
+        import kge.extra.win32.Box2D as b2
+else:
+    import kge.extra.linux64.Box2D as b2
 
 
 def make_pixelated(sprite: pyglet.sprite.Sprite):
@@ -78,6 +88,11 @@ class SpriteRenderer(RenderComponent):
                   abs(self.entity.transform.scale.x)
         self._h = DEFAULT_SPRITE_RESOLUTION[1] * \
                   abs(self.entity.transform.scale.y)
+
+        self._t = b2.b2Transform()
+        self._scale = 0
+        # TODO : IS IT PERFORMANT ?
+        self._changed = False
 
     def _getLLCircleVertices(self, radius, points):
         """
@@ -279,6 +294,17 @@ class SpriteRenderer(RenderComponent):
             self._sprite.delete()
             self._sprite = None
 
+    def delete(self):
+        """
+        Delete the renderer
+        """
+        if self._vlist is not None:
+            self._vlist.delete()
+            self._vlist = None
+        if self._sprite is not None:
+            self._sprite.delete()
+            self._sprite = None
+
     def set_image(self):
         """
         Set Image
@@ -291,17 +317,18 @@ class SpriteRenderer(RenderComponent):
             self._next_image = None
 
             # Set Sprite & delete vertices
-            self._sprite = pyglet.sprite.Sprite(
-                img=self._image.load(), subpixel=True,
-                group=layers[self.entity.layer]
-            )
+            if self._sprite is not None:
+                self._sprite.image = self._image.load()
+            else:
+                self._sprite = pyglet.sprite.Sprite(
+                    img=self._image.load(), subpixel=True,
+                    group=layers[self.entity.layer]
+                )
 
             # Make the sprite pixelated
             make_pixelated(self._sprite)
 
             # Set debuggable
-            self.entity.debuggable = True
-
             if self._vlist is not None:
                 self._vlist.delete()
                 self._vlist = None
@@ -334,8 +361,12 @@ class SpriteRenderer(RenderComponent):
             # Set image only if next image is different
             if self._image != val:
                 self._next_image = val
+                # TODO : IS IT PERFORMANT ?
+                self._changed = True
         else:
             self.shape = val
+            # TODO : IS IT PERFORMANT ?
+            self._changed = True
 
     @property
     def opacity(self):
@@ -351,7 +382,14 @@ class SpriteRenderer(RenderComponent):
 
             if self._color is None:
                 self._color = Color(self._shape_color.red, self._shape_color.green, self._shape_color.blue, val)
-            self._color.alpha = val
+                # TODO : IS IT PERFORMANT ?
+                self._changed = True
+            else:
+                if val != tuple(self._color)[:3]:
+                    self._color.alpha = val
+                    # TODO : IS IT PERFORMANT ?
+                    self._changed = True
+
 
     @property
     def visible(self):
@@ -363,6 +401,9 @@ class SpriteRenderer(RenderComponent):
             raise TypeError("Sprite Visible Attribute should be a boolean")
 
         self._visible = val
+        # TODO : IS IT PERFORMANT ?
+        self._changed = True
+
 
     @property
     def color(self):
@@ -371,10 +412,6 @@ class SpriteRenderer(RenderComponent):
     @color.setter
     def color(self, val: Union[Sequence[int], Color]):
         val = tuple(val)
-        if not isinstance(val, (tuple)):
-            raise TypeError(
-                "Sprite color should be a tuple of integers in form : (red, green, blue), example: (255, 255, 225)")
-
         if not len(val) >= 3:
             raise IndexError(
                 "Too little arguments for Sprite color !\n should be a tuple of integers in form : (red, green, blue), example: (255, 255, 225)")
@@ -384,10 +421,15 @@ class SpriteRenderer(RenderComponent):
         if self._color is None:
             self._color = Color(r, g, b, 1)
             self._color.alpha = self._shape_color.alpha
+            # TODO : IS IT PERFORMANT ?
+            self._changed = True
         else:
-            self._color.red = r
-            self._color.green = g
-            self._color.blue = b
+            if val != tuple(self._color)[:3]:
+                self._color.red = r
+                self._color.green = g
+                self._color.blue = b
+                # TODO : IS IT PERFORMANT ?
+                self._changed = True
 
     def render(self, scene: "kge.Scene", ):
         """
@@ -404,8 +446,34 @@ class SpriteRenderer(RenderComponent):
                 raise AttributeError(
                     "Sprite renderer components should be attached to Sprites ('kge.Sprite')")
             else:
+                # Do not do anything if i'm not in frame
+                rb = self.entity.getComponent(kind=kge.RigidBody)
+                if rb is not None and (self._sprite is not None or self._vlist is not None):
+                    if rb.body_type == kge.RigidBodyType.DYNAMIC:
+                        if not camera.in_frame(self.entity, offset=1):
+                            self._sprite.visible = False
+                            return
+                        else:
+                            if self._sprite is not None:
+                                if self.visible:
+                                    self._sprite.visible = True
+
                 if self._next_image is not None:
                     self.set_image()
+                else:
+                    # Check For transform, do not do anything if the entity has not moved
+                    t = self.entity.transform.t
+                    if self._t.position != t.position \
+                            or self._t.angle != t.angle\
+                            or self._scale != self.entity.transform.scale\
+                            or self._changed:
+                        self._t.position = *t.position,
+                        self._t.angle = t.angle
+                        self._scale = self.entity.transform.scale
+                        # TODO : IS IT PERFORMANT ?
+                        self._changed = False
+                    else:
+                        return
 
                 shape = None
                 if self._sprite is None:
@@ -437,9 +505,9 @@ class SpriteRenderer(RenderComponent):
                                             )
 
                 # Remove From 'dirties' only if it not a dynamic RigidBody
-                rb = self.entity.getComponent(kind=kge.RigidBody)
                 dirty = False
-                if rb is not None:
+                rb = self.entity.getComponent(kind=kge.RigidBody)
+                if rb is not None and (self._sprite is not None or self._vlist is not None):
                     if rb.body_type == kge.RigidBodyType.DYNAMIC:
                         dirty = True
 

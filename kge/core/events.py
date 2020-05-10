@@ -215,7 +215,7 @@ class TimeDilation(Event):
 
 
 @dataclass
-class DebugDraw(Event):
+class DrawDebug(Event):
     """
     Fired when we need to draw something to the screen
     """

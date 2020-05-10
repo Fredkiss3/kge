@@ -262,6 +262,7 @@ class BaseScene(EntityCollection, EventMixin):
 
         # TODO : IS IT GOOD ?
         self.started  = False
+        self.rendered = False
 
     def mark_as_debuggable(self, e: BaseEntity):
         """
@@ -379,6 +380,13 @@ class BaseScene(EntityCollection, EventMixin):
         super(BaseScene, self).add(entity, entity.tag)
         # Initialize the entity
         entity.__fire_event__(events.Init(self), self.engine.dispatch)
+
+        # Dispatch Components added
+        for p in entity.pending:
+            manager = kge.ServiceProvider.getEntityManager()
+            manager.dispatch_component_operation(entity, p, added=True)
+        entity.pending.clear()
+
         self.register_events(entity)
 
     def addAll(self, *entities: Tuple[BaseEntity, Union[Tuple[float, float], Vector], Union[str, int]]):

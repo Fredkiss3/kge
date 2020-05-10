@@ -19,7 +19,7 @@ class Cadre(Entity):
 
         # Collider and scale
         self.scale = Vector.Unit() * scale_factor
-        self.addComponent(EdgeCollider(
+        self.addComponent(LoopCollider(
             vertices=[
                 v * scale_factor for v in Vector.Box()
             ],

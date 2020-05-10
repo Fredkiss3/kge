@@ -1,7 +1,7 @@
 from typing import List, Tuple, Callable, Dict
 
 import pyglet
-import pyglet_ffmpeg2
+# import pyglet_ffmpeg2
 
 
 from kge.audio.sound import Sound
@@ -26,7 +26,7 @@ class AudioManager(System):
         super().__init__(engine, **kw)
 
     def __enter__(self):
-        pyglet_ffmpeg2.load_ffmpeg()
+        # pyglet_ffmpeg2.load_ffmpeg()
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):

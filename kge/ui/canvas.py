@@ -1,6 +1,6 @@
 from collections import deque
 # from enum import Enum, auto
-from typing import Deque, Set
+from typing import Deque, Set, TypeVar
 
 from dataclasses import dataclass
 
@@ -38,6 +38,8 @@ class ClickDown(CanvasEvent):
 class Clear(CanvasEvent):
     pass
 
+
+T = TypeVar('T', bound=kge.Component)
 
 class Canvas(BaseEntity):
     """
@@ -173,6 +175,12 @@ class Canvas(BaseEntity):
 
                     if not ui in self._event_set:
                         self._event_set.append(ui)
+
+    def addComponent(self, component: T):
+        """
+        Cannot add a component
+        """
+        raise TypeError("Cannot add another component to the canvas")
 
     @property
     def spatial_hash(self):

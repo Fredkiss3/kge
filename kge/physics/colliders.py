@@ -27,6 +27,7 @@ from kge.core.events import Event, BodyCreated, BodyDestroyed, CreateBody
 class Collider(BaseComponent):
     """
     The only component that handles collisions
+    TODO : MULTIPLE SHAPES COLLIDERS
     """
 
     def __init__(self,
@@ -480,7 +481,7 @@ class TriangleCollider(Collider):
         )
 
 
-class LineCollider(Collider):
+class SegmentCollider(Collider):
     """
     A component that handles collisions which occurs in a line segment shape
     """
@@ -499,7 +500,7 @@ class LineCollider(Collider):
         :param point1: The origin point relative to the parent
         :param point2: The destination point relative to the parent
             # each point is relative to the parent body
-            >>> collider = LineCollider(
+            >>> collider = SegmentCollider(
             >>>         point1=Vector(-1, -1),
             >>>         point2=Vector(1, 1)
             >>> )
@@ -527,6 +528,7 @@ class EdgeCollider(Collider):
                  bounciness: float = 0,
                  friction: float = 0,
                  density: float = 1,
+                 loop: bool = False
                  ):
         """
         initialize the collider. When you give vertices, the collider automatically closes itself with the
@@ -534,7 +536,7 @@ class EdgeCollider(Collider):
 
         :param vertices: a list of points of the collider in this form :
             # each point is relative to the parent body
-            >>> collider = LineCollider(
+            >>> collider = SegmentCollider(
             >>> vertices=[
             >>>   Vector(-1, -1), Vector(2, 2), Vector(1, 1)
             >>> ])
@@ -543,12 +545,19 @@ class EdgeCollider(Collider):
 
         # the vertices
         self._vertices = vertices  # type: List[Vector]
+        self.loop = loop
 
     @property
-    def shape(self) -> b2.b2LoopShape:
-        return b2.b2LoopShape(
-            vertices=[(*v,) for v in self._vertices]
-        )
+    def shape(self) -> Union[b2.b2LoopShape, List[b2.b2EdgeShape]]:
+        if self.loop:
+            shape = b2.b2LoopShape(
+                vertices=[(*v,) for v in self._vertices]
+            )
+        else:
+            # TODO : MULTIPLE SHAPES COLLIDER
+            raise NotImplementedError("Not Implemented Yet !")
+
+        return shape
 
 
 if __name__ == '__main__':

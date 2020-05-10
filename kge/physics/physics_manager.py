@@ -1,9 +1,9 @@
-import logging
+import math
 import math
 import platform
 import sys
 from itertools import chain
-from typing import Callable, Union, List, Tuple, Sequence, Optional
+from typing import Callable, Union, List, Tuple, Sequence, Optional, Set
 
 import pyglet
 from pyglet import gl
@@ -13,12 +13,12 @@ from kge.core import events
 from kge.core.component_system import ComponentSystem
 from kge.core.constants import *
 from kge.core.entity import BaseEntity
+from kge.core.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, \
+    PhysicsUpdate, CollisionBegin, CollisionEnd
 from kge.core.events import Event
 from kge.core.service import Service
 from kge.physics.colliders import Collider, CameraCollider, CircleCollider, TriangleCollider, PolygonCollider, \
-    BoxCollider, EdgeCollider, LineCollider
-from kge.core.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, \
-    PhysicsUpdate, CollisionBegin, CollisionEnd
+    BoxCollider, EdgeCollider, SegmentCollider
 from kge.physics.joints import Joint
 from kge.physics.rigid_body import RigidBody, RigidBodyType
 from kge.utils.vector import Vector
@@ -43,6 +43,29 @@ class grBlended(pyglet.graphics.Group):
 
     def unset_state(self):
         gl.glDisable(gl.GL_BLEND)
+
+
+class ContactFilter(b2.b2ContactFilter):
+    def __init__(self, system: "PhysicsManager"):
+        b2.b2ContactFilter.__init__(self)
+        self.system = system
+
+    def ShouldCollide(self, fix1: b2.b2Fixture, fix2: b2.b2Fixture):
+        # Implements the default behavior of b2ContactFilter in Python
+        col1 = fix1.userData
+        col2 = fix2.userData
+
+        if isinstance(col1, Collider) and isinstance(col2, Collider):
+            layer1 = col1.entity.layer
+            layer2 = col2.entity.layer
+
+            if (layer1, layer2) in self.system.layers_to_ignore or (layer2, layer1) in self.system.layers_to_ignore:
+                # TODO : Filter collision based on their layer
+                return False
+            else:
+                return True
+        else:
+            return False
 
 
 class grPointSize(pyglet.graphics.Group):
@@ -126,7 +149,8 @@ class DebugDrawer(b2.b2Draw):
         else:
             if self.world_batch is None:
                 self.rebatch()
-        self.debug_batch = pyglet.graphics.Batch()
+        if self.debug_batch is None:
+            self.debug_batch = pyglet.graphics.Batch()
 
     def EndDraw(self):
         pass
@@ -401,7 +425,7 @@ class DebugDrawer(b2.b2Draw):
         Draw the world
         """
         # Get Debuggable entities
-        entities = scene.debuggable #scene.entity_layers(kge.Entity, renderable=False, debuggable=True, check_active=False)
+        entities = scene.debuggable  # scene.entity_layers(kge.Entity, renderable=False, debuggable=True, check_active=False)
 
         # Draw Debug Data
         for e in set(entities):
@@ -535,7 +559,7 @@ class DebugDrawer(b2.b2Draw):
                 [vertices.append(v) for v in self.DrawSegment(v1, v2)]
                 v1 = v2
 
-        elif isinstance(col, LineCollider):
+        elif isinstance(col, SegmentCollider):
             v1 = xf * col.shape.vertex1
             v2 = xf * col.shape.vertex2
 
@@ -656,7 +680,7 @@ class RayCastInfo(b2.b2RayCastCallback):
     MULTIPLE = 2
     ANY = 3
 
-    def __init__(self, type=CLOSEST, layer=None, maxPoint: Vector = Vector.Zero()):
+    def __init__(self, type=CLOSEST, layer=None, maxPoint: Vector = Vector.Zero(), cast_sensors: bool = False):
         b2.b2RayCastCallback.__init__(self)
         self.collider = None
         self.colliders = []
@@ -668,6 +692,7 @@ class RayCastInfo(b2.b2RayCastCallback):
         self.points = []
         self.normals = []
         self.layer = layer
+        self.cast_sensors = cast_sensors
 
     def ReportFixture(self, fixture, point, normal, fraction):
         """
@@ -687,8 +712,12 @@ class RayCastInfo(b2.b2RayCastCallback):
         if self.layer is not None:
             if collider is not None:
                 if collider.entity.layer == self.layer:
-                    self.hit = True
-                    self.collider = collider
+                    if not self.cast_sensors and collider.isSensor:
+                        # We pass through each collider which is not a sensor
+                        return -1
+                    else:
+                        self.hit = True
+                        self.collider = collider
                 else:
                     # We pass through each collider which is not in this layer
                     return -1
@@ -697,13 +726,17 @@ class RayCastInfo(b2.b2RayCastCallback):
                 return -1
         else:
             if collider is not None:
-                if self.type == RayCastInfo.MULTIPLE or self.type == RayCastInfo.ANY:
-                    self.colliders.append(collider)
+                if not self.cast_sensors and collider.isSensor:
+                    # We pass through each collider which is not a sensor
+                    return -1
                 else:
-                    self.collider = collider
-                self.hit = True
-                self.point = Vector(*point)
-                self.normal = Vector(*normal)
+                    if self.type == RayCastInfo.MULTIPLE or self.type == RayCastInfo.ANY:
+                        self.colliders.append(collider)
+                    else:
+                        self.collider = collider
+                    self.hit = True
+                    self.point = Vector(*point)
+                    self.normal = Vector(*normal)
 
         if self.type == RayCastInfo.CLOSEST:
             return fraction
@@ -720,23 +753,27 @@ class PhysicsManager(ComponentSystem):
     """
     The system that handles movement, collision detection and can perform region queries and ray casts
     TODO :
-       - IGNORE LAYER COLLISIONS
        - ONE WAY COLLISION
        - JOINTS
        - OVERLAPS CIRCLE
     """
     contact_listener: ContactListener = None
+    contact_filter: ContactFilter = None
     destruction_listener: DestructionListener = None
     world: Optional[b2.b2World]
     pause: bool = False
     engine: "kge.Engine"
 
-    @classmethod
-    def ignore_layer_collision(cls, layer1: Union[int, str], layer2: Union[int, str]):
-        # TODO
-        l1 = cls.engine.current_scene.getLayer(layer1)
-        l2 = cls.engine.current_scene.getLayer(layer2)
-        raise NotImplementedError("Not implemented Yet !")
+    def ignore_layer_collision(self, layer1: Union[int, str], layer2: Union[int, str]):
+        """
+        Ignore a collision between the layers provided
+        """
+        l1 = self.engine.current_scene.getLayer(layer1)
+        l2 = self.engine.current_scene.getLayer(layer2)
+
+        if not ((l1, l2) in self.layers_to_ignore and (l2, l1) in self.layers_to_ignore):
+            self.layers_to_ignore.add((l1, l2))
+        # raise NotImplementedError("Not implemented Yet !")
 
     @classmethod
     def overlap_circle(cls, center: Vector, radius: float, layer: Union[int, str, None] = None,
@@ -819,7 +856,7 @@ class PhysicsManager(ComponentSystem):
                 "Query Type should be one of 'RegionInfo.ONE or RegionInfo.MULTIPLE'")
 
     def ray_cast(self, origin: Vector, direction: Vector, distance: float, layer: Union[int, str, None] = None,
-                 type=RayCastInfo.CLOSEST) -> RayCastInfo:
+                 type=RayCastInfo.CLOSEST, cast_sensors: bool = False) -> RayCastInfo:
         """
         Perform a ray cast
 
@@ -845,7 +882,7 @@ class PhysicsManager(ComponentSystem):
 
             # Calculate the destination of the ray
             dest = origin + direction * distance
-            cb = RayCastInfo(type=type, layer=lay, maxPoint=dest)
+            cb = RayCastInfo(type=type, layer=lay, maxPoint=dest, cast_sensors=cast_sensors)
 
             # Send the ray
             if self.world is not None:
@@ -862,6 +899,7 @@ class PhysicsManager(ComponentSystem):
         # state
         self.debug_drawer = DebugDrawer(self)
         self.contact_listener = ContactListener(self)
+        self.contact_filter = ContactFilter(self)
         self.destruction_listener = DestructionListener(self)
 
         # only rigid bodies and colliders supported
@@ -873,7 +911,7 @@ class PhysicsManager(ComponentSystem):
         self.new_bodies = []  # type: List[Tuple[RigidBody, BaseEntity]]
 
         # TODO : Implement layers in order to ignore collisions within different layers
-        self.layers_to_ignore = {}
+        self.layers_to_ignore = set()  # type: Set[Tuple[int, int]]
 
         # world
         self.world = None
@@ -902,11 +940,7 @@ class PhysicsManager(ComponentSystem):
                     FIXED_DELTA_TIME * event.time_scale, 10, 10)
                 self.world.ClearForces()
 
-                # Debug Draw only if debug is activated
-                if self.logger.getEffectiveLevel() == logging.DEBUG:
-                    self._dispatch(events.DebugDraw())
-
-    def on_debug_draw(self, event: events.DebugDraw, dispatch: Callable[[Event], None]):
+    def on_draw_debug(self, event: events.DrawDebug, dispatch: Callable[[Event], None]):
         self.debug_drawer.StartDraw()
         if self.world is not None:
             if not self.world.locked:
@@ -961,6 +995,7 @@ class PhysicsManager(ComponentSystem):
     def on_start_scene(self, ev: events.StartScene, dispatch: Callable[[Event], None]):
         self.world = b2.b2World(gravity=(0, -10), doSleep=True)
         self.world.contactListener = self.contact_listener
+        self.world.contactFilter = self.contact_filter
         self.world.destructionListener = self.destruction_listener
         # self.world.renderer = self.debug_drawer
 
@@ -972,7 +1007,6 @@ class PhysicsManager(ComponentSystem):
     def on_scene_stopped(self, event: events.SceneStopped, dispatch):
         super(PhysicsManager, self).on_scene_stopped(event, dispatch)
         self.world = None
-
 
     def create_body(self, rb: RigidBody, e: BaseEntity):
         """
@@ -1199,7 +1233,7 @@ class PhysicsManager(ComponentSystem):
 
         if isinstance(collider_a, Collider) and isinstance(collider_b, Collider):
             # disable contact if one of the colliders is not active
-            if not collider_a.is_active or not collider_b.is_active:
+            if not (collider_a.is_active and collider_b.is_active):
                 contact.enabled = False
         else:
             contact.enabled = False
@@ -1219,8 +1253,15 @@ class Physics(Service):
 
     @classmethod
     def ray_cast(cls, origin: Vector, direction: Vector, distance: float, layer: Union[int, str, None] = None,
-                 type=RayCastInfo.CLOSEST) -> RayCastInfo:
-        return cls._system_instance.ray_cast(origin, direction, distance, layer, type)
+                 type=RayCastInfo.CLOSEST, cast_sensors: bool = False) -> RayCastInfo:
+        return cls._system_instance.ray_cast(origin, direction, distance, layer, type, cast_sensors)
+
+    @classmethod
+    def ignore_layer_collision(cls, layer1: Union[int, str], layer2: Union[int, str]):
+        """
+        Ignore a collision between the layers provided
+        """
+        cls._system_instance.ignore_layer_collision(layer1, layer2)
 
     # TODO
     # @classmethod
@@ -1268,6 +1309,10 @@ class DebugDraw(Service):
     @property
     def debug_batch(self):
         return self._system_instance.debug_drawer.debug_batch
+
+    @classmethod
+    def rebatch(self):
+        self._system_instance.debug_drawer.debug_batch = pyglet.graphics.Batch()
 
     # @property
     # def flags(self):

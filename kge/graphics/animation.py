@@ -59,6 +59,8 @@ class Animation(object):
         - function: The transition function that the animation should apply when
             passing from one frame to another.
             Use ```Animation.Smooth``` in order to get smooth animations.
+
+    FIXME: REFORMAT WITH PYGLET SCHEDULE FUNCTIONS
     """
 
     # Override this to change the clock used for frames.
@@ -177,7 +179,26 @@ class Animation(object):
         self._cur_frame = None
         self._stopped = True
 
-    # @property
+    # TODO: FOR INSPIRATION
+    # def _animate(self, dt):
+    #     self._frame_index += 1
+    #     if self._frame_index >= len(self._animation.frames):
+    #         self._frame_index = 0
+    #         self.dispatch_event('on_animation_end')
+    #         if self._vertex_list is None:
+    #             return  # Deleted in event handler.
+    #
+    #     frame = self._animation.frames[self._frame_index]
+    #     self._set_texture(frame.image.get_texture())
+    #
+    #     if frame.duration is not None:
+    #         duration = frame.duration - (self._next_dt - dt)
+    #         duration = min(max(0, duration), frame.duration)
+    #         clock.schedule_once(self._animate, duration)
+    #         self._next_dt = duration
+    #     else:
+    #         self.dispatch_event('on_animation_end')
+
     def __next__(self) -> Optional[Frame]:
         """
         :return:

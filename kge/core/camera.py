@@ -1,6 +1,5 @@
 from typing import Union
 
-from kge.core import events
 from kge.core.constants import DEFAULT_RESOLUTION, MAX_ZOOM, MIN_ZOOM, DEFAULT_PIXEL_RATIO
 from kge.core.entity import BaseEntity
 from kge.physics.colliders import CameraCollider
@@ -14,7 +13,6 @@ class Camera(BaseEntity):
     A camera attached to a scene
     FIXME :
         - CANVAS POSITION & EVENT DISPATCHING SHOULD BE INDEPENDANT OF ZOOMING
-        - FIX : CAMERA ZOOMING WITH RENDERERS
     """
 
     def __new__(cls, name="MainCamera", tag="MainCamera",
@@ -44,11 +42,6 @@ class Camera(BaseEntity):
 
         return inst
 
-    def on_collision_enter(self, ev: events.CollisionEnter, dispatch):
-        # Track Position of entities that enter in camera sight
-        _ = lambda x: x
-        _(ev.collider.entity.position)
-
     @property
     def resolution(self):
         """
@@ -69,6 +62,22 @@ class Camera(BaseEntity):
         if collider:
             newBox = (self.pixels_to_unit(val) + Vector.Unit() / 2) * 1 / self.zoom
             collider.setBox(newBox)
+
+    # def on_collision_enter(self, event: events.CollisionEnter, dispatch: Callable):
+    #     e = event.collider.entity
+    #     rb = e.getComponent(RigidBody)
+    #     if rb is not None:
+    #         if rb.body_type == RigidBodyType.DYNAMIC:
+    #             e.dirty = True
+    #
+    # def on_collision_exit(self, event: events.CollisionExit, dispatch: Callable):
+    #     e = event.collider.entity
+    #     rb = e.getComponent(RigidBody)
+    #     if rb is not None:
+    #         if rb.body_type == RigidBodyType.DYNAMIC:
+    #             e.dirty = True
+    #             if isinstance(e, kge.Sprite):
+    #                 e.renderer.delete()
 
     @property
     def pixel_ratio(self):
@@ -107,11 +116,6 @@ class Camera(BaseEntity):
         if isinstance(value, (float, int)):
             if MIN_ZOOM <= float(value) <= MAX_ZOOM:
                 if value != self._zoom:
-                    # FIXME : TO REMOVE
-                    # if self.scene is not None:
-                    #     for e in self.scene:
-                    #         e.dirty = True
-                    #         e.debuggable = True
                     self._zoom = float(value)
                     self._pixel_ratio = self._pixel_ratio_original * self._zoom
 
@@ -234,7 +238,7 @@ class Camera(BaseEntity):
             return True
         return False
 
-    def in_frame(self, entity: BaseEntity) -> bool:
+    def in_frame(self, entity: BaseEntity, offset: int = 0) -> bool:
         """
         Is this entity in the screen ?
         This method is meant to be used with the renderer system in order to render
@@ -244,8 +248,8 @@ class Camera(BaseEntity):
         :return: True if the entity is in camera sight
         """
         # Minimum distances before the collision occurs
-        min_dist_x = entity.size.width / 2 + self.half_width
-        min_dist_y = entity.size.height / 2 + self.half_height
+        min_dist_x = entity.size.width / 2 + self.half_width + offset
+        min_dist_y = entity.size.height / 2 + self.half_height + offset
 
         # distance from camera to the entity
         distVec = entity.position - Vector(self.position.x, -self.position.y)
@@ -268,9 +272,6 @@ class Camera(BaseEntity):
         scaled = self.pixels_to_unit(point)
         # 2. Reposition relative to frame edges
         return Vector(self.frame_left + scaled.x, scaled.y - self.frame_top)
-
-    # def on_window_resized(self, event: events.WindowResized, dispatch):
-    #     self.resolution = DottedDict(width=event.new_size.x,height=event.new_size.y)
 
     def world_to_screen_point(self, point: Vector) -> Vector:
         """

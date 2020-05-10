@@ -41,7 +41,7 @@ from kge.inputs import keys as Keys
 from kge.inputs import mouse as Mouse
 from kge.inputs.input_manager import Inputs
 from kge.physics.colliders import (
-    Collider, BoxCollider, CircleCollider, PolygonCollider, LineCollider, TriangleCollider,
+    Collider, BoxCollider, CircleCollider, PolygonCollider, SegmentCollider, TriangleCollider,
     EdgeCollider
 )
 from kge.physics.physics_manager import (
@@ -59,6 +59,9 @@ from kge.utils.spatial_hash import Box
 from kge.utils.vector import Vector
 
 __all__ = [
+    # Run function
+    "run",
+
     # Services
     "Physics",
     "Audio",
@@ -113,7 +116,7 @@ __all__ = [
     "PolygonCollider",
     "CircleCollider",
     "TriangleCollider",
-    "LineCollider",
+    "SegmentCollider",
     "EdgeCollider",
     "RayCastInfo",
     "OverlapInfo",
@@ -194,7 +197,8 @@ def run(
         starting_scene=Scene,
         title="Kiss Game Engine",
         resizable=True,
-        show_console=False,
+        show_output=False,
+        show_fps=False,
         resolution=DEFAULT_RESOLUTION,
         fullscreen=False,
         vsync=False,
@@ -212,10 +216,11 @@ def run(
 
     starting_scene let's you change the scene used by the engine.
     """
-    output = None
-    if show_console:
-        output = io.StringIO()
-    logging.basicConfig(level=log_level, stream=output)
+    # output = io.StringIO()
+    # if show_log:
+    #     logging.basicConfig(level=log_level, stream=output)
+    # else:
+    logging.basicConfig(level=log_level)
 
     with make_engine(setup,
                      starting_scene=starting_scene,
@@ -223,8 +228,9 @@ def run(
                      pixel_ratio=pixel_ratio,
                      fullscreen=fullscreen,
                      resizable=resizable,
-                     show_console=show_console,
-                     console_output=output,
+                     show_output=show_output,
+                     show_fps=show_fps,
+                     # console_output=output,
                      vsync=vsync,
                      resolution=resolution,
                      **engine_opts) as eng:

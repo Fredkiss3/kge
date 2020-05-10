@@ -32,12 +32,15 @@ class BaseComponent(EventMixin):
     def on_scene_stopped(self, ev, dispatch):
         self._initialized = False
 
+    nbItems = 0
 
     def __init__(self, entity=None):
         if entity is not None:
             if not isinstance(entity, kge.Entity):
                 raise TypeError("entity should be of type 'kge.Entity' or a subclass of 'kge.Entity'")
         self.entity = entity  # type: kge.Entity
+        type(self).nbItems += 2
+        self.name = f"new {type(self)} {type(self).nbItems}"
 
         # Used to Initialize component
         self._initialized = False

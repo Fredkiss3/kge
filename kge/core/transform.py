@@ -138,6 +138,13 @@ class Transform(BaseComponent):
         else:
             raise TypeError("Angle should be an int or a float")
 
+    @property
+    def t(self):
+        """
+        Get real transform
+        """
+        return self._t
+
     def __repr__(self):
         """
         Print this object

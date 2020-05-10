@@ -40,6 +40,9 @@ class CanvasRenderer(RenderComponent):
         else:
             self.delete()
 
+        # Set as dirty
+        self.entity.dirty = False
+
     @property
     def entity(self) -> 'kge.Canvas':
         return self._entity

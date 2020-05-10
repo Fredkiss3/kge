@@ -18,10 +18,14 @@ class AnimSystem(ComponentSystem):
     def on_update(self, ev: events.Update, dispatch: Callable[[events.Event], None]):
         """
         Animate by update
+        TODO : TO CHANGE ?
         """
-        scene = ev.scene
-        anim_e = set(scene.entity_layers(kge.Entity, filter_set=self._entities, renderable=False))
+        if ev.scene.rendered:
+            # scene = ev.scene
+            # FIXME : REALLY NOT PERFORMANT !!!
+            # anim_e = set(scene.entity_layers(kge.Entity, filter_set=self._entities, renderable=False))
+            anim_e = self._components
 
-        for e in anim_e:
-            animator = e.getComponent(kind=Animator)
-            animator.update(dispatch)
+            for animator in anim_e: # type: Animator
+                # animator = e.getComponent(kind=Animator)
+                animator.update(dispatch)

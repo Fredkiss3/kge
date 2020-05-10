@@ -1,8 +1,12 @@
+import time
+
 from kge import *
 
 
 class CameraController(Behaviour):
-    def on_update(self, ev: events.Update, _):
+    def on_fixed_update(self, ev: events.FixedUpdate, _):
+        camera = ev.scene.main_camera
+        # print(f"Camera Pos (Update: {time.monotonic()})", camera.position)
         inputs = ServiceProvider.getInputs()
 
         # movement
@@ -17,10 +21,14 @@ class CameraController(Behaviour):
             direction += Vector.Up()
 
         # zoom
-        camera = ev.scene.main_camera
-        if inputs.get_key_down(Keys.NumpadPlus):
-            camera.zoom += 1 * ev.delta_time
-        elif inputs.get_key_down(Keys.NumpadMinus):
-            camera.zoom -= 1 * ev.delta_time
+        camera.position += direction * 10 * ev.fixed_delta_time
 
-        self.entity.position += direction * 10 * ev.delta_time
+    def on_key_up(self, ev: events.KeyUp, _):
+        camera = ev.scene.main_camera
+        if ev.key is Keys.NumpadPlus:
+            camera.zoom *= 2
+        elif ev.key is Keys.NumpadMinus:
+            camera.zoom /= 2
+        if ev.key is Keys.C:
+            camera.zoom = 1
+            camera.position = Vector.Zero()

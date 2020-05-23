@@ -460,6 +460,7 @@ class SpriteRenderer(RenderComponent):
 
                 if self._next_image is not None:
                     self.set_image()
+                    pass
                 else:
                     # Check For transform, do not do anything if the entity has not moved
                     t = self.entity.transform.t
@@ -483,6 +484,7 @@ class SpriteRenderer(RenderComponent):
                             self._vlist = None
                     else:
                         shape = self.draw_shape(camera)
+                        pass
                 else:
                     if not self._visible:
                         if self._sprite.batch is not None:

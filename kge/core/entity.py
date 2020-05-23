@@ -219,11 +219,11 @@ class BaseEntity(EventMixin):
         if rb is not None:
             if rb.body is not None and self._transform.position != rb.position:
                 if not isinstance(self, kge.Camera):
-                    if self.scene is not None:
-                        self.scene.spatial_hash.remove(self._transform.position,
-                                                       Vector(self.size.width, self.size.height),
-                                                       self)
-                        self.scene.spatial_hash.add(rb.position, Vector(self.size.width, self.size.height), self)
+                    # if self.scene is not None:
+                    #     self.scene.spatial_hash.remove(self._transform.position,
+                    #                                    Vector(self.size.width, self.size.height),
+                    #                                    self)
+                    #     self.scene.spatial_hash.add(rb.position, Vector(self.size.width, self.size.height), self)
 
                     # When position get changed, mark as 'dirty'
                     self.dirty = True
@@ -245,9 +245,9 @@ class BaseEntity(EventMixin):
                 self.dirty = True
                 self.debuggable = True
 
-                self.scene.spatial_hash.remove(self._transform.position, Vector(self.size.width, self.size.height),
-                                               self)
-                self.scene.spatial_hash.add(value, Vector(self.size.width, self.size.height), self)
+                # self.scene.spatial_hash.remove(self._transform.position, Vector(self.size.width, self.size.height),
+                #                                self)
+                # self.scene.spatial_hash.add(value, Vector(self.size.width, self.size.height), self)
 
             self._transform.position = Vector(value)
 

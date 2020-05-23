@@ -1,0 +1,1390 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="fr-fr" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="fr-fr" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Référence des classes de kge &mdash; kiss game engine 1.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Manuel d’utilisation du moteur de jeu KISS GAME ENGINE" href="../user_guide/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> kiss game engine
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contenu:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Démarrage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/index.html">Manuel d’utilisation du moteur de jeu KISS GAME ENGINE</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Référence des classes de kge</a><ul class="simple">
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">kiss game engine</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Référence des classes de kge</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/ref/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="reference-des-classes-de-kge">
+<h1>Référence des classes de kge<a class="headerlink" href="#reference-des-classes-de-kge" title="Permalink to this headline">¶</a></h1>
+<p>Ci-dessous la liste des classes du moteur.</p>
+<span class="target" id="module-kge"></span><p><a class="reference external" href="https://github.com/Fredkiss3/kge">https://github.com/Fredkiss3/kge</a></p>
+<p>Copyright (C) 2020-2021 Fredhel KISSIE</p>
+<dl class="simple">
+<dt>THIS GAME ENGINE USE A COMBINATION OF GAME ENGINES :</dt><dd><ul class="simple">
+<li><p>PYGLET : FOR RENDERING AND SOUND SYSTEM</p></li>
+<li><p>PYGAME : FOR JOYSTICK CONTROL</p></li>
+</ul>
+</dd>
+</dl>
+<p>inspired by PPB ENGINE:
+Checkout the repository :  <a class="reference external" href="https://github.com/ppb/pursuedpybear/">https://github.com/ppb/pursuedpybear/</a></p>
+<dl class="py class">
+<dt id="kge.Audio">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Audio</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">instance</span><span class="p">:</span> <span class="n">kge.core.system.System</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Audio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Note that, we can only use “wav” and “ogg” format for sounds</p>
+<dl class="py attribute">
+<dt id="kge.Audio.system_class">
+<code class="sig-name descname">system_class</code><a class="headerlink" href="#kge.Audio.system_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">AudioManager</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.DebugDraw">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">DebugDraw</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">instance</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.DebugDraw" title="Permalink to this definition">¶</a></dt>
+<dd><p>The service that helps to draw custom shape and others</p>
+<dl class="py method">
+<dt id="kge.DebugDraw.setFlags">
+<em class="property">classmethod </em><code class="sig-name descname">setFlags</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">drawColliders</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">drawJoints</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">drawEntities</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">drawStuff</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.DebugDraw.setFlags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the draw flags
+:param drawColliders: Set to True to draw the colliders
+:param drawJoints: Set to True to draw the joints
+:param drawEntities: Set to True to draw the entities” centers and their boundaries</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="kge.DebugDraw.system_class">
+<code class="sig-name descname">system_class</code><a class="headerlink" href="#kge.DebugDraw.system_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">PhysicsManager</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Frame">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">duration</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.02</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">states</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>An animation frame</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Animation">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Animation</code><span class="sig-paren">(</span><em class="sig-param">owner: Any</em>, <em class="sig-param">frames=None</em>, <em class="sig-param">loop: bool = True</em>, <em class="sig-param">name: str = None</em>, <em class="sig-param">function: kge.graphics.animation.Animation.Fn = &lt;kge.graphics.animation.Animation.Fn object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Animation" title="Permalink to this definition">¶</a></dt>
+<dd><p>An animation clip</p>
+<dl>
+<dt>Usage :</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">run_anim</span> <span class="o">=</span> <span class="n">Animation</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">owner</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">frames</span><span class="o">=</span><span class="p">[</span><span class="n">Frame</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="n">run1</span><span class="p">),</span> <span class="n">Frame</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="n">run2</span><span class="p">),</span> <span class="n">Frame</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="n">run3</span><span class="p">)],</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">loop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">function</span><span class="o">=</span><span class="n">Step</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>Where :</dt><dd><ul class="simple">
+<li><p>owner: the object which we want to apply the animation</p></li>
+<li><p>frames: the frames of the animation</p></li>
+<li><p>loop: set the animation as looping or not</p></li>
+<li><dl class="simple">
+<dt>function: The transition function that the animation should apply when</dt><dd><p>passing from one frame to another.
+Use <code class="docutils literal notranslate"><span class="pre">`Animation.Smooth`</span></code> in order to get smooth animations.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="kge.Animation.from_sequence">
+<em class="property">classmethod </em><code class="sig-name descname">from_sequence</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">owner</span><span class="p">:</span> <span class="n">Any</span></em>, <em class="sig-param"><span class="n">images</span><span class="p">:</span> <span class="n">List<span class="p">[</span>kge.graphics.image.Image<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">[]</span></em>, <em class="sig-param"><span class="n">frame_duration</span><span class="o">=</span><span class="default_value">0.02</span></em>, <em class="sig-param"><span class="n">name</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">loop</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">property_name</span><span class="o">=</span><span class="default_value">'image'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Animation.from_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an image animation from a sequence of images</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Animation.from_spritesheet">
+<em class="property">classmethod </em><code class="sig-name descname">from_spritesheet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">owner</span><span class="p">:</span> <span class="n">Any</span></em>, <em class="sig-param"><span class="n">image</span><span class="p">:</span> <span class="n">kge.graphics.image.Image</span></em>, <em class="sig-param"><span class="n">grid_size</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em>, <em class="sig-param"><span class="n">frame_duration</span><span class="o">=</span><span class="default_value">0.02</span></em>, <em class="sig-param"><span class="n">name</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">loop</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">property_name</span><span class="o">=</span><span class="default_value">'image'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Animation.from_spritesheet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an image animation from a sprite sheet</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Animation.lerp">
+<em class="property">static </em><code class="sig-name descname">lerp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">T</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">T</span></em>, <em class="sig-param"><span class="n">p</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; T<a class="headerlink" href="#kge.Animation.lerp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Linear interpolation function</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Animation.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Animation.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the properties to owner
+:return:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Animator">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Animator</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">animations</span><span class="p">:</span> <span class="n">kge.graphics.animation.Animation</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Animator" title="Permalink to this definition">¶</a></dt>
+<dd><p>A component that controls which animation to play</p>
+<dl class="py method">
+<dt id="kge.Animator.add_transition">
+<code class="sig-name descname">add_transition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">from_</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>kge.graphics.animation.Animation<span class="p">, </span>kge.graphics.animator.AnimState<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">to</span><span class="p">:</span> <span class="n">kge.graphics.animation.Animation</span></em>, <em class="sig-param"><span class="n">forward_condition</span><span class="p">:</span> <span class="n">kge.utils.condition.Condition</span> <span class="o">=</span> <span class="default_value">Condition(Always)</span></em>, <em class="sig-param"><span class="n">back_condition</span><span class="p">:</span> <span class="n">kge.utils.condition.Condition</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Animator.add_transition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a transition between two animations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>from</strong> – the animation where the transition begin</p></li>
+<li><p><strong>to</strong> – the animation where the transition should go next</p></li>
+<li><p><strong>forward_condition</strong> – the condition to fulfill in order to switch to the next animation</p></li>
+<li><p><strong>back_condition</strong> – the condition to fulfill in order to switch back to the previous animation</p></li>
+</ul>
+</dd>
+</dl>
+<dl>
+<dt>Usage :</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">animator</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">from_</span><span class="o">=</span><span class="n">idle</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="n">run</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">forward_condition</span><span class="o">=</span><span class="n">Condition</span><span class="p">(</span><span class="n">is_running</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">back_condition</span><span class="o">=</span><span class="n">Condition</span><span class="p">(</span><span class="n">is_running</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="kge.C">
+<code class="sig-prename descclassname">kge.</code><code class="sig-name descname">C</code><a class="headerlink" href="#kge.C" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">kge.utils.condition.Condition</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Condition">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Condition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">const</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Condition" title="Permalink to this definition">¶</a></dt>
+<dd><p>A condition
+This class is meant to be used in order to set a condition on an object</p>
+<dl>
+<dt>The syntax for setting a condition is :</dt><dd><ul class="simple">
+<li><p>Condition({property}__{expression}=value)</p></li>
+</ul>
+</dd>
+<dt>Where :</dt><dd><ul class="simple">
+<li><p>property is the property concerned by the condition</p></li>
+<li><p>expression is one of the expressions registered in Condition class</p></li>
+</ul>
+</dd>
+<dt>Example :</dt><dd><dl>
+<dt>here we set a condition on property “height” that check if height is greater or equal to 500px :</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Condition</span><span class="p">(</span><span class="n">height__gte</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>here we want to check if name is equal to “kiss” :</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Condition</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;kiss&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="kge.Condition.resolve">
+<code class="sig-name descname">resolve</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">for_</span><span class="p">:</span> <span class="n">Any</span></em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kge.Condition.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve if this condition is true for the object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="kge.Scene">
+<code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Scene</code><a class="headerlink" href="#kge.Scene" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">kge.core.scene.BaseScene</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Behaviour">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Behaviour</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">entity</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Behaviour" title="Permalink to this definition">¶</a></dt>
+<dd><p>A behavior represents an element that can be added to an entity
+to add a « behaviour » to a game object (like moving the player for example).</p>
+<p>In order to to do so, we must use event handlers.</p>
+<p>Their signatures are :
+def on_{event_name}(self, event_type, dispatch_function):</p>
+<blockquote>
+<div><p>(your code goes here)</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Where :</dt><dd><ul class="simple">
+<li><p>event_name is the name of the event in snake_case</p></li>
+<li><p>event_type is the event, you should use that, it contains a lot of important parameters</p></li>
+<li><p>dispatch_function is a function to call in order to send messages, in practice, you won’t use it so much</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example of an event handler :</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">PlayerMovement</span><span class="p">(</span><span class="n">Behaviour</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Moving the player...&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to know a list of all events, you should see in module <code class="docutils literal notranslate"><span class="pre">kge.core.events</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="kge.Component">
+<code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Component</code><a class="headerlink" href="#kge.Component" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">kge.core.component.BaseComponent</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Camera">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Camera</code><a class="headerlink" href="#kge.Camera" title="Permalink to this definition">¶</a></dt>
+<dd><p>A camera attached to a scene
+FIXME :</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>CANVAS POSITION &amp; EVENT DISPATCHING SHOULD BE INDEPENDANT OF ZOOMING</p></li>
+<li><p>FIX : CAMERA ZOOMING WITH RENDERERS</p></li>
+</ul>
+</div></blockquote>
+<dl class="py method">
+<dt id="kge.Camera.box_in_frame">
+<code class="sig-name descname">box_in_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">point</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em>, <em class="sig-param"><span class="n">size</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Camera.box_in_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a box is visible.
+You can use this method if you want to test sprites, rectangles and others</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.fixed_world_to_screen_point">
+<code class="sig-name descname">fixed_world_to_screen_point</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">point</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Camera.fixed_world_to_screen_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get real screen pixels coordinates of the point.
+Used to retrieve the position in which we should draw the point
+FIXME : SET FOR UI</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.frame_bottom">
+<em class="property">property </em><code class="sig-name descname">frame_bottom</code><a class="headerlink" href="#kge.Camera.frame_bottom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frame bottom position in unit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.frame_height">
+<em class="property">property </em><code class="sig-name descname">frame_height</code><a class="headerlink" href="#kge.Camera.frame_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frame Height in units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.frame_left">
+<em class="property">property </em><code class="sig-name descname">frame_left</code><a class="headerlink" href="#kge.Camera.frame_left" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frame left position in unit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.frame_right">
+<em class="property">property </em><code class="sig-name descname">frame_right</code><a class="headerlink" href="#kge.Camera.frame_right" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frame right position in unit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.frame_top">
+<em class="property">property </em><code class="sig-name descname">frame_top</code><a class="headerlink" href="#kge.Camera.frame_top" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frame top position in unit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.frame_width">
+<em class="property">property </em><code class="sig-name descname">frame_width</code><a class="headerlink" href="#kge.Camera.frame_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frame Width in units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.half_height">
+<em class="property">property </em><code class="sig-name descname">half_height</code><a class="headerlink" href="#kge.Camera.half_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get half height of the frame in units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.half_width">
+<em class="property">property </em><code class="sig-name descname">half_width</code><a class="headerlink" href="#kge.Camera.half_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get half width of the frame in units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>half width</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.in_frame">
+<code class="sig-name descname">in_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">entity</span><span class="p">:</span> <span class="n">kge.core.entity.BaseEntity</span></em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kge.Camera.in_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is this entity in the screen ?
+This method is meant to be used with the renderer system in order to render
+only elements that are in camera sight.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>entity</strong> – the entity to check</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if the entity is in camera sight</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.pixel_ratio">
+<em class="property">property </em><code class="sig-name descname">pixel_ratio</code><a class="headerlink" href="#kge.Camera.pixel_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the pixel ratio of the camera</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.pixels_to_unit">
+<code class="sig-name descname">pixels_to_unit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pixels</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>float<span class="p">, </span>kge.utils.vector.Vector<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Union<span class="p">[</span>float<span class="p">, </span>kge.utils.vector.Vector<span class="p">]</span><a class="headerlink" href="#kge.Camera.pixels_to_unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert pixels to unit in the world</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.real_frame_bottom">
+<em class="property">property </em><code class="sig-name descname">real_frame_bottom</code><a class="headerlink" href="#kge.Camera.real_frame_bottom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Real Frame bottom position in unit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.real_frame_top">
+<em class="property">property </em><code class="sig-name descname">real_frame_top</code><a class="headerlink" href="#kge.Camera.real_frame_top" title="Permalink to this definition">¶</a></dt>
+<dd><p>Real Frame top position in unit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.resolution">
+<em class="property">property </em><code class="sig-name descname">resolution</code><a class="headerlink" href="#kge.Camera.resolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the resolution of the camera</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.screen_to_world_point">
+<code class="sig-name descname">screen_to_world_point</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">point</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Camera.screen_to_world_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get units coordinates of a pixel coordinates point in screen</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.unit_to_pixels">
+<code class="sig-name descname">unit_to_pixels</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">unit</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>float<span class="p">, </span>kge.utils.vector.Vector<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Union<span class="p">[</span>float<span class="p">, </span>kge.utils.vector.Vector<span class="p">]</span><a class="headerlink" href="#kge.Camera.unit_to_pixels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a point to pixels</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>unit</strong> – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.world_to_screen_point">
+<code class="sig-name descname">world_to_screen_point</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">point</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Camera.world_to_screen_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get real screen pixels coordinates of the point.
+Used to retrieve the position in which we should draw the point</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Camera.zoom">
+<em class="property">property </em><code class="sig-name descname">zoom</code><a class="headerlink" href="#kge.Camera.zoom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Zoom, can’t be greater than MAX_ZOOM = 10
+and can’t be lower than MIN_ZOOM = 1
+:return:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Event">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Event</code><a class="headerlink" href="#kge.Event" title="Permalink to this definition">¶</a></dt>
+<dd><p>The event class</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Vector">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Vector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg1</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>Vector<span class="p">, </span>float<span class="p">, </span>Tuple<span class="p">[</span>float<span class="p">, </span>float<span class="p">]</span><span class="p">, </span>List<span class="p">[</span>float<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">arg2</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class representing a vector</p>
+<dl class="py method">
+<dt id="kge.Vector.BottomLeft">
+<em class="property">classmethod </em><code class="sig-name descname">BottomLeft</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Vector.BottomLeft" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A vector representing the left bottom corner</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.BottomRight">
+<em class="property">classmethod </em><code class="sig-name descname">BottomRight</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Vector.BottomRight" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A vector representing the left bottom corner</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.Down">
+<em class="property">classmethod </em><code class="sig-name descname">Down</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Vector.Down" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A vector pointing down</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.Left">
+<em class="property">classmethod </em><code class="sig-name descname">Left</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Vector.Left" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A vector pointing to the left</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.Right">
+<em class="property">classmethod </em><code class="sig-name descname">Right</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Vector.Right" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A vector pointing to the right</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.TopLeft">
+<em class="property">classmethod </em><code class="sig-name descname">TopLeft</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Vector.TopLeft" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A vector representing the left up corner</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.TopRight">
+<em class="property">classmethod </em><code class="sig-name descname">TopRight</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Vector.TopRight" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A vector representing the left up corner</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.Unit">
+<em class="property">classmethod </em><code class="sig-name descname">Unit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Vector.Unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a 1 unit vector
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.Up">
+<em class="property">classmethod </em><code class="sig-name descname">Up</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Vector.Up" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A vector pointing up</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.Zero">
+<em class="property">classmethod </em><code class="sig-name descname">Zero</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; kge.utils.vector.Vector<a class="headerlink" href="#kge.Vector.Zero" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a zero length vector
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.angle_to">
+<code class="sig-name descname">angle_to</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Vector.angle_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get angle between to vectors in degrees</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.cross">
+<code class="sig-name descname">cross</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>Sequence<span class="p">[</span>float<span class="p">]</span><span class="p">, </span>Vector<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Vector.cross" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>The cross product between the vector and other vector</dt><dd><p>v1.cross(v2) (v1xv2) -&gt; v1.x*v2.y - v1.y*v2.x</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The cross product</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.distance_to">
+<code class="sig-name descname">distance_to</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>Sequence<span class="p">[</span>float<span class="p">]</span><span class="p">, </span>Vector<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; float<a class="headerlink" href="#kge.Vector.distance_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>The distance between this vector and another one</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> – a vectorLike object which can either be a tuple or a another vector</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.dot">
+<code class="sig-name descname">dot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Vector.dot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>The dot product between the vector and other vector</dt><dd><p>v1.dot(v2) (v1.v2) -&gt; v1.x*v2.x + v1.y*v2.y</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The dot product</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.lerp">
+<code class="sig-name descname">lerp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em>, <em class="sig-param"><span class="n">p</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Vector.lerp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lerp function</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.move_towards">
+<em class="property">classmethod </em><code class="sig-name descname">move_towards</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">origin</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em>, <em class="sig-param"><span class="n">dest</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em>, <em class="sig-param"><span class="n">speed</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Vector.move_towards" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move towards another vector at a given speed
+speed is a normal value</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.rotate">
+<code class="sig-name descname">rotate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angle_d</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Vector.rotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the vector by “angle_d” degrees.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Vector.rotated">
+<code class="sig-name descname">rotated</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angle_d</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Vector.rotated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and return a new vector by rotating this vector by
+“angle_d” degrees.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Rotated vector</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Sound">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Sound</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Sound" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asset for sound</p>
+<dl class="py method">
+<dt id="kge.Sound.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Optional<span class="p">[</span>pyglet.media.codecs.base.Source<span class="p">]</span><a class="headerlink" href="#kge.Sound.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load and return sound</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Sound.play">
+<code class="sig-name descname">play</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">volume</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">10</span></em>, <em class="sig-param"><span class="n">loop</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">pitch</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Sound.play" title="Permalink to this definition">¶</a></dt>
+<dd><p>Play the sound</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Image">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asset for image</p>
+<dl class="py method">
+<dt id="kge.Image.cropped">
+<code class="sig-name descname">cropped</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">origin</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em>, <em class="sig-param"><span class="n">size</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em><span class="sig-paren">)</span> &#x2192; kge.graphics.image.SlicedImage<a class="headerlink" href="#kge.Image.cropped" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a cropped copy of the image</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Image.is_loaded">
+<code class="sig-name descname">is_loaded</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Image.is_loaded" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns if the data is ready now or if <a class="reference internal" href="#kge.Image.load" title="kge.Image.load"><code class="xref py py-meth docutils literal notranslate"><span class="pre">load()</span></code></a> will block.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Image.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span> &#x2192; pyglet.image.AbstractImage<a class="headerlink" href="#kge.Image.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the data of this asset, in the appropriate form.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Image.slice">
+<code class="sig-name descname">slice</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sliced_size</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em><span class="sig-paren">)</span> &#x2192; List<span class="p">[</span>kge.graphics.image.SlicedImage<span class="p">]</span><a class="headerlink" href="#kge.Image.slice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load Image From Region
+good for sampling sprite sheets
+:param sliced_size: the size of each sample</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.TiledImage">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">TiledImage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">size</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.TiledImage" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Repeated Image</p>
+<dl>
+<dt>Usage :</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tiled</span> <span class="o">=</span> <span class="n">TiledImage</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s1">&#39;image.png&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">Vector</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+</pre></div>
+</div>
+</dd>
+<dt>Where :</dt><dd><ul class="simple">
+<li><p>“name” is the path of the file</p></li>
+<li><p>“size” is the number of times we want to repeat the image on x axis and on y axis</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="kge.TiledImage.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; pyglet.image.AbstractImage<a class="headerlink" href="#kge.TiledImage.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the data of this asset, in the appropriate form.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Box">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Box</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">center</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em>, <em class="sig-param"><span class="n">size</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Box" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Box, an object used to represent bounds in the hash table</p>
+<dl class="py method">
+<dt id="kge.Box.overlaps">
+<code class="sig-name descname">overlaps</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="p">:</span> <span class="n">kge.utils.spatial_hash.Box</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Box.overlaps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if another box overlaps this one.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.RigidBody">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">RigidBody</code><span class="sig-paren">(</span><em class="sig-param">body_type: kge.physics.rigid_body.RigidBodyType = &lt;RigidBodyType.DYNAMIC: 2&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#kge.RigidBody" title="Permalink to this definition">¶</a></dt>
+<dd><p>A component that manages all physics of the entity.
+In practice it just an interface that holds and modify information about the real body.
+An entity should only have one of this in its components.
+You should also note that when adding a RigidBody to an entity, the positions controls are switched to
+the component, so if you want to later get the control of the position, you should use
+the component directly</p>
+<dl class="py method">
+<dt id="kge.RigidBody.add_force">
+<code class="sig-name descname">add_force</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em>, <em class="sig-param"><span class="n">impulse</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">point</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span> <span class="o">=</span> <span class="default_value">Vector(0, 0)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.RigidBody.add_force" title="Permalink to this definition">¶</a></dt>
+<dd><p>add a force to the rigid body.
+You can specify a point in the body to add the force.
+The point should be a relative point to the center of the rigid body.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.RigidBody.add_torque">
+<code class="sig-name descname">add_torque</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">torque</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">impulse</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.RigidBody.add_torque" title="Permalink to this definition">¶</a></dt>
+<dd><p>add a rotation torque to the rigid body</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.RigidBody.angle">
+<em class="property">property </em><code class="sig-name descname">angle</code><a class="headerlink" href="#kge.RigidBody.angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get angle in degrees</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.RigidBody.angular_drag">
+<em class="property">property </em><code class="sig-name descname">angular_drag</code><a class="headerlink" href="#kge.RigidBody.angular_drag" title="Permalink to this definition">¶</a></dt>
+<dd><p>The resistance to the rotation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.RigidBody.awake">
+<em class="property">property </em><code class="sig-name descname">awake</code><a class="headerlink" href="#kge.RigidBody.awake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the body to awake</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.RigidBody.drag">
+<em class="property">property </em><code class="sig-name descname">drag</code><a class="headerlink" href="#kge.RigidBody.drag" title="Permalink to this definition">¶</a></dt>
+<dd><p>The</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.RigidBody.move_position">
+<code class="sig-name descname">move_position</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">destination</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>kge.utils.vector.Vector<span class="p">, </span>Tuple<span class="p">[</span>float<span class="p">, </span>float<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.RigidBody.move_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>move towards a destination. This methods is collision safe.
+Moves the rigid body to the specified position by calculating the appropriate
+linear velocity required to move  the rigid body to that position
+during the next physics update.</p>
+<p>Warning : Do not use this method to move between large distances</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>destination</strong> – destination</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.RigidBody.move_rotation">
+<code class="sig-name descname">move_rotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angle</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.RigidBody.move_rotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate towards an angle. This methods is collision safe.
+Rotate the rigid body to the specified angle by calculating the appropriate
+angular velocity required to rotate the rigid body to that position
+during the next physics update.</p>
+<p>Warning : Do not use this method to rotate between large angles</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>angle</strong> – angle of destination</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.RigidBody.on_body_created">
+<code class="sig-name descname">on_body_created</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ev</span><span class="p">:</span> <span class="n">kge.core.events.BodyCreated</span></em>, <em class="sig-param"><span class="n">dispatch</span><span class="p">:</span> <span class="n">Callable[[kge.core.events.Event], None]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.RigidBody.on_body_created" title="Permalink to this definition">¶</a></dt>
+<dd><p>if the real body has been created then
+attach it to this</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.RigidBody.on_init">
+<code class="sig-name descname">on_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ev</span><span class="p">:</span> <span class="n">kge.core.events.Init</span></em>, <em class="sig-param"><span class="n">dispatch</span><span class="p">:</span> <span class="n">Callable[[kge.core.events.Event], None]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.RigidBody.on_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>At initialization we must create the body</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.RigidBodyType">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">RigidBodyType</code><a class="headerlink" href="#kge.RigidBodyType" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.BoxCollider">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">BoxCollider</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">box</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sensor</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">offset</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span> <span class="o">=</span> <span class="default_value">Vector(0, 0)</span></em>, <em class="sig-param"><span class="n">bounciness</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">density</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.BoxCollider" title="Permalink to this definition">¶</a></dt>
+<dd><p>A component that handles collision in a box shape</p>
+<dl class="py method">
+<dt id="kge.BoxCollider.on_init">
+<code class="sig-name descname">on_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ev</span><span class="p">:</span> <span class="n">kge.core.events.Init</span></em>, <em class="sig-param"><span class="n">dispatch</span><span class="p">:</span> <span class="n">Callable[[kge.core.events.Event], None]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.BoxCollider.on_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>on initialisation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.BoxCollider.setBox">
+<code class="sig-name descname">setBox</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">box</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.BoxCollider.setBox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the “Box” Value of the Collider</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Collider">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Collider</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sensor</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">offset</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span> <span class="o">=</span> <span class="default_value">Vector(0, 0)</span></em>, <em class="sig-param"><span class="n">bounciness</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">density</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Collider" title="Permalink to this definition">¶</a></dt>
+<dd><p>The only component that handles collisions</p>
+<dl class="py method">
+<dt id="kge.Collider.on_init">
+<code class="sig-name descname">on_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ev</span><span class="p">:</span> <span class="n">kge.core.events.Init</span></em>, <em class="sig-param"><span class="n">dispatch</span><span class="p">:</span> <span class="n">Callable[[kge.core.events.Event], None]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Collider.on_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>on initialisation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Collider.rb_attached">
+<em class="property">property </em><code class="sig-name descname">rb_attached</code><a class="headerlink" href="#kge.Collider.rb_attached" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the RigidBody attached to the collider</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.PolygonCollider">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">PolygonCollider</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vertices</span><span class="p">:</span> <span class="n">List<span class="p">[</span>kge.utils.vector.Vector<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">sensor</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bounciness</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">density</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.PolygonCollider" title="Permalink to this definition">¶</a></dt>
+<dd><p>A component that handles collision within in a polygon shape</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.CircleCollider">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">CircleCollider</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">radius</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">center</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span> <span class="o">=</span> <span class="default_value">Vector(0, 0)</span></em>, <em class="sig-param"><span class="n">sensor</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bounciness</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">density</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.CircleCollider" title="Permalink to this definition">¶</a></dt>
+<dd><p>A component that handles collision in a circle shape</p>
+<dl class="py method">
+<dt id="kge.CircleCollider.on_init">
+<code class="sig-name descname">on_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ev</span><span class="p">:</span> <span class="n">kge.core.events.Init</span></em>, <em class="sig-param"><span class="n">dispatch</span><span class="p">:</span> <span class="n">Callable[[kge.core.events.Event], None]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.CircleCollider.on_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>on initialisation</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.TriangleCollider">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">TriangleCollider</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vertices</span><span class="p">:</span> <span class="n">List<span class="p">[</span>kge.utils.vector.Vector<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">center</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span> <span class="o">=</span> <span class="default_value">Vector(0, 0)</span></em>, <em class="sig-param"><span class="n">sensor</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bounciness</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">density</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.TriangleCollider" title="Permalink to this definition">¶</a></dt>
+<dd><p>A component that handles collisions in a triangle shape</p>
+<dl class="py method">
+<dt id="kge.TriangleCollider.on_init">
+<code class="sig-name descname">on_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ev</span><span class="p">:</span> <span class="n">kge.core.events.Init</span></em>, <em class="sig-param"><span class="n">dispatch</span><span class="p">:</span> <span class="n">Callable[[kge.core.events.Event], None]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.TriangleCollider.on_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>on initialisation</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.LineCollider">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">LineCollider</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">point1</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em>, <em class="sig-param"><span class="n">point2</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span></em>, <em class="sig-param"><span class="n">sensor</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bounciness</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">density</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.LineCollider" title="Permalink to this definition">¶</a></dt>
+<dd><p>A component that handles collisions which occurs in a line segment shape</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.EdgeCollider">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">EdgeCollider</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vertices</span><span class="p">:</span> <span class="n">List<span class="p">[</span>kge.utils.vector.Vector<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">sensor</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bounciness</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">density</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.EdgeCollider" title="Permalink to this definition">¶</a></dt>
+<dd><p>A component that handles collisions which occurs in a sequence of line segments that forms a circular list.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.RayCastInfo">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">RayCastInfo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">layer</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">maxPoint</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span> <span class="o">=</span> <span class="default_value">Vector(0, 0)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.RayCastInfo" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="kge.RayCastInfo.ReportFixture">
+<code class="sig-name descname">ReportFixture</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fixture</span></em>, <em class="sig-param"><span class="n">point</span></em>, <em class="sig-param"><span class="n">normal</span></em>, <em class="sig-param"><span class="n">fraction</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.RayCastInfo.ReportFixture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called for each fixture found in the query. You control how the ray
+proceeds by returning a float that indicates the fractional length of
+the ray. By returning 0, you set the ray length to zero. By returning
+the current fraction, you proceed to find the closest point. By
+returning 1, you continue with the original ray clipping. By returning
+-1, you will filter out the current fixture (the ray will not hit it).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.OverlapInfo">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">OverlapInfo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">layer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.OverlapInfo" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="kge.OverlapInfo.ReportFixture">
+<code class="sig-name descname">ReportFixture</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fixture</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.OverlapInfo.ReportFixture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called for each fixture found in the query AABB.
+false to terminate the query.
+:param fixture: a fixture found in the query
+:return: True to continue the query, False to terminate the query</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.ServiceProvider">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">ServiceProvider</code><a class="headerlink" href="#kge.ServiceProvider" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for providing services to users</p>
+<dl class="py method">
+<dt id="kge.ServiceProvider.getService">
+<em class="property">classmethod </em><code class="sig-name descname">getService</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">kind</span><span class="p">:</span> <span class="n">Type<span class="p">[</span>T<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; T<a class="headerlink" href="#kge.ServiceProvider.getService" title="Permalink to this definition">¶</a></dt>
+<dd><p>get a service</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.ServiceProvider.provide">
+<em class="property">classmethod </em><code class="sig-name descname">provide</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">service</span><span class="p">:</span> <span class="n">Type<span class="p">[</span>kge.core.service.Service<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">system</span><span class="p">:</span> <span class="n">kge.core.system.System</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.ServiceProvider.provide" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide a service</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Sprite">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Sprite</code><a class="headerlink" href="#kge.Sprite" title="Permalink to this definition">¶</a></dt>
+<dd><p>An entity that can be visualised</p>
+<dl class="py method">
+<dt id="kge.Sprite.size">
+<em class="property">property </em><code class="sig-name descname">size</code><a class="headerlink" href="#kge.Sprite.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Size of the entity (should be subclassed)
+and must return a dottedDict in form :</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">DottedDict</span><span class="p">(</span><span class="n">width</span><span class="o">=...</span><span class="p">,</span> <span class="n">height</span><span class="o">=...</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Canvas">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Canvas</code><a class="headerlink" href="#kge.Canvas" title="Permalink to this definition">¶</a></dt>
+<dd><p>A canvas is a panel that holds ui elements
+TODO : Implement order in canvas</p>
+<dl class="py method">
+<dt id="kge.Canvas.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">element</span><span class="p">:</span> <span class="n">kge.ui.ui_element.UIElement</span></em>, <em class="sig-param"><span class="n">position</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span> <span class="o">=</span> <span class="default_value">Vector(0, 0)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Canvas.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a ui element to the canvas
+:param element: the element to add
+:param position: position of the element relative to the canvas, Vector(0, 0) is the center of the canvas</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Canvas.dispatch">
+<code class="sig-name descname">dispatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">e</span><span class="p">:</span> <span class="n">kge.ui.canvas.CanvasEvent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Canvas.dispatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispatch events to ui elements
+:param zone:
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Canvas.remove">
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">element</span><span class="p">:</span> <span class="n">kge.ui.ui_element.UIElement</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Canvas.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove the element from self
+:param element: the element to remove</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="kge.Entity">
+<code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Entity</code><a class="headerlink" href="#kge.Entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">kge.core.entity.BaseEntity</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Empty">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Empty</code><a class="headerlink" href="#kge.Empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>To Create an empty entity (Entity Which have zero for scale)</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Text">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Text</code><span class="sig-paren">(</span><em class="sig-param">value: str = ''</em>, <em class="sig-param">font: kge.ui.font.Font = &lt;kge.ui.font.Font object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Text" title="Permalink to this definition">¶</a></dt>
+<dd><p>A text element</p>
+<dl class="py method">
+<dt id="kge.Text.delete">
+<code class="sig-name descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Text.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>For deleting vertices &amp; other things on the element
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Text.render">
+<code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scene</span><span class="p">:</span> <span class="n">kge.core.scene.BaseScene</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Text.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Render the text</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Button">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Button</code><span class="sig-paren">(</span><em class="sig-param">text: str = 'button'</em>, <em class="sig-param">on_clicked: Callable = None</em>, <em class="sig-param">font: kge.ui.font.Font = &lt;kge.ui.font.Font object&gt;</em>, <em class="sig-param">style: kge.ui.button.ButtonStyle = &lt;kge.ui.button.ButtonStyle object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Button" title="Permalink to this definition">¶</a></dt>
+<dd><p>A button element</p>
+<dl class="py method">
+<dt id="kge.Button.delete">
+<code class="sig-name descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Button.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>For deleting vertices &amp; other things on the element
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Button.dispatch_click_events">
+<code class="sig-name descname">dispatch_click_events</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Button.dispatch_click_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispatch click event if there is one
+Should be subclassed</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Button.render">
+<code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scene</span><span class="p">:</span> <span class="n">kge.core.scene.BaseScene</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Button.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Render the element
+:param canvas: the parent canvas
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Button.render_bg">
+<code class="sig-name descname">render_bg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">camera</span><span class="p">:</span> <span class="n">kge.core.camera.Camera</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Button.render_bg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Render Background</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Button.set_click">
+<code class="sig-name descname">set_click</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Button.set_click" title="Permalink to this definition">¶</a></dt>
+<dd><p>Methods that help to click an ui element
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Button.set_hover">
+<code class="sig-name descname">set_hover</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Button.set_hover" title="Permalink to this definition">¶</a></dt>
+<dd><p>Methods that help to hover an ui element
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Button.set_image">
+<code class="sig-name descname">set_image</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Button.set_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set Image</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Button.set_normal">
+<code class="sig-name descname">set_normal</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Button.set_normal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Methods that help to click an ui element
+:return:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Panel">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Panel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">img</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>kge.graphics.image.Image<span class="p">, </span>kge.graphics.shapes.Shape<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">Square(num_points=4, mode=7)</span></em>, <em class="sig-param"><span class="n">color</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>int<span class="p">, </span>int<span class="p">, </span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">Color(red=255, green=255, blue=255, alpha=1.0)</span></em>, <em class="sig-param"><span class="n">opacity</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Panel" title="Permalink to this definition">¶</a></dt>
+<dd><p>A panel is just a blank square plane,
+you should use this to add a static image
+or just flat shape to your ui.</p>
+<dl class="py method">
+<dt id="kge.Panel.angle">
+<em class="property">property </em><code class="sig-name descname">angle</code><a class="headerlink" href="#kge.Panel.angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get angle, in degrees</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Panel.delete">
+<code class="sig-name descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Panel.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete vertices &amp; Sprite if they have been initialized
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Panel.getCircleVertices">
+<code class="sig-name descname">getCircleVertices</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">camera</span><span class="p">:</span> <span class="n">kge.core.camera.Camera</span></em>, <em class="sig-param"><span class="n">center</span></em>, <em class="sig-param"><span class="n">radius</span></em>, <em class="sig-param"><span class="n">points</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Panel.getCircleVertices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the triangles that approximate the circle and
+the lines that border the circles edges, given
+(center, radius, points).</p>
+<p>Caches the calculated LL/TF vertices, but recalculates
+based on the center passed in.</p>
+<p>Currently, there’s only one point amount,
+so the circle cache ignores it when storing. Could cause
+some confusion if you’re using multiple point counts as
+only the first stored point-count for that radius will
+show up.</p>
+<p>Returns: (tf_vertices, ll_vertices)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Panel.render">
+<code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scene</span><span class="p">:</span> <span class="n">kge.core.scene.BaseScene</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Panel.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Render the sprite</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="kge.Panel.set_image">
+<code class="sig-name descname">set_image</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Panel.set_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set Image</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Font">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Font</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'Arial'</span></em>, <em class="sig-param"><span class="n">file</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">size</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">15</span></em>, <em class="sig-param"><span class="n">align</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'center'</span></em>, <em class="sig-param"><span class="n">italic</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bold</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">color</span><span class="p">:</span> <span class="n">kge.utils.color.Color</span> <span class="o">=</span> <span class="default_value">Color(red=0, green=0, blue=0, alpha=1.0)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Font" title="Permalink to this definition">¶</a></dt>
+<dd><p>An asset for specifying fonts</p>
+<dl class="py method">
+<dt id="kge.Font.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kge.Font.load" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Shape">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Shape</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_points</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">mode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shapes are drawing primitives that are good for rapid prototyping.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Square">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Square</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_points</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">4</span></em>, <em class="sig-param"><span class="n">mode</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">7</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Square" title="Permalink to this definition">¶</a></dt>
+<dd><p>A square image of a single color.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.Triangle">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Triangle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_points</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">3</span></em>, <em class="sig-param"><span class="n">mode</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">4</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Triangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>A triangle image of a single color.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.OutLinedSquare">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">OutLinedSquare</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_points</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">8</span></em>, <em class="sig-param"><span class="n">mode</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.OutLinedSquare" title="Permalink to this definition">¶</a></dt>
+<dd><p>An outlined square of a single color.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.OutlinedTriangle">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">OutlinedTriangle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_points</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">6</span></em>, <em class="sig-param"><span class="n">mode</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.OutlinedTriangle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="kge.Circle">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Circle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_points</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">20</span></em>, <em class="sig-param"><span class="n">mode</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">6</span></em>, <em class="sig-param"><span class="n">radius</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">center</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span> <span class="o">=</span> <span class="default_value">Vector(0, 0)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Circle" title="Permalink to this definition">¶</a></dt>
+<dd><p>A circle image of a single color.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="kge.OutlinedCircle">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">OutlinedCircle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_points</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">20</span></em>, <em class="sig-param"><span class="n">mode</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">2</span></em>, <em class="sig-param"><span class="n">radius</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">center</span><span class="p">:</span> <span class="n">kge.utils.vector.Vector</span> <span class="o">=</span> <span class="default_value">Vector(0, 0)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.OutlinedCircle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="kge.Color">
+<em class="property">class </em><code class="sig-prename descclassname">kge.</code><code class="sig-name descname">Color</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">r</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">255</span></em>, <em class="sig-param"><span class="n">g</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">255</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">255</span></em>, <em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#kge.Color" title="Permalink to this definition">¶</a></dt>
+<dd><p>An object that represent a color</p>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../user_guide/index.html" class="btn btn-neutral float-left" title="Manuel d’utilisation du moteur de jeu KISS GAME ENGINE" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, fredkiss3
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

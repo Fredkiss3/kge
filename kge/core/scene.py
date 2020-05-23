@@ -353,7 +353,7 @@ class BaseScene(EntityCollection, EventMixin):
         entity.transform.position = position
 
         # add entity to the spatial Hash
-        self.spatial_hash.add(entity.position, Vector(entity.size.width, entity.size.height), entity)
+        #self.spatial_hash.add(entity.position, Vector(entity.size.width, entity.size.height), entity)
 
         # Set layer
         if isinstance(layer, (int, str)):
@@ -400,54 +400,54 @@ class BaseScene(EntityCollection, EventMixin):
         for entity, position, layer in entities:
             self.add(entity, position, layer)
 
-    def entity_layers(self, *types: Type[BaseEntity],
-                      filter_set: Set[BaseEntity] = None,
-                      filter_component: Type[BaseComponent] = None,
-                      renderable: bool = True,
-                      debuggable: bool = False,
-                      check_active: bool = True
-                      ) -> Iterator[
-        BaseEntity]:
-        """
-        Return an iterator of the contained Entities in ascending layer order that are active and visible in frame.
+    # def entity_layers(self, *types: Type[BaseEntity],
+    #                   filter_set: Set[BaseEntity] = None,
+    #                   filter_component: Type[BaseComponent] = None,
+    #                   renderable: bool = True,
+    #                   debuggable: bool = False,
+    #                   check_active: bool = True
+    #                   ) -> Iterator[
+    #     BaseEntity]:
+    #     """
+    #     Return an iterator of the contained Entities in ascending layer order that are active and visible in frame.
 
-        Sprites are part of a layer if they have a layer attribute equal to
-        that layer value. Sprites without a layer attribute are considered
-        layer 0.
+    #     Sprites are part of a layer if they have a layer attribute equal to
+    #     that layer value. Sprites without a layer attribute are considered
+    #     layer 0.
 
-        This function exists primarily to assist the Renderer subsystem,
-        but will be left public for other creative uses.
-        """
-        size = (Vector(self.main_camera.frame_width,
-                       self.main_camera.frame_height) + Vector.Unit() / 2) / self.main_camera.zoom
-        position = Vector(self.main_camera.position.x, -self.main_camera.position.y)
+    #     This function exists primarily to assist the Renderer subsystem,
+    #     but will be left public for other creative uses.
+    #     """
+    #     size = (Vector(self.main_camera.frame_width,
+    #                    self.main_camera.frame_height) + Vector.Unit() / 2) / self.main_camera.zoom
+    #     position = Vector(self.main_camera.position.x, -self.main_camera.position.y)
 
-        # Filter components
-        def filter_c(e: BaseEntity):
-            val = e.is_active if check_active else True
-            if filter_component is not None:
-                val = val and e.getComponent(filter_component) is not None
+    #     # Filter components
+    #     def filter_c(e: BaseEntity):
+    #         val = e.is_active if check_active else True
+    #         if filter_component is not None:
+    #             val = val and e.getComponent(filter_component) is not None
 
-            return val
+    #         return val
 
-        if not types:
-            types = (kge.Canvas, kge.Sprite)
+    #     if not types:
+    #         types = (kge.Canvas, kge.Sprite)
 
-        # Entities to return
-        entities = self.spatial_hash.search(position, size, *types)
-        if renderable:
-            entities = entities.intersection(self.dirties)
-        elif debuggable:
-            entities = entities.intersection(self.debuggable)
+    #     # Entities to return
+    #     entities = self.spatial_hash.search(position, size, *types)
+    #     if renderable:
+    #         entities = entities.intersection(self.dirties)
+    #     elif debuggable:
+    #         entities = entities.intersection(self.debuggable)
 
-        if filter_set is not None:
-            entities = entities.intersection(filter_set)
+    #     if filter_set is not None:
+    #         entities = entities.intersection(filter_set)
 
-        return sorted(
-            filter(filter_c,
-                   entities, ),
-            key=lambda s: getattr(s, "layer_order", -255)
-        )
+    #     return sorted(
+    #         filter(filter_c,
+    #                entities, ),
+    #         key=lambda s: getattr(s, "layer_order", -255)
+    #     )
 
     def clear(self):
         """

@@ -41,8 +41,7 @@ class DebugConsole(object):
 
     def render(self, metrics: str, window: pyglet.window.Window, console: bool):
         # Imgui Renderer
-
-        #TODO : Update Imgui to newer version '1.1.0'
+        imgui.new_frame()
         imgui.set_next_window_position(0, 18)
         imgui.set_next_window_size(window.width, window.height-18)
         imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 0)
@@ -70,8 +69,6 @@ class DebugConsole(object):
                 imgui.end_menu()
 
             imgui.end_main_menu_bar()
-        imgui.new_frame()
-        imgui.begin("Debug Console", False, imgui.WINDOW_NO_FOCUS_ON_APPEARING)
 
         # Show Everything
         if metrics is not None:
@@ -80,6 +77,7 @@ class DebugConsole(object):
             self._show_input_line()
             self._show_text_output()
 
+        imgui.end()
         imgui.end()
 
         # Render Imgui
@@ -104,11 +102,13 @@ class DebugConsole(object):
         imgui.same_line()
 
         # Show Filter TextField
+        imgui.push_item_width(150)
         changed, self.input = imgui.input_text(
             'Filter',
             self.input,
-            100
+            256
         )
+        imgui.pop_item_width()
 
         imgui.end_child()
 
@@ -369,6 +369,7 @@ class Renderer(ComponentSystem):
 
         # create imgui context
         imgui.create_context()
+        imgui.get_io().config_flags |= imgui.CONFIG_DOCKING_ENABLE
         self.imgui_impl = PygletRenderer(self.window)
 
         # Loading FeedBack

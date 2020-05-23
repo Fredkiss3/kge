@@ -1,0 +1,239 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="fr-fr" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="fr-fr" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Bienvenue sur la documentation de KISS GAME ENGINE! &mdash; kiss game engine 1.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Démarrage" href="getting-started.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> kiss game engine
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contenu:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Démarrage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/index.html">Manuel d’utilisation du moteur de jeu KISS GAME ENGINE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ref/index.html">Référence des classes de kge</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">kiss game engine</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>Bienvenue sur la documentation de KISS GAME ENGINE!</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="bienvenue-sur-la-documentation-de-kiss-game-engine">
+<h1>Bienvenue sur la documentation de KISS GAME ENGINE!<a class="headerlink" href="#bienvenue-sur-la-documentation-de-kiss-game-engine" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="https://github.com/Fredkiss3/kge">https://github.com/Fredkiss3/kge</a></p>
+<p><strong>KISS GAME ENGINE</strong>, alias kge, est le <strong>premier moteur de jeu 2D</strong> complet optimisé pour la création de jeux-vidéos avec le langage Python. Etant donné la lenteur de l’interprêteur python, le moteur a été optimisé en interne pour lancer vos jeux quelque soit leur taille. Ce moteur de jeu est basé sur un moteur de Jeu <strong>PPB</strong> créé par <a class="reference external" href="https://github.com/ppb/pursuedpybear">Piper Thunstrom</a>.</p>
+<div class="section" id="une-bibliotheque-optimisee-et-facile-a-utiliser">
+<h2>Une Bibliothèque optimisée et facile à utiliser<a class="headerlink" href="#une-bibliotheque-optimisee-et-facile-a-utiliser" title="Permalink to this headline">¶</a></h2>
+<p>L’API du moteur utilise les <em>best practices</em> de la programmation orientée objet en python, avec une interface simple facile et à comprendre. Le moteur utilise un système d’évènements pour l’implémentation de la logique du jeu, des collisions, des évènements personnalisés, la liste complète des évènements se trouve dans le module <code class="docutils literal notranslate"><span class="pre">kge.core.events</span></code>. Le système utilise aussi une architecture d” <a class="reference external" href="https://en.wikipedia.org/wiki/Entity_component_system">Entité Composant</a> afin de pouvoir facilement ajouter des comportements personnalisés (Exemple: <code class="docutils literal notranslate"><span class="pre">Archer</span></code>, <code class="docutils literal notranslate"><span class="pre">Magicien</span></code>, <code class="docutils literal notranslate"><span class="pre">Goblin</span></code> ).</p>
+<p>Vous verrez vos jeux prendre vie en quelques lignes de code, la preuve :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">kge</span>
+
+<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="n">scene</span><span class="p">):</span>
+    <span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;player.png&#39;</span><span class="p">)))</span>
+
+<span class="n">kge</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">setup</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Résultat :</p>
+<a class="reference internal image-reference" href="screenshot.png"><img alt="Screen Shot 1" src="screenshot.png" style="height: 400px;" /></a>
+<p>Nous plongeons dans le contenu de ce code dans les sections suivantes, j’espère que ce petit bout de code vous a mis l’eau à la bouche.</p>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contenu:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Démarrage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#pre-requis">Pré-requis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#creer-votre-premier-jeu">Créer votre premier Jeu</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/index.html">Manuel d’utilisation du moteur de jeu KISS GAME ENGINE</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/index.html#les-concepts">Les concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/index.html#cette-partie-est-encore-en-construction">Cette partie est encore en construction.</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ref/index.html">Référence des classes de kge</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="getting-started.html" class="btn btn-neutral float-right" title="Démarrage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, fredkiss3
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

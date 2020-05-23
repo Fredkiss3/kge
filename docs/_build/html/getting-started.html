@@ -1,0 +1,588 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="fr-fr" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="fr-fr" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Démarrage &mdash; kiss game engine 1.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Manuel d’utilisation du moteur de jeu KISS GAME ENGINE" href="user_guide/index.html" />
+    <link rel="prev" title="Bienvenue sur la documentation de KISS GAME ENGINE!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> kiss game engine
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contenu:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Démarrage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pre-requis">Pré-requis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#tester-si-le-module-a-ete-installe">Tester si le module a été installé</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#creer-votre-premier-jeu">Créer votre premier Jeu</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#afficher-le-joueur">Afficher le joueur</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deplacer-le-joueur">Déplacer le joueur</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ajoutons-quelques-enemis">Ajoutons quelques enemis</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/index.html">Manuel d’utilisation du moteur de jeu KISS GAME ENGINE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ref/index.html">Référence des classes de kge</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">kiss game engine</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Démarrage</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/getting-started.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="demarrage">
+<h1>Démarrage<a class="headerlink" href="#demarrage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="pre-requis">
+<h2>Pré-requis<a class="headerlink" href="#pre-requis" title="Permalink to this headline">¶</a></h2>
+<p>kge ne marche que sur les versions de python avec <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">3.7</span></code> sur windows pour l’instant.</p>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>kge est installable depuis PyPI:</p>
+<div class="highlight-cmd notranslate"><div class="highlight"><pre><span></span>python -m pip install --upgrade --user kge
+</pre></div>
+</div>
+<p>Mais si vous voulez l’installer depuis les sources, Vous pouvez le faire avec la commande sur le terminal :</p>
+<div class="highlight-cmd notranslate"><div class="highlight"><pre><span></span>python -m pip install .
+</pre></div>
+</div>
+<div class="section" id="tester-si-le-module-a-ete-installe">
+<h3>Tester si le module a été installé<a class="headerlink" href="#tester-si-le-module-a-ete-installe" title="Permalink to this headline">¶</a></h3>
+<p>Afin de savoir si l’installation a été un succès, vous tester la commande suivante dans votre interprêteur python :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">kge</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kge</span><span class="o">.</span><span class="n">version</span>
+<span class="go">1.0</span>
+<span class="go">&gt;&gt;&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="creer-votre-premier-jeu">
+<h2>Créer votre premier Jeu<a class="headerlink" href="#creer-votre-premier-jeu" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="afficher-le-joueur">
+<h3>Afficher le joueur<a class="headerlink" href="#afficher-le-joueur" title="Permalink to this headline">¶</a></h3>
+<p>Une fois que l’installation est un succès, nous pouvons dès à présent créer notre premier jeu. Pour cela, nous devons créer un nouveau dossier et nous rendre dans celui-ci, ouvrez votre terminal et saisissez :</p>
+<div class="highlight-cmd notranslate"><div class="highlight"><pre><span></span>mkdir chemin_vers_mon_dossier/premier_jeu
+cd chemin_vers_mon_dossier/premier_jeu
+</pre></div>
+</div>
+<p>L’étape suivante est de créer un nouveau fichier. Si vous utilisez un IDE, Ouvrez votre projet dans celui-ci et créer un nouveau fichier nommé <code class="docutils literal notranslate"><span class="pre">game.py</span></code>. Si vous utiliser un simple éditeur de texte, vous devez créer un nouveau fichier et l’enregistrer sous le nom de <code class="docutils literal notranslate"><span class="pre">game.py</span></code>.</p>
+<p><em>Note:</em> <code class="docutils literal notranslate"><span class="pre">game.py</span></code> <em>est juste un nom de convention, vous êtes libre de le nommer tel que vous le voulez</em>.</p>
+<p>Dans votre code, ajoutez ceci :</p>
+<p><code class="docutils literal notranslate"><span class="pre">game.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">kge</span>
+
+<span class="n">kge</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Enregistrez votre fichier et lancer le programme via la commande sur le terminal:</p>
+<div class="highlight-cmd notranslate"><div class="highlight"><pre><span></span>python game.py
+</pre></div>
+</div>
+<p>Vous devriez avoir le résultat suivant :</p>
+<a class="reference internal image-reference" href="screenshot2.png"><img alt="Screen Shot blank" src="screenshot2.png" style="height: 200px;" /></a>
+<p>Ajoutons une image, pour rendre tout cela plus intéressant :</p>
+<p>Nous nous baserons sur cette image (Il est mignon, mon petit vaisseau pas vrai ?) :</p>
+<img alt="Player" src="player.png" />
+<p>Copiez le fichier dans le dossier de votre jeu, et ajouter ceci dans votre code :</p>
+<p><code class="docutils literal notranslate"><span class="pre">game.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">kge</span>
+
+<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="n">scene</span><span class="p">):</span>
+    <span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;player.png&#39;</span><span class="p">)))</span>
+
+<span class="n">kge</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">setup</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Le résultat ne devrait pas trop vous surprendre :</p>
+<p>Résultat :</p>
+<a class="reference internal image-reference" href="screenshot.png"><img alt="Screen Shot 1" src="screenshot.png" style="height: 200px;" /></a>
+<p>Basiquement, ce que fait le programme c’est d’ajouter une image à la <code class="docutils literal notranslate"><span class="pre">scene</span></code>, cela représente un niveau dans le jeu. Tous les éléments qui doivent être visibles, sont ajoutés dans la <code class="docutils literal notranslate"><span class="pre">scene</span></code>.</p>
+</div>
+<div class="section" id="deplacer-le-joueur">
+<h3>Déplacer le joueur<a class="headerlink" href="#deplacer-le-joueur" title="Permalink to this headline">¶</a></h3>
+<p>Afin de prendre le contrôle de notre vaisseau, il va falloir créer une nouvelle classe héritant de <code class="docutils literal notranslate"><span class="pre">Sprite</span></code> afin de personnaliser son comportement :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Player</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;player.png&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Donc notre fichier <code class="docutils literal notranslate"><span class="pre">game.py</span></code> devient :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">kge</span>
+
+<span class="k">class</span> <span class="nc">Player</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;player.png&#39;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="n">scene</span><span class="p">):</span>
+    <span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Player</span><span class="p">())</span>
+
+<span class="n">kge</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">setup</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Si vous relancez le programme, vous ne constaterez aucun changement, mais là nous avons la base pour ajouter des comportements à notre vaisseau. Pour ce faire, il va falloir importer certains modules :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">kge</span>
+<span class="kn">from</span> <span class="nn">kge</span> <span class="kn">import</span> <span class="n">Inputs</span><span class="p">,</span> <span class="n">Keys</span><span class="p">,</span> <span class="n">Vector</span>
+<span class="kn">from</span> <span class="nn">kge.events</span> <span class="kn">import</span> <span class="n">Update</span>
+</pre></div>
+</div>
+<p>Et définir notre logique dans la fonction <code class="docutils literal notranslate"><span class="pre">on_update</span></code> du <code class="docutils literal notranslate"><span class="pre">Player</span></code> que nous devons créer, sachez que vous allez définir presque tous les comportements de vos entités dans cette fonction :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Player</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;player.png&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">Update</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="k">pass</span>
+</pre></div>
+</div>
+<p>Cette fonction prend deux arguments en paramètres, <code class="docutils literal notranslate"><span class="pre">event</span></code> contient certains attributs importants que nous verrons plus tard et <code class="docutils literal notranslate"><span class="pre">dispatch</span></code> qui est une fonction que vous n’aurez pas tout le temps à utiliser. pour plus d’informations, veuillez lire la documentation dans la section <a href="#id1"><span class="problematic" id="id2">`Evènements`_</span></a>.</p>
+<p>Ainsi, ajoutons un peu de code pour gérer les entrées du clavier :</p>
+<p><code class="docutils literal notranslate"><span class="pre">game.py</span></code> :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">kge</span>
+<span class="kn">from</span> <span class="nn">kge</span> <span class="kn">import</span> <span class="n">Inputs</span><span class="p">,</span> <span class="n">Keys</span><span class="p">,</span> <span class="n">Vector</span>
+
+<span class="k">class</span> <span class="nc">Player</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;player.png&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">Inputs</span><span class="o">.</span><span class="n">get_key_down</span><span class="p">(</span><span class="n">Keys</span><span class="o">.</span><span class="n">Left</span><span class="p">):</span>
+            <span class="c1"># déplacer à gauche</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Left</span><span class="p">()</span>
+
+        <span class="k">elif</span> <span class="n">Inputs</span><span class="o">.</span><span class="n">get_key_down</span><span class="p">(</span><span class="n">Keys</span><span class="o">.</span><span class="n">Right</span><span class="p">):</span>
+            <span class="c1"># déplacer à droite</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Right</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="n">scene</span><span class="p">):</span>
+    <span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Player</span><span class="p">())</span>
+
+<span class="n">kge</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">setup</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Lancer le programme et vous devez avoir pris le contrôle du joueur !!
+Vous devez avoir remarqué que le joueur était bien trop rapide ! Ceci est tout à fait normal, pour régler ce problème, il va falloir faire quelques modifications à notre programme :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ... Les différents &#39;import&#39;</span>
+
+<span class="k">class</span> <span class="nc">Player</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="c1"># ... Code d&#39;initialisation</span>
+
+    <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">Inputs</span><span class="o">.</span><span class="n">get_key_down</span><span class="p">(</span><span class="n">Keys</span><span class="o">.</span><span class="n">Left</span><span class="p">):</span>
+            <span class="c1"># déplacer à gauche</span>
+            <span class="c1"># Multiplication par &#39;delta_time&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Left</span><span class="p">()</span> <span class="o">*</span> <span class="n">event</span><span class="o">.</span><span class="n">delta_time</span>
+
+        <span class="k">elif</span> <span class="n">Inputs</span><span class="o">.</span><span class="n">get_key_down</span><span class="p">(</span><span class="n">Keys</span><span class="o">.</span><span class="n">Right</span><span class="p">):</span>
+            <span class="c1"># déplacer à droite</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Right</span><span class="p">()</span> <span class="o">*</span> <span class="n">event</span><span class="o">.</span><span class="n">delta_time</span>
+</pre></div>
+</div>
+<p>Tout marche !! Mais le joueur est bien trop lent !!
+Pour cela il va falloir définir une vitesse de déplacement pour le joueur. Ainsi notre code se voit modifié encore:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ... Les différents &#39;import&#39;</span>
+
+<span class="k">class</span> <span class="nc">Player</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># ... Code d&#39;initialisation</span>
+
+        <span class="c1"># Ajouter la variable pour la vitesse</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mi">5</span>
+
+    <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">Inputs</span><span class="o">.</span><span class="n">get_key_down</span><span class="p">(</span><span class="n">Keys</span><span class="o">.</span><span class="n">Left</span><span class="p">):</span>
+            <span class="c1"># déplacer à gauche</span>
+            <span class="c1"># Multiplication par &#39;delta_time&#39;</span>
+            <span class="c1"># Multiplication par la vitesse</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Left</span><span class="p">()</span> <span class="o">*</span> <span class="n">event</span><span class="o">.</span><span class="n">delta_time</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span>
+
+        <span class="k">elif</span> <span class="n">Inputs</span><span class="o">.</span><span class="n">get_key_down</span><span class="p">(</span><span class="n">Keys</span><span class="o">.</span><span class="n">Right</span><span class="p">):</span>
+            <span class="c1"># déplacer à droite</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Right</span><span class="p">()</span> <span class="o">*</span> <span class="n">event</span><span class="o">.</span><span class="n">delta_time</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span>
+</pre></div>
+</div>
+<p>Cette fois-ci notre vaisseau devrait pouvoir se déplacer à une vitesse convenable. Soyez libre de jouer avec la valeur de la vitesse afin de voir l’effet que ça pourrait produire. A ce stade, notre fichier devrait ressembler à ceci :</p>
+<p><code class="docutils literal notranslate"><span class="pre">game.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">kge</span>
+<span class="kn">from</span> <span class="nn">kge</span> <span class="kn">import</span> <span class="n">Inputs</span><span class="p">,</span> <span class="n">Keys</span><span class="p">,</span> <span class="n">Vector</span>
+
+<span class="k">class</span> <span class="nc">Player</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;player.png&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mi">5</span>
+
+    <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">Inputs</span><span class="o">.</span><span class="n">get_key_down</span><span class="p">(</span><span class="n">Keys</span><span class="o">.</span><span class="n">Left</span><span class="p">):</span>
+            <span class="c1"># déplacer à gauche</span>
+            <span class="c1"># Multiplication par &#39;delta_time&#39;</span>
+            <span class="c1"># Multiplication par la vitesse</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Left</span><span class="p">()</span> <span class="o">*</span> <span class="n">event</span><span class="o">.</span><span class="n">delta_time</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span>
+
+        <span class="k">elif</span> <span class="n">Inputs</span><span class="o">.</span><span class="n">get_key_down</span><span class="p">(</span><span class="n">Keys</span><span class="o">.</span><span class="n">Right</span><span class="p">):</span>
+            <span class="c1"># déplacer à droite</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Right</span><span class="p">()</span> <span class="o">*</span> <span class="n">event</span><span class="o">.</span><span class="n">delta_time</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span>
+
+
+<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="n">scene</span><span class="p">):</span>
+    <span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Player</span><span class="p">())</span>
+
+<span class="n">kge</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">setup</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ajoutons-quelques-enemis">
+<h3>Ajoutons quelques enemis<a class="headerlink" href="#ajoutons-quelques-enemis" title="Permalink to this headline">¶</a></h3>
+<p>Tout bon jeu, nécessite un enemi à détruire pour être fun, nous allons les ajouter. Pour cela, nous allons ajouter quelques images :</p>
+<img alt="Enemy" src="enemy.png" />
+<img alt="Bullet" src="bullet.png" />
+<p>Dans notre code, nous ajoutons l’enemi :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">kge</span>
+<span class="kn">from</span> <span class="nn">kge</span> <span class="kn">import</span> <span class="n">Inputs</span><span class="p">,</span> <span class="n">Keys</span><span class="p">,</span> <span class="n">Vector</span><span class="p">,</span> <span class="n">BoxCollider</span>
+
+<span class="k">class</span> <span class="nc">Enemy</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;enemy.png&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Ajout du composant permettant de répondre aux collisions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addComponent</span><span class="p">(</span>
+            <span class="n">BoxCollider</span><span class="p">(</span><span class="n">sensor</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_collision_enter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="c1"># Si l&#39;enemi est touché, le détruire</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Ce code permet de créer un enemi basique qui lorsqu’il est touché par quelque chose se détruit.
+Nous lui avons ajouté un composant <code class="docutils literal notranslate"><span class="pre">BoxCollider</span></code> afin de répondre aux collisions, que nous avons mis à <code class="docutils literal notranslate"><span class="pre">sensor=True</span></code> afin de ne pas repousser les collisions. Nous avons aussi mis le code de destruction de l’enemi dans la fonction <code class="docutils literal notranslate"><span class="pre">on_collision_enter</span></code> afin d’être exécuté lorsque le projectile rentrera en collision avec l’enemi.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Vous pouvez remarquer que la signature est la même que la fonction <code class="docutils literal notranslate"><span class="pre">on_update</span></code>.</p>
+</div>
+<p>Ajoutons du code pour le projectile:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Bullet</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;bullet.png&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Ajout d&#39;un composant pour le déplacement par la physique</span>
+        <span class="n">rb</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">RigidBody</span><span class="p">()</span>
+
+        <span class="c1"># Empêcher la gravité de faire effet</span>
+        <span class="n">rb</span><span class="o">.</span><span class="n">gravity_scale</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Vitesse</span>
+        <span class="n">rb</span><span class="o">.</span><span class="n">velocity</span> <span class="o">=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Up</span><span class="p">()</span> <span class="o">*</span> <span class="mi">2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">addComponent</span><span class="p">(</span><span class="n">rb</span><span class="p">)</span>
+
+        <span class="c1"># Ajout du composant pour répondre aux collisions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addComponent</span><span class="p">(</span>
+            <span class="n">BoxCollider</span><span class="p">(</span><span class="n">sensor</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_collision_enter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="c1"># Détruire aussi le projectile, s&#39;il touche l&#39;enemi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Afin de tirer le projectile, il faut appuyer le bouton espace donc :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Player</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="c1">#... Code d&#39;initialisation</span>
+
+    <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="c1">#... Code pour se déplacer</span>
+
+    <span class="k">def</span> <span class="nf">on_key_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="c1"># Nous pouvons aussi gérer les saisies de clavier dans cette méthode</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="n">Keys</span><span class="o">.</span><span class="n">Space</span><span class="p">:</span>
+            <span class="c1"># Tirer !!</span>
+            <span class="n">event</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Bullet</span><span class="p">(),</span> <span class="n">position</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Vous pouvez remarquer que l’argument <code class="docutils literal notranslate"><span class="pre">event</span></code> a pour attribut <code class="docutils literal notranslate"><span class="pre">scene</span></code>, qui représente le niveau actuel. la fonction <code class="docutils literal notranslate"><span class="pre">add</span></code> prend aussi en argument la position où mettre l’élément. Ajoutons donc les enemis à notre niveau et :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="n">scene</span><span class="p">):</span>
+    <span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Player</span><span class="p">())</span>
+
+    <span class="c1"># Ajout des enemis</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Enemy</span><span class="p">(),</span> <span class="n">position</span><span class="o">=</span><span class="n">Vector</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>D’où le code complet :</p>
+<p><code class="docutils literal notranslate"><span class="pre">game.py</span></code> :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">kge</span>
+<span class="kn">from</span> <span class="nn">kge</span> <span class="kn">import</span> <span class="n">Inputs</span><span class="p">,</span> <span class="n">Keys</span><span class="p">,</span> <span class="n">Vector</span><span class="p">,</span> <span class="n">BoxCollider</span>
+
+<span class="k">class</span> <span class="nc">Enemy</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;enemy.png&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Ajout du composant permettant de répondre aux collisions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addComponent</span><span class="p">(</span>
+            <span class="n">BoxCollider</span><span class="p">(</span><span class="n">sensor</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_collision_enter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="c1"># Si l&#39;enemi est touché, le détruire</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">Bullet</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;bullet.png&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Ajout d&#39;un composant pour le déplacement par la physique</span>
+        <span class="n">rb</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">RigidBody</span><span class="p">()</span>
+
+        <span class="c1"># Empêcher la gravité de faire effet</span>
+        <span class="n">rb</span><span class="o">.</span><span class="n">gravity_scale</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Vitesse</span>
+        <span class="n">rb</span><span class="o">.</span><span class="n">velocity</span> <span class="o">=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Up</span><span class="p">()</span> <span class="o">*</span> <span class="mi">2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">addComponent</span><span class="p">(</span><span class="n">rb</span><span class="p">)</span>
+
+        <span class="c1"># Ajout du composant pour répondre aux collisions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addComponent</span><span class="p">(</span>
+            <span class="n">BoxCollider</span><span class="p">(</span><span class="n">sensor</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_collision_enter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="c1"># Détruire aussi le projectile, s&#39;il touche l&#39;enemi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">Player</span><span class="p">(</span><span class="n">kge</span><span class="o">.</span><span class="n">Sprite</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">kge</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="s1">&#39;player.png&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="mi">5</span>
+
+    <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">Inputs</span><span class="o">.</span><span class="n">get_key_down</span><span class="p">(</span><span class="n">Keys</span><span class="o">.</span><span class="n">Left</span><span class="p">):</span>
+            <span class="c1"># déplacer à gauche</span>
+            <span class="c1"># Multiplication par &#39;delta_time&#39;</span>
+            <span class="c1"># Multiplication par la vitesse</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Left</span><span class="p">()</span> <span class="o">*</span> <span class="n">event</span><span class="o">.</span><span class="n">delta_time</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span>
+
+        <span class="k">elif</span> <span class="n">Inputs</span><span class="o">.</span><span class="n">get_key_down</span><span class="p">(</span><span class="n">Keys</span><span class="o">.</span><span class="n">Right</span><span class="p">):</span>
+            <span class="c1"># déplacer à droite</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="n">Vector</span><span class="o">.</span><span class="n">Right</span><span class="p">()</span> <span class="o">*</span> <span class="n">event</span><span class="o">.</span><span class="n">delta_time</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span>
+
+    <span class="k">def</span> <span class="nf">on_key_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">):</span>
+        <span class="c1"># Nous pouvons aussi gérer les saisies de clavier dans cette méthode</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="n">Keys</span><span class="o">.</span><span class="n">Space</span><span class="p">:</span>
+            <span class="c1"># Tirer !!</span>
+            <span class="n">event</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Bullet</span><span class="p">(),</span> <span class="n">position</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="n">scene</span><span class="p">):</span>
+    <span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Player</span><span class="p">())</span>
+
+    <span class="c1"># Ajout des enemis</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="n">scene</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Enemy</span><span class="p">(),</span> <span class="n">position</span><span class="o">=</span><span class="n">Vector</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+
+<span class="n">kge</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">setup</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="screenshot3.png"><img alt="Game Complete" src="screenshot3.png" style="height: 300px;" /></a>
+<p>Voilà ! Nous avons un jeu fonctionnel. Si vous ressortez de ce tutoriel sans avoir compris certaines parties, ne vous en faites pas, nous allons les aborder dans les prochains chapitres.</p>
+<p>Un petit plus pour pouvoir y voir plus clair et afficher les boîtes de collisions, il suffit d’ajouter ces lignes à votre code :</p>
+<p><code class="docutils literal notranslate"><span class="pre">game.py</span></code> :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">kge</span>
+<span class="kn">from</span> <span class="nn">kge</span> <span class="kn">import</span> <span class="n">Inputs</span><span class="p">,</span> <span class="n">Keys</span><span class="p">,</span> <span class="n">Vector</span><span class="p">,</span> <span class="n">BoxCollider</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="c1">#... Code du jeu</span>
+
+<span class="n">kge</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">setup</span><span class="p">,</span>
+        <span class="c1"># Ajouter cette ligne</span>
+        <span class="n">log_level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="user_guide/index.html" class="btn btn-neutral float-right" title="Manuel d’utilisation du moteur de jeu KISS GAME ENGINE" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Bienvenue sur la documentation de KISS GAME ENGINE!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, fredkiss3
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

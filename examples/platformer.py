@@ -5,10 +5,6 @@ from typing import Dict, List, Type
 import kge
 from kge import *
 from kge import events
-# from kge_v1 import *
-# from kge_v1.core.constants import RED
-# from kge_v1.core.events import Update, MouseMotion, KeyDown, StopScene
-# from kge_v1.physics.events import CollisionEnter
 from move_mixin import MoveMixin
 
 
@@ -185,9 +181,11 @@ appearing_sheet = Image(f"{root}/Main Characters/Appearing (96x96).png")
 run_sheet = Image(f"{root}/Main Characters/{player}/Run (32x32).png")
 jump = Image(f"{root}/Main Characters/{player}/Jump (32x32).png")
 fall = Image(f"{root}/Main Characters/{player}/Fall (32x32).png")
+wall_sheet = Image(f"{root}/Main Characters/{player}/Wall Jump (32x32).png")
 idle = idle_sheet.slice(Vector(32, 32))
 run = run_sheet.slice(Vector(32, 32))
 appear = appearing_sheet.slice(Vector(96, 96))
+wall = wall_sheet.slice(Vector(32, 32))
 
 # Double the animation length
 len_ = len(appear)
@@ -202,7 +200,7 @@ size = 16
 terrain = Image(f"{root}/Terrain/Terrain Sliced (16x16).png")
 terrains = terrain.slice(Vector.Unit() * size)
 # print(len(terrains))
-brick = terrains[31]
+brick = terrains[133]
 
 
 # Fruits
@@ -232,10 +230,10 @@ class Fruit(Sprite):
 
         # Add components
         self.addComponents(
-            # self.animator,
-            RigidBody(),
+            self.animator,
+            # RigidBody(),
             CircleCollider(
-                sensor=False,
+                sensor=True,
                 bounciness=1,
                 radius=1 / 4
             )
@@ -262,6 +260,7 @@ class Player(Sprite):
         idle_anim = Animation.from_sequence(self, idle, .05, 'idle')
         run.insert(0, run[-1])
         run_anim = Animation.from_sequence(self, run, .05, 'run', )
+        wall_anim = Animation.from_sequence(self, wall, .05, 'wall jump', loop=True)
 
         jump_anim = Animation(
             self, [Frame(image=jump, duration=1)], loop=False, name='jump'
@@ -279,6 +278,7 @@ class Player(Sprite):
         # Animator
         self.animator = Animator(
             appear_anim,
+            wall_anim,
             idle_anim,
             run_anim,
             jump_anim,
@@ -289,17 +289,23 @@ class Player(Sprite):
         self.animator.add_field('on_ground', True)
         self.animator.add_field('velx', 0)
         self.animator.add_field('vely', 0)
+        self.animator.add_field('wall', False)
 
         # Conditions
         grounding = C(on_ground=True)
         running = C(velx__gt=0.4)
         jumping = C(vely__gt=0.5)
         falling = C(vely__lt=-0.4)
+        touching_wall = C(wall=True)
 
         # Transitions
         self.animator.add_transition(appear_anim, fall_anim, ALWAYS)
         self.animator.add_transition(ANY, fall_anim, falling & ~grounding)
         self.animator.add_transition(ANY, jump_anim, jumping)
+        self.animator.add_transition(ANY, wall_anim, touching_wall)
+        #self.animator.add_transition(wall_anim, fall_anim, ~touching_wall & falling)
+        #self.animator.add_transition(wall_anim, jump_anim, ~touching_wall & jumping)
+        self.animator.add_transition(wall_anim, idle_anim, ~touching_wall & grounding)
         self.animator.add_transition(jump_anim, fall_anim, falling)
         self.animator.add_transition(fall_anim, idle_anim, grounding & ~running)
         self.animator.add_transition(fall_anim, run_anim, grounding & running)
@@ -314,7 +320,7 @@ class Player(Sprite):
         self.controller = PlayerController()
 
         # Add animator
-        # self.addComponent(self.animator)
+        self.addComponent(self.animator)
         self.addComponent(self.controller)
         self.addComponent(self.rb)
         self.addComponent(BoxCollider(
@@ -338,6 +344,9 @@ class Player(Sprite):
         self.colliders = []
         self.offsetx = .2
         self.offsety = .1
+        self.wall = False
+        self.ray_wall_l = .35
+
 
     def on_update(self, ev, _):
         # print(self.components)
@@ -349,13 +358,20 @@ class Player(Sprite):
                                     self.ray_dist, )
             hit3 = Physics.ray_cast(self.position, Vector.Down(),
                                     self.ray_dist, )
+            hit4 = Physics.ray_cast(self.position, Vector.Right(),
+                                    self.ray_wall_l, )
+            hit5 = Physics.ray_cast(self.position, Vector.Left(),
+                                    self.ray_wall_l, )
             # hits = physics.query_region(self.position, self.overlap_size, layer="Foreground")
             # self.colliders = hits.colliders
 
-            self.colliders = [hit.collider, hit2.collider, hit3.collider]
+            self.colliders = [hit.collider, hit2.collider, hit3.collider, hit4.collider, hit5.collider, ]
 
             grounded = hit.collider is not None or hit2.collider is not None or hit3.collider is not None
+            wall = (hit4.collider is not None and Inputs.get_key_down(Keys.D)) or (hit5.collider is not None and Inputs.get_key_down(Keys.Q))  
             self.animator["on_ground"] = grounded
+            self.animator["wall"] = wall
+            #print(wall)
 
             if grounded != self.controller.on_ground:
                 self.controller.on_ground = grounded
@@ -374,6 +390,8 @@ class Player(Sprite):
         debug.draw_segment(o, o + Vector.Down() * self.ray_dist, BLUE)
         debug.draw_segment(o2, o2 + Vector.Down() * self.ray_dist, BLUE)
         debug.draw_segment(self.position, self.position + Vector.Down() * self.ray_dist, BLUE)
+        debug.draw_segment(self.position, self.position + Vector.Left() * self.ray_wall_l, BLUE)
+        debug.draw_segment(self.position, self.position + Vector.Right() * self.ray_wall_l, BLUE)
         # debug.draw_box(self.position, self.overlap_size, BLUE, solid=True)
 
         for col in self.colliders:
@@ -547,9 +565,9 @@ class Tilemap(Entity):
 
 def setup(scene: Scene):
     DebugDraw.setFlags(
-        drawColliders=True,
+        # drawColliders=True,
         # drawEntities=True,
-        # drawStuff=True,
+        drawStuff=True,
     )
     scene.background_color = BLACK
     # Set layer
@@ -576,7 +594,7 @@ def setup(scene: Scene):
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 
     ]
-    scene.add(Tilemap(pattern=pattern, entities={1: Brick}))
+    # scene.add(Tilemap(pattern=pattern, entities={1: Brick}))
 
     # Add component to main camera
     # scene.display_fps = True
@@ -596,11 +614,11 @@ def setup(scene: Scene):
         "Apple", "Bananas", "Cherries", "Kiwi", "Melon", "Orange", "Pineapple", "Strawberry"
     ]
     # #
-    b = Box()
-    scene.add(b, position=Vector(0, 0), layer="Box")
-    scene.add(ChildBox(b), position=Vector(0, 0), layer="Foreground")
+    # b = Box()
+    # scene.add(b, position=Vector(0, 0), layer="Box")
+    # scene.add(ChildBox(b), position=Vector(0, 0), layer="Foreground")
     x = 0
-    for j in range(5):
+    for j in range(-3, -2):
         for i in range(-21, 20, 3):
             if i != 0:
                 random.seed(time.time())
@@ -627,27 +645,29 @@ def setup(scene: Scene):
     for i in range(-25, 24):
         for j in range(-5, -6, -1):
             x += 1
-            gd = Sprite(name=f"ground {x}", tag="ground", image=Image("assets/ground.png"))
+            gd = Sprite(name=f"ground {x}", tag="ground", image=brick)
+            gd.scale *= 4
             gd.addComponent(BoxCollider(
-                friction=.01
+                friction=.01,
+                box=Vector.Unit()
             ))
             if i == -25 or i == 23:
                 scene.add(gd, position=Vector(i, j + 1), layer="Ground")
             else:
                 scene.add(gd, position=Vector(i, j), layer="Ground")
 
-    scene.add(Ball(), position=Vector(-1, 0), layer="Ground")
+    # scene.add(Ball(), position=Vector(-1, 0), layer="Ground")
 
     # follower = Sprite(name="Follower")
-    follower = Follower()
-    # follower2 = Follower()
-    follower3 = Follower()
-    follower4 = Follower()
-    follower4.opacity = follower3.opacity = 1
-    # follower.visible = False
+    # follower = Follower()
+    # # follower2 = Follower()
+    # follower3 = Follower()
+    # follower4 = Follower()
+    # follower4.opacity = follower3.opacity = 1
+    # # follower.visible = False
 
-    follower.addComponent(RigidBody(RigidBodyType.DYNAMIC))
-    follower.position = Vector(0, -4)
+    # follower.addComponent(RigidBody(RigidBodyType.DYNAMIC))
+    # follower.position = Vector(0, -4)
     # follower2.addComponent(RigidBody(RigidBodyType.KINEMATIC))
     # follower3.addComponent(RigidBody(RigidBodyType.KINEMATIC))
     # follower4.addComponent(RigidBody(RigidBodyType.KINEMATIC))
@@ -665,12 +685,14 @@ def setup(scene: Scene):
 
 
 if __name__ == '__main__':
-    kge.run(setup,
+    import logging
+    kge.run(
+            setup,
             pixel_ratio=32,
-            # resolution=Vector(1000, 700),
-            show_output=True,
+            resolution=Vector(1366, 720),
+            #show_output=True,
             show_fps=True,
             # resizable=False,
             vsync=False,
-            # log_level=logging.DEBUG
+            #log_level=logging.DEBUG
             )

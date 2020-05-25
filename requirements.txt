@@ -2,3 +2,6 @@ dataclasses==0.6
 Pillow==7.0.0
 pyglet==1.5.0
 pyglet-ffmpeg2==0.1.17
+# pyglm
+# pyopengl
+# numpy

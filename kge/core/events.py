@@ -25,7 +25,7 @@ The events below are handled by user
 @dataclass
 class CollisionBegin(Event):
     """
-    Fired when two colliders begin to hit one another
+    Fired when two colliders begin to touch one another
     """
     collider: "kge.Collider"
     scene: 'kge.Scene' = None
@@ -34,7 +34,7 @@ class CollisionBegin(Event):
 @dataclass
 class CollisionEnd(Event):
     """
-    Fired when two colliders end to hit one another
+    Fired when two colliders end touching one another
     """
     collider: "kge.Collider"
     scene: 'kge.Scene' = None
@@ -103,7 +103,7 @@ class MouseDown(Event):
 @dataclass
 class MouseScroll(Event):
     """
-    Fired when a mouse button is pressed
+    Fired when the mouse wheel is being used 
     """
     position: Vector  # Scene position
     screen_position: Vector
@@ -137,7 +137,7 @@ class MouseMotion(Event):
 @dataclass
 class MouseDrag(Event):
     """
-    An event to represent mouse drag.
+    An event to represent mouse drag
     """
     position: Vector
     screen_position: Vector
@@ -171,7 +171,7 @@ class KeyUp(Event):
 @dataclass
 class Init(Event):
     """
-    Fired on initialisation of an entity, or a script
+    Fired on initialisation of an entity, or a behavior
     """
     scene: 'kge.Scene' = None
 
@@ -263,12 +263,12 @@ class EntityDestroyed(Event):
     scene: "kge.Scene" = None
 
 
-@dataclass
-class PreRender(Event):
-    """
-    Fired before rendering.
-    """
-    scene: 'kge.Scene' = None
+# @dataclass
+# class PreRender(Event):
+#     """
+#     Fired before rendering.
+#     """
+#     scene: 'kge.Scene' = None
 
 
 @dataclass
@@ -301,12 +301,12 @@ class Render(Event):
     scene: 'kge.Scene' = None
 
 
-@dataclass
-class Rendered(Event):
-    """
-    Fired after the window has been drawn
-    """
-    scene: 'kge.Scene' = None
+# @dataclass
+# class Rendered(Event):
+#     """
+#     Fired after the window has been drawn
+#     """
+#     scene: 'kge.Scene' = None
 
 
 @dataclass
@@ -331,19 +331,6 @@ class EntityDisabled(Event):
 class StartScene(Event):
     """
     Fired to start a new scene.
-
-    new_scene can be an instance or a class. If a class, must include kwargs.
-    If new_scene is an instance kwargs should be empty or None.
-
-    Before the previous scene pauses, a ScenePaused event will be fired.
-    Any events signaled in response will be delivered to the new scene.
-
-    After the ScenePaused event and any follow up events have been delivered, a
-    SceneStarted event will be sent.
-
-    Examples:
-        * `dispatch(new_scene=StartScene(MyScene(player=player))`
-        * `dispatch(new_scene=StartScene, kwargs={"player": player})`
     """
     kwargs: Dict[str, Any] = None
 
@@ -357,14 +344,13 @@ class ReplaceScene(Event):
     If new_scene is an instance kwargs should be empty or None.
 
     Before the previous scene stops, a SceneStopped event will be fired.
-    Any events signaled in response will be delivered to the new scene.
+    Any events dispatched in response will be delivered to the new scene.
 
     After the SceneStopped event and any follow up events have been delivered,
     a SceneStarted event will be sent.
 
     Examples:
         * `dispatch(new_scene=ReplaceScene(MyScene(player=player))`
-        * `dispatch(new_scene=ReplaceScene, kwargs={"player": player})`
     """
     new_scene: Union['kge.Scene', Type['kge.Scene']]
     kwargs: Dict[str, Any] = None
@@ -437,24 +423,24 @@ class StopScene(Event):
     scene: 'kge.Scene' = None
 
 
-@dataclass
-class Idle(Event):
-    """
-    An engine plumbing event to pump timing information to subsystems.
-    """
-    time_delta: float
-    scene: 'kge.Scene' = None
+# @dataclass
+# class Idle(Event):
+#     """
+#     An engine plumbing event to pump timing information to subsystems.
+#     """
+#     time_delta: float
+#     scene: 'kge.Scene' = None
 
-
-@dataclass
-class AddComponent(Event):
-    """
-    Fired when we need to add a component to an entity
-    """
-    entity: 'kge.Entity'
-    # key: str
-    component: Type['kge.Component']
-    scene: 'kge.Scene' = None
+#
+# @dataclass
+# class AddComponent(Event):
+#     """
+#     Fired when we need to add a component to an entity
+#     """
+#     entity: 'kge.Entity'
+#     # key: str
+#     component: Type['kge.Component']
+#     scene: 'kge.Scene' = None
 
 
 @dataclass
@@ -467,15 +453,15 @@ class ComponentAdded(Event):
     scene: 'kge.Scene' = None
 
 
-@dataclass
-class RemoveComponent(Event):
-    """
-    Fired when we need to remove a component to an entity
-    """
-    entity: 'kge.Entity'
-    kind: Union[Type['kge.Component'], "kge.Component", str]
-    scene: 'kge.Scene' = None
-
+# @dataclass
+# class RemoveComponent(Event):
+#     """
+#     Fired when we need to remove a component to an entity
+#     """
+#     entity: 'kge.Entity'
+#     kind: Union[Type['kge.Component'], "kge.Component", str]
+#     scene: 'kge.Scene' = None
+#
 
 @dataclass
 class ComponentRemoved(Event):
@@ -485,11 +471,6 @@ class ComponentRemoved(Event):
     entity: 'kge.Entity'
     components: List[Union[Type['kge.Component'], "kge.Component"]]
     scene: 'kge.Scene' = None
-
-
-"""
-Engine Managed Events
-"""
 
 
 @dataclass
@@ -542,4 +523,4 @@ class BodyDestroyed(Event):
 
 
 if __name__ == '__main__':
-    print(Idle(.05))
+    print(Update(delta_time=.05))

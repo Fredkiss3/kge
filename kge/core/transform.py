@@ -1,10 +1,11 @@
 import math
-from typing import Union, Tuple, List
-
+import platform
 # import Box2D as b2
 import sys
+from typing import Union, Tuple, Set
 
-import platform
+import kge
+
 if sys.platform == "win32":
     if platform.architecture()[0] == "64bit":
         import kge.extra.win64.Box2D as b2
@@ -12,7 +13,6 @@ if sys.platform == "win32":
         import kge.extra.win32.Box2D as b2
 else:
     import kge.extra.linux64.Box2D as b2
-
 
 from kge.core.component import BaseComponent
 from kge.utils.vector import Vector
@@ -33,7 +33,7 @@ class Transform(BaseComponent):
         self._scale = Vector.Unit()
 
         # Parent-Child Relationship
-        self._children = []  # type: List[Transform]
+        self._children = set()  # type: Set[Transform]
         self._parent = None  # type: Union[Transform, None]
 
         # transform
@@ -47,6 +47,10 @@ class Transform(BaseComponent):
         self.scale = scale
 
     @property
+    def xf(self):
+        return self._t
+
+    @property
     def children(self):
         return self._children
 
@@ -58,7 +62,7 @@ class Transform(BaseComponent):
     def parent(self, value: "Transform"):
         if isinstance(value, Transform):
             self._parent = value
-            value.children.append(self)
+            value.children.add(self)
 
         elif value is None:
             # remove self from children
@@ -95,8 +99,12 @@ class Transform(BaseComponent):
                 "Position should be either a tuple of Numbers or a vector")
 
         offset = vec - self._position
+
+        if isinstance(self.entity, kge.Camera):
+            offset = Vector(offset.x, -offset.y)
+
         self._position = vec
-        self._t.position = vec
+        self._t.position = *vec,
 
         # TODO : TO TEST
         for child in self.children:  # type: Transform
@@ -129,6 +137,13 @@ class Transform(BaseComponent):
 
         else:
             raise TypeError("Angle should be an int or a float")
+
+    @property
+    def t(self):
+        """
+        Get real transform
+        """
+        return self._t
 
     def __repr__(self):
         """

@@ -1,7 +1,5 @@
 from typing import Union
 
-from kge.core import events
-from kge.physics import events as physics_events
 from kge.core.constants import DEFAULT_RESOLUTION, MAX_ZOOM, MIN_ZOOM, DEFAULT_PIXEL_RATIO
 from kge.core.entity import BaseEntity
 from kge.physics.colliders import CameraCollider
@@ -13,36 +11,36 @@ from kge.utils.vector import Vector
 class Camera(BaseEntity):
     """
     A camera attached to a scene
+    FIXME :
+        - CANVAS POSITION & EVENT DISPATCHING SHOULD BE INDEPENDANT OF ZOOMING
     """
 
-    def __init__(self, name="MainCamera", tag="MainCamera",
-                 resolution: "Vector" = Vector(*DEFAULT_RESOLUTION),
-                 pixel_ratio: int = DEFAULT_PIXEL_RATIO):
+    def __new__(cls, name="MainCamera", tag="MainCamera",
+                resolution: "Vector" = Vector(*DEFAULT_RESOLUTION),
+                pixel_ratio: int = DEFAULT_PIXEL_RATIO):
         """
-        :param name: the name of the camera
-        :param tag: the tag of the camera
-        :param pixel_ratio: unit of conversion
-            - Example :
-                - in the game, if we set an entity a size of 1x1, it will be translated to 64x64 pixels
+       :param name: the name of the camera
+       :param tag: the tag of the camera
+       :param pixel_ratio: unit of conversion
+           - Example :
+               - in the game, if we set an entity a size of 1x1, it will be translated to 64x64 pixels
         """
-        super().__init__(name, tag)
-        self._zoom = 1.0
-        self._resolution = DottedDict(width=resolution.x, height=resolution.y)
-        self._pixel_ratio_original = pixel_ratio
-        self._pixel_ratio = self._pixel_ratio_original * self._zoom
+        inst = super().__new__(cls, name=name, tag=tag)
+
+        inst._zoom = 1.0
+        inst._resolution = DottedDict(width=resolution.x, height=resolution.y)
+        inst._pixel_ratio_original = pixel_ratio
+        inst._pixel_ratio = inst._pixel_ratio_original * inst._zoom
 
         # FIXME : IS THERE A BETTER WAY OF HANDLING THIS ?
-        self.addComponents(
+        inst.addComponents(
             RigidBody(body_type=RigidBodyType.KINEMATIC),
             CameraCollider(
-                box=self.pixels_to_unit(resolution) + Vector.Unit() / 2,
+                box=inst.pixels_to_unit(resolution) + Vector.Unit() / 2,
             ),
         )
 
-    def on_collision_enter(self, ev: physics_events.CollisionEnter, dispatch):
-        # Track Position of entities that enter in camera sight
-        _ = lambda x: x
-        _(ev.collider.entity.position)
+        return inst
 
     @property
     def resolution(self):
@@ -65,6 +63,22 @@ class Camera(BaseEntity):
             newBox = (self.pixels_to_unit(val) + Vector.Unit() / 2) * 1 / self.zoom
             collider.setBox(newBox)
 
+    # def on_collision_enter(self, event: events.CollisionEnter, dispatch: Callable):
+    #     e = event.collider.entity
+    #     rb = e.getComponent(RigidBody)
+    #     if rb is not None:
+    #         if rb.body_type == RigidBodyType.DYNAMIC:
+    #             e.dirty = True
+    #
+    # def on_collision_exit(self, event: events.CollisionExit, dispatch: Callable):
+    #     e = event.collider.entity
+    #     rb = e.getComponent(RigidBody)
+    #     if rb is not None:
+    #         if rb.body_type == RigidBodyType.DYNAMIC:
+    #             e.dirty = True
+    #             if isinstance(e, kge.Sprite):
+    #                 e.renderer.delete()
+
     @property
     def pixel_ratio(self):
         """
@@ -74,23 +88,17 @@ class Camera(BaseEntity):
 
     @property
     def position(self):
-        # If there is a rigidBody
-        rb = self.getComponent(kind=RigidBody)
-
-        if rb is not None:
-            rbpos = Vector(rb.position.x, -rb.position.y)
-            if rb.body is not None and self._transform.position != rbpos:
-                self._transform.position = rbpos
         return self._transform.position
 
     @position.setter
     def position(self, value: Vector):
+        rb = self.getComponent(kind=RigidBody)
+        if rb is not None:
+            rb.velocity = Vector.Zero()
         if self._transform.position != value:
-            rb = self.getComponent(kind=RigidBody)
-
             # Set position of the body
             if rb is not None:
-                rb.position = Vector(value.x, -value.y)
+                rb.move_position(Vector(value.x, -value.y))
 
             self._transform.position = value
 
@@ -107,13 +115,14 @@ class Camera(BaseEntity):
     def zoom(self, value: Union[float, int]):
         if isinstance(value, (float, int)):
             if MIN_ZOOM <= float(value) <= MAX_ZOOM:
-                self._zoom = float(value)
-                self._pixel_ratio = self._pixel_ratio_original * self._zoom
+                if value != self._zoom:
+                    self._zoom = float(value)
+                    self._pixel_ratio = self._pixel_ratio_original * self._zoom
 
-                collider = self.getComponent(kind=CameraCollider)
-                if collider:
-                    newBox = (self.pixels_to_unit(self.resolution) + Vector.Unit() / 2) * 1 / self.zoom
-                    collider.setBox(newBox)
+                    collider = self.getComponent(kind=CameraCollider)
+                    if collider:
+                        newBox = (self.pixels_to_unit(self.resolution) + Vector.Unit() / 2) * 1 / self.zoom
+                        collider.setBox(newBox)
         else:
             raise TypeError("Zoom should be a float or an int")
 
@@ -229,7 +238,7 @@ class Camera(BaseEntity):
             return True
         return False
 
-    def in_frame(self, entity: BaseEntity) -> bool:
+    def in_frame(self, entity: BaseEntity, offset: int = 0) -> bool:
         """
         Is this entity in the screen ?
         This method is meant to be used with the renderer system in order to render
@@ -239,8 +248,8 @@ class Camera(BaseEntity):
         :return: True if the entity is in camera sight
         """
         # Minimum distances before the collision occurs
-        min_dist_x = entity.size.width / 2 + self.half_width
-        min_dist_y = entity.size.height / 2 + self.half_height
+        min_dist_x = entity.size.width / 2 + self.half_width + offset
+        min_dist_y = entity.size.height / 2 + self.half_height + offset
 
         # distance from camera to the entity
         distVec = entity.position - Vector(self.position.x, -self.position.y)
@@ -264,9 +273,6 @@ class Camera(BaseEntity):
         # 2. Reposition relative to frame edges
         return Vector(self.frame_left + scaled.x, scaled.y - self.frame_top)
 
-    # def on_window_resized(self, event: events.WindowResized, dispatch):
-    #     self.resolution = DottedDict(width=event.new_size.x,height=event.new_size.y)
-
     def world_to_screen_point(self, point: Vector) -> Vector:
         """
         Get real screen pixels coordinates of the point.
@@ -274,9 +280,28 @@ class Camera(BaseEntity):
         """
 
         # 1. Reposition based on frame edges
-        vector = Vector(point.x - self.frame_left, self.frame_top + point.y)
+        vector = Vector(point.x, point.y)
+        # openGL offset 
+        # GL_offset = self.unit_to_pixels(Vector(-self.position.x / 2, self.position.y / 2, ))
+        GL_offset = Vector.Zero()
         # 2. Scale from game units to pixels
-        return Vector(self.unit_to_pixels(vector))
+        return Vector(self.unit_to_pixels(vector) + GL_offset) * 1 / self._zoom
+
+    def fixed_world_to_screen_point(self, point: Vector) -> Vector:
+        """
+        Get real screen pixels coordinates of the point.
+        Used to retrieve the position in which we should draw the point
+        FIXME : SET FOR UI
+        """
+
+        # 1. Reposition based on frame edges
+        vector = Vector(point.x, point.y)
+        # openGL offset 
+        # GL_offset = self.unit_to_pixels(Vector(self.position.x, -self.position.y, ))
+        GL_offset = Vector.Zero()
+
+        # 2. Scale from game units to pixels
+        return Vector(self.unit_to_pixels(vector) + GL_offset)
 
     def pixels_to_unit(self, pixels: Union[float, Vector]) -> Union[float, Vector]:
         """
@@ -302,94 +327,4 @@ class Camera(BaseEntity):
 
 
 if __name__ == '__main__':
-    from kge.core.entity import BaseEntity
-
-
-    class Player(BaseEntity):
-
-        @property
-        def size(self) -> DottedDict:
-            return DottedDict(
-                width=2, height=2
-            )
-
-
-    class Terrain(BaseEntity):
-
-        @property
-        def size(self) -> DottedDict:
-            return DottedDict(
-                width=20, height=20
-            )
-
-
-    cam = Camera(resolution=Vector(640, 640))
-
-    print(cam.position, cam.frame_left, cam.frame_right)
-    # cam2 = cam.copy()
-    player1 = Player(name="Player One")
-    # player1.position = (-1, -1)
-    # player2 = Player(name="Player Two")
-    # player2.position = (1, 1)
-
-    # print(cam.screen_to_world_point(Vector(1000, 700)))
-    #
-    # print(cam.world_to_screen_point(cam.position))
-    # print(cam.world_to_screen_point(player1.position),
-    #       cam.screen_to_world_point(cam.world_to_screen_point(player1.position)))
-    # print(cam.world_to_screen_point(player2.position),
-    #       cam.screen_to_world_point(cam.world_to_screen_point(player2.position)))
-
-    box = Terrain("Ground Box")
-    player1.position = Vector.Zero()
-
-    print(cam.in_frame(box), box.left, box.right)
-    print(cam.in_frame(player1), player1.left, player1.right)
-
-    player1.position = Vector(-5, 0)
-    print(cam.in_frame(player1), player1.left, player1.right)
-
-    player1.position = Vector(-6, 0)
-    print(cam.in_frame(player1), player1.left, player1.right)
-
-    # player1.position = Vector.Right()
-    # print(cam.world_to_screen_point(player1.position))
-    # cam.position = Vector.Right()
-    # print(cam.world_to_screen_point(player1.position))
-
-    # print(cam.in_viewport(player1), cam.in_viewport(player2))
-    # print(cam.offset(player1.position), player1.position)
-
-    # print(cam.resolution)
-    # print(cam.offset(cam.position))
-    # print(cam.world_to_screen_point(player1.position))
-
-    # cam.position += (4.8126, 0)
-    # player1.position += (0, 0)
-
-    # print(cam.offset(player1.position), player1.position)
-    # print(cam.offset(cam.position))
-    # print(cam.world_to_screen_point(player1.position))
-
-    # print(cam.position, cam.frame_left, cam.frame_right)
-    # print(cam.in_viewport(player1), cam.in_viewport(player2))
-
-    # player.position = Vector(-1, 0)
-    # # print(player.transform.position)
-    # unit = cam.offset(player.position)
-    # print(cam.world_to_screen_point(unit) == cam.world_to_screen_point(player.position))
-    #
-    # cam.position += Vector(-2, 0)
-    # # print(player.transform.position)
-    # unit = cam.offset(player.position)
-    #
-    # print(cam2.world_to_screen_point(unit) == cam.world_to_screen_point(player.position))
-
-    # v = c.transform.position + Vector(*DEFAULT_RESOLUTION)
-    # point_in_pixels = c.screen_to_world_point(v)
-    #
-    # print(point_in_pixels)
-    #
-    # point_in_units = c.world_to_screen_point(point_in_pixels)
-    #
-    # print(point_in_units)
+    pass

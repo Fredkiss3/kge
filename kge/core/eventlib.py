@@ -4,7 +4,7 @@ The event machinery
 
 import logging
 import re
-from typing import Callable, Type
+from typing import Callable
 
 from kge.core.events import Event
 
@@ -74,7 +74,7 @@ class EventMixin:
 
         if callable(meth):
             try:
-                elog.debug(f"Calling handler {meth} for {name}")
+                elog.debug(f"Calling handler {meth} for {event}")
                 meth(event, dispatch)
             except TypeError as ex:
                 from inspect import signature

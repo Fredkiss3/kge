@@ -24,11 +24,13 @@ from kge.core.scene import BaseScene
 from kge.core.service import Service
 from kge.core.service_provider import ServiceProvider
 from kge.core.system import System
-from kge.graphics.renderer import Renderer, WindowService
-from kge.inputs.input_manager import InputManager, InputService
+from kge.graphics.anim_system import AnimSystem
+from kge.graphics.renderer import Renderer, Window
+from kge.inputs.input_manager import InputManager, Inputs
 from kge.physics.fixed_updater import FixedUpdater
-from kge.physics.physics_manager import PhysicsManager, Physics, DebugDrawService
+from kge.physics.physics_manager import PhysicsManager, Physics, DebugDraw
 from kge.resources.assetlib import AssetLoader
+# from kge.ui.ui_manager import UIManager
 
 
 class Engine(LoggerMixin, EventMixin):
@@ -43,20 +45,29 @@ class Engine(LoggerMixin, EventMixin):
 
     def __init__(self, first_scene: Type[BaseScene], *,
                  basic_systems=(
-                         Updater,
-                         PhysicsManager,
-                         FixedUpdater,
-                         EventDispatcher,
-                         Renderer,
-                         InputManager,
-                         AssetLoader,
-                         AudioManager,
-                         EntityManager,
+                         AnimSystem,
+                         # AssetLoader,
+                         # AudioManager,
                          BehaviourManager,
+                         EntityManager,
+                         EventDispatcher,
+                         FixedUpdater,
+                         InputManager,
+                         PhysicsManager,
+                         Renderer,
+                         # UIManager,
+                         Updater,
                  ),
                  basic_services=(
-                         Physics, EntityManagerService, Audio, InputService,
-                         WindowService, DebugDrawService,
+                         # Inner Services
+                         EntityManagerService,
+
+                         # Services provided to users
+                         Audio,
+                         Inputs,
+                         Physics,
+                         Window,
+                         DebugDraw,
                  ),
                  systems=(), scene_kwargs=None, window_title: str = None, **kwargs):
         super(Engine, self).__init__()
@@ -95,6 +106,9 @@ class Engine(LoggerMixin, EventMixin):
         # Executor for multi threading
         self._executor = futures.ThreadPoolExecutor()
         self._jobs = deque()
+
+        # Time deltas for update, fixed_update & render
+        self.update_dt, self.fixed_dt, self.render_dt,  = 1, 1, 1
 
     def append_job(self, func: Callable, *args, **kwargs):
         """
@@ -158,8 +172,7 @@ class Engine(LoggerMixin, EventMixin):
         # Then provide services
         for service in self._services_classes:
             if service.system_class in kinds:
-                ServiceProvider.provide(service=service(
-                    instance=kinds[service.system_class]))
+                ServiceProvider.provide(service=service, system=kinds[service.system_class])
 
     def init(self):
         """
@@ -216,7 +229,7 @@ class Engine(LoggerMixin, EventMixin):
         """
         The main loop
         """
-        pyglet.clock.schedule_interval(self.loop_once, 1 / 10_000)
+        pyglet.clock.schedule(self.loop_once)
         # Flush the jobs created
         pyglet.clock.schedule_interval(self.flush_jobs, 1 / 10)
         self.event_loop.run()
@@ -273,6 +286,7 @@ class Engine(LoggerMixin, EventMixin):
         Destroy an entity
         """
         ev.entity.is_active = False
+        ev.scene.remove(ev.entity)
 
         # dispatch the event
         self.dispatch(events.EntityDestroyed(
@@ -326,7 +340,7 @@ class Engine(LoggerMixin, EventMixin):
                 if isinstance(system, Renderer):
                     system.__fire_event__(event, self.dispatch)
                     continue
-                elif isinstance(event, events.DebugDraw) and isinstance(system, (
+                elif isinstance(event, events.DrawDebug) and isinstance(system, (
                         PhysicsManager, BehaviourManager, EventDispatcher)):
                     system.__fire_event__(event, self.dispatch)
                     continue

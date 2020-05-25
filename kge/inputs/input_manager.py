@@ -21,16 +21,16 @@ class InputManager(System):
     TODO :
         - HANDLE JOYSTICK EVENTS
         - FOR AS MANY JOYS AS POSSIBLE (SET A MAX JOYS)
-        - JOYSTICK KEY HANDLER (JUST A DICT)
+        - USE PYGAME
 
     """
 
     event_map = None
 
     mouse_button_map: Dict[int, MouseInput] = {
-        mouse_ev.LEFT: mouse.Left,
+        mouse_ev.LEFT: mouse.Primary,
         mouse_ev.MIDDLE: mouse.Middle,
-        mouse_ev.RIGHT: mouse.Right,
+        mouse_ev.RIGHT: mouse.Secondary,
     }
 
     # Keyboard map
@@ -197,7 +197,7 @@ class InputManager(System):
         """
         if self.window_ref is None:
             try:
-                window = kge.ServiceProvider.getWindow().window
+                window = kge.Window.window
                 window.push_handlers(self.key_handler)
                 window.push_handlers(self.mouse_handler)
 
@@ -214,7 +214,9 @@ class InputManager(System):
                                                                                            ev.scene)
                 window.on_mouse_enter = lambda x, y: self.mouse_enter(x, y, ev.scene)
                 window.on_mouse_leave = lambda x, y: self.mouse_exit(x, y, ev.scene)
-            except Exception:
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
                 self.logger.warning("This system won't work without renderer system being started first")
             else:
                 self.window_ref = window
@@ -331,7 +333,7 @@ class InputManager(System):
         screen_position = Vector(x, y)
         camera = scene.main_camera
 
-        scene_position = camera.world_to_screen_point(screen_position)
+        scene_position = camera.screen_to_world_point(screen_position)
 
         # Get the button clicked
         mouse_btn = self.mouse_button_map.get(btn)
@@ -421,15 +423,20 @@ class InputManager(System):
         )
 
 
-class InputService(Service):
+class Inputs(Service):
     system_class = InputManager
     _system_instance: InputManager
 
+    @classmethod
     def get_key_down(self, key: Type[KeyCode]) -> bool:
         """
         Find if the specified key is pressed
         """
         return self._system_instance.get_key_down(key)
 
+    @classmethod
     def get_mouse_down(self, mouse_btn: Type[MouseInput]) -> bool:
+        """
+        Find if the specified mouse button is pressed
+        """
         return self._system_instance.get_mouse_down(mouse_btn)

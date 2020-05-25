@@ -7,7 +7,6 @@ class Vector:
     """
     A class representing a vector
     """
-
     def __init__(self, arg1: Union["Vector", float, Tuple[float, float], List[float]] = 0.0, arg2: float = 0.0):
         if isinstance(arg1, Vector):
             self.x = arg1.x
@@ -138,11 +137,11 @@ class Vector:
         return self.x * other[1] - self.y * other[0]
 
     @property
-    def length(self):
+    def magnitude(self):
         return math.sqrt(self.x ** 2 + self.y ** 2)
 
     @property
-    def length_sqrd(self):
+    def magnitude_sqrd(self):
         return self.x ** 2 + self.y ** 2
 
     def distance_to(self, other: Union[Sequence[float], "Vector"]) -> float:
@@ -158,7 +157,11 @@ class Vector:
         """
         Lerp function
         """
-        return Vector(self.x + (other[0] - self.x) * p, self.y + (other[1] - self.y) * p)
+        return  self + (other - self) * p
+        # return Vector(
+        #     self.x + (other[0] - self.x) * p,
+        #     self.y + (other[1] - self.y) * p
+        # )
 
     @classmethod
     def move_towards(cls, origin: "Vector", dest: "Vector", speed: float):
@@ -167,7 +170,7 @@ class Vector:
         speed is a normal value
         """
         v = dest - origin
-        magnitude = v.length
+        magnitude = v.magnitude
 
         if magnitude <= speed or magnitude == 0:
             new_position = dest
@@ -177,11 +180,18 @@ class Vector:
         return Vector(new_position)
 
     def normalized(self):
-        length = self.length
+        length = self.magnitude
 
         if length != 0:
             return self / length
         return Vector(self)
+
+    def __gt__(self, other: "Vector"):
+        if not isinstance(other, Vector):
+            raise TypeError(f"'>' not supported between instances of 'Vector' and '{type(other).__name__}")
+
+        return self.magnitude > other.magnitude
+
 
     def __getitem__(self, item):
         if item == 0:
@@ -204,7 +214,7 @@ class Vector:
 
     @property
     def angle(self):
-        if self.length_sqrd == 0:
+        if self.magnitude_sqrd == 0:
             return 0
         return math.degrees(math.atan2(self.y, self.x))
 
@@ -286,12 +296,12 @@ if __name__ == '__main__':
     print(A / 2)
     print(*A)
     print(A.normalized())
-    print(A.length)
+    print(A.magnitude)
     # A.normalize()
-    print(A.length)
-    print(C.length)
+    print(A.magnitude)
+    print(C.magnitude)
     C.normalize()
-    print(C.length)
+    print(C.magnitude)
     print(B.angle_to(C))
     print(A.angle)
     print(C.angle)
@@ -303,3 +313,7 @@ if __name__ == '__main__':
     # print(A.move_towards(B, math.sqrt(2)))
 
     print(tuple(A))
+
+    v1 = Vector.Up() * 4
+    v2 = Vector.Up() * 4
+    print(v1.lerp(v2, .1), (v1 + v2) * .1)

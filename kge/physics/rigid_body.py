@@ -28,7 +28,6 @@ else:
         b2_staticBody,
     )
 
-
 import math
 
 import pyglet
@@ -45,7 +44,7 @@ from kge.core.component import BaseComponent
 
 from kge.core.entity import BaseEntity
 from kge.core import events
-from kge.physics.events import Event, DestroyBody, BodyCreated, CreateBody
+from kge.core.events import Event, DestroyBody, BodyCreated, CreateBody
 
 
 class RigidBodyType(Enum):
@@ -106,7 +105,7 @@ class RigidBody(BaseComponent):
         self._angular_drag = 0
 
         try:
-            self._physics_system = kge.ServiceProvider.getPhysics()
+            self._physics_system = kge.Physics
         except:
             self._physics_system = None
 
@@ -154,7 +153,7 @@ class RigidBody(BaseComponent):
     def entity(self, e: BaseEntity):
         if isinstance(e, BaseEntity):
             if e.getComponent(kind=RigidBody) is not None:
-                raise AttributeError(f"There is already another rigid body attached to '{e}'")
+                raise AttributeError(f"There is already another RigidBody component attached to '{e}'")
 
             # set entity
             self._entity = e
@@ -305,6 +304,8 @@ class RigidBody(BaseComponent):
 
         self._sleeping = val
         if self._body is not None and self._physics_system.world is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.awake = val
             pass
 
@@ -337,7 +338,6 @@ class RigidBody(BaseComponent):
             self._position = Vector(self._body.position.x, self._body.position.y)
         return self._position
 
-    # TODO : TO TEST
     @position.setter
     def position(self, val: Union[Vector, tuple]):
         if not isinstance(val, (Vector, tuple)):
@@ -348,6 +348,8 @@ class RigidBody(BaseComponent):
 
         self._position = val
         if self._body is not None and self._physics_system.world is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.position = (val.x, val.y)
 
     @property
@@ -364,6 +366,8 @@ class RigidBody(BaseComponent):
 
         self._drag = val
         if self._body is not None and self._physics_system.world is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.linearDamping = val
 
     @property
@@ -380,6 +384,8 @@ class RigidBody(BaseComponent):
 
         self._angular_drag = val
         if self._body is not None and self._physics_system.world is not None:
+            while self._physics_system.world.locked:
+                continue
             self._body.angularDamping = val
 
     def on_body_created(self, ev: BodyCreated, dispatch: Callable[[Event], None]):
@@ -389,9 +395,9 @@ class RigidBody(BaseComponent):
         """
         if ev.entity == self.entity:
             # set the real body
-            self._body = ev.body
+            self._body = ev.rb.body
 
-    def on_body_destroyed(self, ev, dispatch):
+    def on_body_destroyed(self, ev, _):
         if ev.entity == self.entity:
             self._body = None
             manager = kge.ServiceProvider.getEntityManager()
@@ -414,14 +420,14 @@ class RigidBody(BaseComponent):
                     # delete the real body in the world
                     ev_ = DestroyBody(
                         entity=self.entity,
-                        body_component=ghost_body
+                        rb=ghost_body
                     )
                     ev_.onlyEntity = self.entity
                     dispatch(ev_)
 
             ev_ = CreateBody(
                 entity=self.entity,
-                body_component=self
+                rb=self
             )
 
             # create the real body
@@ -442,6 +448,9 @@ class RigidBody(BaseComponent):
 
         point = self._body.GetWorldPoint(localPoint=(point.x, point.y))
         force = self._body.GetWorldVector(localVector=(force.x, force.y))
+
+        while self._physics_system.world.locked:
+            continue
         if not impulse:
             self._body.ApplyForce(force, point, True)
         else:
@@ -495,6 +504,15 @@ class RigidBody(BaseComponent):
         vel = (angle - self.entity.angle) / FIXED_DELTA_TIME
         self.angular_velocity = vel
 
+    @body.setter
+    def body(self, value: b2.b2Body):
+        if not isinstance(value, b2.b2Body):
+            raise TypeError("Body should be of type (Box2D.b2Body)")
+        if self._body is not None:
+            raise AttributeError("Can only set Body Property once")
+
+        self._body = value
+
 
 if __name__ == '__main__':
     class Player(BaseEntity):
@@ -506,7 +524,7 @@ if __name__ == '__main__':
     p = Player()
     rb = RigidBody(body_type=RigidBodyType.DYNAMIC)
     print(rb.entity)
-    p.addComponent('rigidbody', rb)
+    p.addComponent(rb)
     print(rb.entity)
     print(p.components)
     # rb.velocity = (5, 5)

@@ -1,8 +1,9 @@
 from typing import Callable
 
+import kge
 from kge.core import events
 from kge.core.system import System
-from kge.physics.events import PhysicsUpdate
+from kge.core.events import PhysicsUpdate
 
 
 class EventDispatcher(System):

@@ -5,9 +5,9 @@ from copy import deepcopy
 from typing import Iterator, Type, Callable, Sequence, Tuple, Union, TypeVar, Set, Dict, List
 
 import kge
-from kge import ServiceProvider
 from kge.core import events
 from kge.core.camera import Camera
+from kge.core.component import BaseComponent
 from kge.core.constants import BLACK, DEFAULT_RESOLUTION, DEFAULT_PIXEL_RATIO, MAX_LAYERS
 from kge.core.entity import BaseEntity
 from kge.core.eventlib import EventMixin
@@ -155,6 +155,8 @@ class BaseScene(EntityCollection, EventMixin):
         >>> Scene.load(MenuScene)
 
     """
+
+    # TODO : Canvas Should not depends on main spatial hash
     nbItems = 0
     engine: "kge.Engine" = None
     resolution: Vector = Vector(*DEFAULT_RESOLUTION)
@@ -220,6 +222,8 @@ class BaseScene(EntityCollection, EventMixin):
     def Right(self):
         return self.main_camera.frame_right
 
+    main_camera : Camera
+
     def __init__(self, set_up: Callable[["BaseScene"], None] = None, **kwargs):
         super(BaseScene, self).__init__()
         self._event_map = dict()  # type: Dict[str, List[EventMixin]]
@@ -230,13 +234,10 @@ class BaseScene(EntityCollection, EventMixin):
         # Spatial Hash for querying visible elements
         self.spatial_hash = SpatialHash(2)
 
-        # Show the spatial Hash Grid
-        # FIXME : USE THIS ONLY IN DEV MODE
-        self.show_grid = False
-
         # Main Camera
         self.main_camera = Camera(
             resolution=self.resolution, pixel_ratio=self.pixel_ratio, )
+        self.main_camera.scene = self
         self.background_color = BLACK  # type: Sequence[int]
 
         for k, v in kwargs.items():
@@ -246,18 +247,57 @@ class BaseScene(EntityCollection, EventMixin):
         for i in range(MAX_LAYERS):
             self.layers[i] = i
 
-        # Display FPS
-        self.display_fps = False
-
         # set_up is callable for setting up the scene
         self._setup_function = set_up
         self.register_events(self)
 
+        # The render list
+        self._render_list = set()  # type: Set[BaseEntity]
+
+        # Debug List
+        self._debug_list = set()  # type: Set[BaseEntity]
+
+        # renderables types
+        self._renderables = [kge.Sprite, kge.Canvas]
+
+        # TODO : IS IT GOOD ?
+        self.started  = False
+        self.rendered = False
+
+    def mark_as_debuggable(self, e: BaseEntity):
+        """
+        Mark an element as to be redrawn on debug
+        """
+        if e.is_active:
+            self._debug_list.add(e)
+
+    @property
+    def debuggable(self):
+        return self._debug_list
+
+    @property
+    def dirties(self):
+        return self._render_list
+
+    def mark_as_dirty(self, e: BaseEntity):
+        """
+        Add an entity to the render list
+        """
+        for type_ in self._renderables:
+            if (isinstance(e, type_)) and e.is_active:
+                self._render_list.add(e)
+
     def on_scene_started(self, ev: events.SceneStarted, dispatch):
-        if self._setup_function is not None:
-            self._setup_function(self)
-        else:
-            self.setup()
+        try:
+            if self._setup_function is not None:
+                self._setup_function(self)
+            else:
+                self.setup()
+        except Exception:
+            import traceback
+            traceback.print_exc()
+        finally:
+            self.started = True
 
         self.register_events(self.main_camera)
 
@@ -266,7 +306,7 @@ class BaseScene(EntityCollection, EventMixin):
         Get a layer by its name or order,
         there are only 20 layers.
         """
-        if layer in self.layers:
+        if layer in self.layers and layer != self.layers[MAX_LAYERS - 1]:
             return self.layers[layer]
         else:
             raise KeyError("This layer is not in scene")
@@ -302,6 +342,10 @@ class BaseScene(EntityCollection, EventMixin):
         :param layer: the layer in which the entity should be
         :return:
         """
+
+        if not isinstance(entity, BaseEntity):
+            raise TypeError("the element to add should be an entity (kge.Entity)")
+
         # Set scene
         entity.scene = self
 
@@ -309,18 +353,26 @@ class BaseScene(EntityCollection, EventMixin):
         entity.transform.position = position
 
         # add entity to the spatial Hash
-        self.spatial_hash.add(entity.position, Vector(entity.size.width, entity.size.height), entity)
+        #self.spatial_hash.add(entity.position, Vector(entity.size.width, entity.size.height), entity)
 
         # Set layer
         if isinstance(layer, (int, str)):
             entity.is_active = True
-            entity.layer = self.getLayer(layer)
+
+            # Add Canvas to Max layer if not set
+            if isinstance(entity, kge.Canvas):
+                entity.layer = self.layers[MAX_LAYERS - 1]
+            else:
+                entity.layer = self.getLayer(layer)
         else:
             raise TypeError("Layer must be an int or str")
 
-        manager = ServiceProvider.getEntityManager()
+        manager = kge.ServiceProvider.getEntityManager()
         # Enable or disable entity
         if entity.is_active:
+            # Mark as dirty
+            entity.dirty = True
+            entity.debuggable = True
             manager.enable(entity)
         else:
             manager.disable(entity)
@@ -328,6 +380,13 @@ class BaseScene(EntityCollection, EventMixin):
         super(BaseScene, self).add(entity, entity.tag)
         # Initialize the entity
         entity.__fire_event__(events.Init(self), self.engine.dispatch)
+
+        # Dispatch Components added
+        for p in entity.pending:
+            manager = kge.ServiceProvider.getEntityManager()
+            manager.dispatch_component_operation(entity, p, added=True)
+        entity.pending.clear()
+
         self.register_events(entity)
 
     def addAll(self, *entities: Tuple[BaseEntity, Union[Tuple[float, float], Vector], Union[str, int]]):
@@ -336,37 +395,59 @@ class BaseScene(EntityCollection, EventMixin):
           - (entity, position, layer)
 
         Usage :
-        >>> scene1.addAll( (player, Vector(1,1), "Foreground"), (enemy, Vector(1,2), 1),  )
-
-        :param entities:
-        :return:
+            >>> scene.addAll( (player, Vector(1,1), "Foreground"), (enemy, Vector(1,2), 1),  )
         """
         for entity, position, layer in entities:
             self.add(entity, position, layer)
 
-    def entity_layers(self) -> Iterator:
-        """
-        Return an iterator of the contained Entities in ascending layer
-        order and in frame.
+    # def entity_layers(self, *types: Type[BaseEntity],
+    #                   filter_set: Set[BaseEntity] = None,
+    #                   filter_component: Type[BaseComponent] = None,
+    #                   renderable: bool = True,
+    #                   debuggable: bool = False,
+    #                   check_active: bool = True
+    #                   ) -> Iterator[
+    #     BaseEntity]:
+    #     """
+    #     Return an iterator of the contained Entities in ascending layer order that are active and visible in frame.
 
-        Sprites are part of a layer if they have a layer attribute equal to
-        that layer value. Sprites without a layer attribute are considered
-        layer 0.
+    #     Sprites are part of a layer if they have a layer attribute equal to
+    #     that layer value. Sprites without a layer attribute are considered
+    #     layer 0.
 
-        This function exists primarily to assist the Renderer subsystem,
-        but will be left public for other creative uses.
-        """
-        size = (Vector(self.main_camera.frame_width,
-                       self.main_camera.frame_height) + Vector.Unit() / 2) * 1 / self.main_camera.zoom
-        position = Vector(self.main_camera.position.x, -self.main_camera.position.y)
-        return sorted(
-            filter(lambda e: hasattr(e, "renderer")
-                   # and self.main_camera.in_frame(e)
-                   ,
-                   self.spatial_hash.search(position, size)
-                   ),
-            key=lambda s: getattr(s, "order_in_layer", 0)
-        )
+    #     This function exists primarily to assist the Renderer subsystem,
+    #     but will be left public for other creative uses.
+    #     """
+    #     size = (Vector(self.main_camera.frame_width,
+    #                    self.main_camera.frame_height) + Vector.Unit() / 2) / self.main_camera.zoom
+    #     position = Vector(self.main_camera.position.x, -self.main_camera.position.y)
+
+    #     # Filter components
+    #     def filter_c(e: BaseEntity):
+    #         val = e.is_active if check_active else True
+    #         if filter_component is not None:
+    #             val = val and e.getComponent(filter_component) is not None
+
+    #         return val
+
+    #     if not types:
+    #         types = (kge.Canvas, kge.Sprite)
+
+    #     # Entities to return
+    #     entities = self.spatial_hash.search(position, size, *types)
+    #     if renderable:
+    #         entities = entities.intersection(self.dirties)
+    #     elif debuggable:
+    #         entities = entities.intersection(self.debuggable)
+
+    #     if filter_set is not None:
+    #         entities = entities.intersection(filter_set)
+
+    #     return sorted(
+    #         filter(filter_c,
+    #                entities, ),
+    #         key=lambda s: getattr(s, "layer_order", -255)
+    #     )
 
     def clear(self):
         """
@@ -394,6 +475,11 @@ class BaseScene(EntityCollection, EventMixin):
         """
         Remove an entity, and its events
         """
+        if entity in self.dirties:
+            self.dirties.remove(entity)
+        if entity in self.debuggable:
+            self.debuggable.remove(entity)
+
         self.spatial_hash.remove(entity.position, Vector(entity.size.width, entity.size.height), entity)
         self.unregister_events(entity)
         super(BaseScene, self).remove(entity)

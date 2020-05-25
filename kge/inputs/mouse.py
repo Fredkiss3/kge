@@ -9,13 +9,13 @@ class MouseInput(Input, abstract=True):
     """
 
 
-class Left(MouseInput):
+class Primary(MouseInput):
     """
     Primary mouse button (commonly left)
     """
 
 
-class Right(MouseInput):
+class Secondary(MouseInput):
     """
     Secondary mouse button (commonly right)
     """

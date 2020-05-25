@@ -28,19 +28,19 @@ If you're reading this `README` from a source distribution, you can install kge 
 
 To get started to create your first scene, add an image named `player.png` to your game folder and start with the code :
 
-    ```python
-        import kge
-        from kge import *
+```python
+import kge
+from kge import *
 
-        class Player(Sprite):
-            def on_update(self, event: Update, dispatch):
-                self.position += Vector.Right() * event.delta_time
+class Player(Sprite):
+    def on_update(self, event: kge.events.Update, dispatch):
+        self.position += Vector.Right() * event.delta_time
 
-        def setup(scene: Scene):
-            scene.add(Player(image='player.png'))
+def setup(scene: Scene):
+    scene.add(Player(image='player.png'))
 
-        kge.run(setup)
-    ```
+kge.run(setup)
+```
 
 ## Get Involved
 
@@ -57,19 +57,19 @@ The engine uses Event System to run almost everything in the game. you can see i
 
 We want our users to start really easily on making game so each of the functions, constants and classes are available on the top level module, no need to to import manually all of the stuff like :
 
-    ```python
-    from kge import Vector
+```python
+from kge import Vector
 
-    v = Vector.Left()
-    ```
+v = Vector.Left()
+```
 
 Instead you can use directly with :
 
-    ```python
-    from kge import *
+```python
+from kge import *
 
-    v = Vector.Left()
-    ```
+v = Vector.Left()
+```
 
 ## Kiss Game Engine RoadMap
 

@@ -45,7 +45,7 @@ kge.run(setup)
 ## Get Involved
 
 The fastest way to get involved is to check out the [ongoing
-discussions.](https://github.com/Fredkiss3/kge/issues?q=is%3Aissue+is%3Aopen+label%3Adiscussion)
+discussions.](https://github.com/Fredkiss3/kge/issues?q=is%3Aissue+is%3Aopen+label%3Aideas)
 If you're already using `kge` feel free to report bugs, suggest enhancements, or ask for new features.
 
 If you want to contribute code, definitely read the relavant portions

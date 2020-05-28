@@ -1,4 +1,5 @@
 # KISS GAME ENGINE
+[Documentation][docs]
 
 KISS GAME ENGINE (`kge`) is a 2D Game Engine written in Python, running in Python and For Python Game Developers.
 
@@ -102,12 +103,13 @@ Our next functionnalities we are excited to give the users are :
 <!-- Correct link -->
 
 [pyglet]: https://pyglet.org
-[events]: https://readthedocs.org/projects/kge/user_guide/events
-[anim docs]: https://readthedocs.org/projects/kge/user_guide/animations
-[audio docs]: https://readthedocs.org/projects/kge/user_guide/audio
-[physics docs]: https://readthedocs.org/projects/kge/user_guide/physics
-[sprite docs]: https://readthedocs.org/projects/kge/user_guide/images
-[behaviour docs]: https://readthedocs.org/projects/kge/user_guide/behaviors
-[scene docs]: https://readthedocs.org/projects/kge/user_guide/scene
-[ui docs]: https://readthedocs.org/projects/kge/user_guide/ui
-[debug docs]: https://readthedocs.org/projects/kge/user_guide/debug
+[events]: https://kge.readthedocs.org/user_guide/events
+[anim docs]: https://kge.readthedocs.org/user_guide/animations
+[audio docs]: https://kge.readthedocs.org/user_guide/audio
+[physics docs]: https://kge.readthedocs.org/user_guide/physics
+[sprite docs]: https://kge.readthedocs.org/user_guide/images
+[behaviour docs]: https://kge.readthedocs.org/user_guide/behaviors
+[scene docs]: https://kge.readthedocs.org/user_guide/scene
+[ui docs]: https://kge.readthedocs.org/user_guide/ui
+[docs]: https://kge.readthedocs.io/fr/latest/
+[debug docs]: https://kge.readthedocs.org/user_guide/debug

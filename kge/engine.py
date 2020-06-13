@@ -6,7 +6,7 @@ from collections import deque
 from concurrent import futures
 from contextlib import ExitStack
 from itertools import chain
-from typing import List, Type, Union, Callable, Any, Deque, Dict
+from typing import List, Type, Union, Callable, Any, Deque, Dict, Tuple
 
 import pyglet
 
@@ -27,10 +27,22 @@ from kge.core.system import System
 from kge.graphics.anim_system import AnimSystem
 from kge.graphics.renderer import Renderer, Window
 from kge.inputs.input_manager import InputManager, Inputs
-from kge.physics.fixed_updater import FixedUpdater
 from kge.physics.physics_manager import PhysicsManager, Physics, DebugDraw
 from kge.resources.assetlib import AssetLoader
+
+
 # from kge.ui.ui_manager import UIManager
+
+def snake_to_camel(meth_name: str):
+    if not meth_name.startswith("on_") or (meth_name[-1] not in "azertyuiopqsdfghjklmwxcvbn"):
+        return None
+    else:
+        event_name = meth_name[3:].split("_")
+        event = ""
+        for name in event_name:  # type: str
+            if len(name.strip()) > 0:
+                event += name.capitalize()
+        return event
 
 
 class Engine(LoggerMixin, EventMixin):
@@ -45,18 +57,19 @@ class Engine(LoggerMixin, EventMixin):
 
     def __init__(self, first_scene: Type[BaseScene], *,
                  basic_systems=(
+                         # Periodic Systems
+                         Renderer,
+                         Updater,
+
+                         # Contextual Systems
                          AnimSystem,
-                         # AssetLoader,
-                         # AudioManager,
+                         AudioManager,
                          BehaviourManager,
                          EntityManager,
                          EventDispatcher,
-                         FixedUpdater,
                          InputManager,
                          PhysicsManager,
-                         Renderer,
                          # UIManager,
-                         Updater,
                  ),
                  basic_services=(
                          # Inner Services
@@ -93,6 +106,7 @@ class Engine(LoggerMixin, EventMixin):
         # Systems
         self._systems_classes = list(chain(basic_systems, systems))
         self.systems = []  # type: List[System]
+        self.wildcards_systems = []  # type: List[System]
 
         # This is exit stack : the order to exit out of systems
         self._exit_stack = ExitStack()
@@ -108,7 +122,41 @@ class Engine(LoggerMixin, EventMixin):
         self._jobs = deque()
 
         # Time deltas for update, fixed_update & render
-        self.update_dt, self.fixed_dt, self.render_dt,  = 1, 1, 1
+        self.update_dt, self.fixed_dt, self.render_dt, = 1, 1, 1
+        self.event_map = dict()  # type: Dict[str, List[EventMixin]]
+
+        # Register events for engine
+        self.register_events(self)
+
+    def register_events(self, b: EventMixin):
+        """
+        Map names of events to event mixins which need to handle the event
+        """
+        for attribute in dir(b):
+            if attribute.startswith("on_") and callable(getattr(b, attribute)):
+                name = snake_to_camel(attribute)
+                try:
+                    l = self.event_map[name]
+                except KeyError:
+                    self.event_map[name] = [b]
+                else:
+                    l.append(b)
+
+    def unregister_events(self, b: EventMixin):
+        """
+        Remove the component from event map
+        """
+        k_l = dict()
+        for k, v in self.event_map.items():
+            if b in v:
+                v.remove(b)
+                k_l[k] = v
+
+        # Remove event from Map if there is no more entity for it
+        for k, v in k_l.items():
+            if len(v) == 0:
+                self.event_map.pop(k)
+        k_l.clear()
 
     def append_job(self, func: Callable, *args, **kwargs):
         """
@@ -144,9 +192,6 @@ class Engine(LoggerMixin, EventMixin):
         self.entered = False
         self._exit_stack.close()
 
-    def on_quit(self, ev, dispatch):
-        self.dispatch(events.StopScene(), immediate=True)
-
     def start_systems(self):
         """
         Start the systems
@@ -163,9 +208,15 @@ class Engine(LoggerMixin, EventMixin):
                 t = system
                 system = system(engine=self, **self.kwargs)  # type: System
                 kinds[t] = system
-            # appends system to independent threads
-            if not isinstance(system, (Updater, FixedUpdater, AssetLoader, AudioManager, EntityManager)):
+            # appends systems
+            if not isinstance(system, (AssetLoader, AudioManager)):
                 self.systems.append(system)
+
+            if isinstance(system, (EventDispatcher, BehaviourManager)):
+                self.wildcards_systems.append(system)
+            else:
+                # Register events for the systems
+                self.register_events(system)
 
             self._exit_stack.enter_context(system)
 
@@ -186,10 +237,9 @@ class Engine(LoggerMixin, EventMixin):
 
     def activate_scene(self, next_scene: dict):
         """
-        Activating a scene
+        Activating a scene at the beginning of the engine
 
         :param next_scene: should be a dict representing the next scene
-        :return:
 
         Example of use :
             >>> engine.activate_scene({
@@ -200,22 +250,14 @@ class Engine(LoggerMixin, EventMixin):
         scene = next_scene["scene_class"]
         if scene is None:
             return
-        args = next_scene.get("args", [])
+
         kwargs = next_scene.get("kwargs", {})
-        BaseScene.engine = self
-
-        self.dispatch(events.StartScene(), immediate=True)
-        self.dispatch_events(on_main=True)
-
-        scene = scene(*args, **kwargs)
-        self._scenes.append(scene)
-        self.dispatch(events.SceneStarted(), immediate=True)
+        args = next_scene.get("args", ())
+        self.start_scene(scene, args, kwargs)
 
     def run(self):
         """
         Run the engine
-
-        :return:
         """
         if not self.entered:
             with self:
@@ -231,11 +273,13 @@ class Engine(LoggerMixin, EventMixin):
         """
         pyglet.clock.schedule(self.loop_once)
         # Flush the jobs created
-        pyglet.clock.schedule_interval(self.flush_jobs, 1 / 10)
         self.event_loop.run()
 
         # Set the running state to False to stop small scripts for updating
         self.flush_events()
+        self.dispatch(events.SceneStopped(), immediate=True)
+        self.dispatch(events.Quit(), immediate=True)
+        self.loop_once()
         self.running = False
 
         for future in futures.as_completed(self._jobs):
@@ -250,18 +294,9 @@ class Engine(LoggerMixin, EventMixin):
         self._executor.shutdown()
         self.logger.info("Finished Processes.")
 
-    def flush_jobs(self, dt):
-        """
-        Flush Finished Jobs in order to close engine more quickly
-        """
-        for future in futures.as_completed(self._jobs):
-            self._jobs.remove(future)
-
-    def loop_once(self, dt):
+    def loop_once(self, dt=None):
         """
         Loop once
-
-        :return: None
         """
         if not self.entered:
             raise ValueError("Cannot run before things have started",
@@ -325,59 +360,23 @@ class Engine(LoggerMixin, EventMixin):
         event.scene = scene
         event.time_scale = self.time_scale
 
-        # launch registered event handlers
-        if self.has_event(event):
-            self._jobs.append(self._executor.submit(
-                self.__fire_event__, event, self.dispatch))
-
         if on_main:
-            # If action should be on main then run it on main
+            # If action should be on main then run it for everyone
             for system in self.systems:
                 system.__fire_event__(event, self.dispatch)
         else:
-            # dispatch events on subsystems
-            for system in self.systems:
-                if isinstance(system, Renderer):
-                    system.__fire_event__(event, self.dispatch)
-                    continue
-                elif isinstance(event, events.DrawDebug) and isinstance(system, (
-                        PhysicsManager, BehaviourManager, EventDispatcher)):
-                    system.__fire_event__(event, self.dispatch)
-                    continue
-                elif isinstance(event, (events.Update, events.FixedUpdate, events.LateUpdate)) and isinstance(system, (
-                EventDispatcher, BehaviourManager)):
-                    # Only to Behaviours
-                    if isinstance(system, BehaviourManager):
-                        self._jobs.append(
-                            self._executor.submit(
-                                system.__fire_event__, event, self.dispatch)
-                        )
+            receivers = self.event_map.get(type(event).__name__, [])
+            for system in receivers:
+                system.__fire_event__(event, self.dispatch)
 
-                    # Dispatch this event to event dispatcher
-                    if isinstance(event, (events.LateUpdate)) and isinstance(system, EventDispatcher):
-                        self._jobs.append(
-                            self._executor.submit(
-                                system.__fire_event__, event, self.dispatch)
-                        )
-                    continue
-                else:
-                    self._jobs.append(
-                        self._executor.submit(
-                            system.__fire_event__, event, self.dispatch)
-                    )
+            for system in self.wildcards_systems:
+                system.__fire_event__(event, self.dispatch)
 
     def on_time_dilation(self, ev: events.TimeDilation, dispatch: Callable[[Event], None]):
         """
         Change the time scale
         """
         self.time_scale = ev.new_time_scale
-
-    # def on_start_scene(self, event: events.StartScene, dispatch: Callable[[Event], None]):
-    #     """
-    #     Start a new scene. The current scene pauses.
-    #     """
-    #     self.pause_scene()
-    #     self.start_scene(event.new_scene, event.kwargs)
 
     def on_stop_scene(self, event: events.StopScene, dispatch: Callable[[Event], None]):
         """
@@ -386,21 +385,17 @@ class Engine(LoggerMixin, EventMixin):
         self.stop_scene()
         if self.current_scene is not None:
             dispatch(events.SceneContinued())
-        else:
-            dispatch(events.Quit())
 
     def on_replace_scene(self, event: events.ReplaceScene, dispatch):
         """
         Replace the running scene with a new one.
         """
         self.stop_scene()
-        self.start_scene(event.new_scene, event.kwargs)
+        self.start_scene(event.new_scene, event.args, event.kwargs)
 
     def pause_scene(self):
         """
         Pause the current scene
-
-        :return:
         """
         # Empty the event queue before changing scenes.
         self.flush_events()
@@ -410,8 +405,6 @@ class Engine(LoggerMixin, EventMixin):
     def stop_scene(self):
         """
         Stop the current scene
-
-        :return:
         """
         # Empty the event queue before changing scenes.
         self.flush_events()
@@ -424,7 +417,7 @@ class Engine(LoggerMixin, EventMixin):
     def __repr__(self):
         return f"{type(self).__name__}(Kiss Game Engine)"
 
-    def start_scene(self, scene: Union[Type[BaseScene], BaseScene], kwargs: Dict[str, Any]):
+    def start_scene(self, scene: Union[Type[BaseScene], BaseScene], args: Tuple, kwargs: Dict[str, Any]):
         """
         Start a new scene
         """
@@ -433,13 +426,16 @@ class Engine(LoggerMixin, EventMixin):
 
         self.running = True
         if isinstance(scene, type):
-            scene = scene(**(kwargs or {}))
+            scene = scene(*(args or ()), **(kwargs or {}))
 
         # Set engine to self
         if scene.engine is None:
             scene.engine = self
 
         self._scenes.append(scene)
+        # setup the scene, then dispatch scene started event
+        scene.__fire_event__(events.SetupScene(scene=scene), self.dispatch)
+
         self.dispatch(events.SceneStarted(), immediate=True)
 
     def flush_events(self):

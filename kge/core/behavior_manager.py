@@ -1,5 +1,6 @@
 from typing import Callable
 
+from kge.core import events
 from kge.core.behaviour import Behaviour
 from kge.core.component_system import ComponentSystem
 from kge.core.events import Event
@@ -11,7 +12,7 @@ class BehaviourManager(ComponentSystem):
     """
     def __init__(self, engine, **_):
         super().__init__(engine, **_)
-        self.components_supported = [Behaviour]
+        self.components_supported = (Behaviour,)
 
     def __fire_event__(self, event: Event, dispatch: Callable[[Event], None]) -> None:
         super(BehaviourManager, self).__fire_event__(event, dispatch)

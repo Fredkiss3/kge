@@ -53,7 +53,7 @@ title_smooth = [
 
 cam_frames = [
     Frame(position=Vector.Zero(), duration=2),
-    Frame(position=Vector.Up() * 5, duration=2),
+    Frame(position=Vector.Up() * .5, duration=2),
     Frame(position=Vector.Zero()),
 ]
 
@@ -62,11 +62,11 @@ class CamShaker(Behaviour):
         self.shake_anim = Animation(
             self.entity, cam_frames,
             loop=False,
-            function=Animation.Smooth,
+            easing=Animation.Lerp,
         )
 
-    def on_update(self, ev, _):
-        self.shake_anim.update()
+    # def on_update(self, ev, _):
+    #     self.shake_anim.update()
 
 #
 # title_op = [
@@ -206,7 +206,7 @@ class Menu(Canvas):
         anim = Animation(
             title,
             frames=title_smooth,
-            function=Animation.Smooth
+            easing=Animation.Lerp
         )
 
         self.addComponent(

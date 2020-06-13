@@ -1,9 +1,11 @@
 from typing import Optional, Dict, Any, Tuple, Set, Callable, Union
 
+import pyglet
+
 import kge
 from kge.core.component import BaseComponent
 from kge.core.constants import ALWAYS
-from kge.core.events import Event, AnimChanged, Init
+from kge.core.events import AnimChanged, Init
 from kge.graphics.animation import Animation
 from kge.utils.condition import Condition
 
@@ -23,33 +25,30 @@ class AnimState(object):
             return inst
 
     def __init__(self, anim: Animation = None):
-        self.animation = anim
+        self.state = anim
 
     def __repr__(self):
-        if self.animation is None:
+        if self.state is None:
             return "AnimState(animation=ANY)"
 
-        return f"AnimState(animation={self.animation})"
+        return f"AnimState(animation={self.state})"
 
     def __next__(self):
         """
         Enter in the state
         """
-        if self.animation is not None:
-            self.animation.update()
-            return self.animation.finished
+        if self.state is not None:
+            if not self.state.paused:
+                self.state.play()
+            return self.state.finished
         return False
 
     def __enter__(self):
-        if self.animation is not None:
-            self.animation.restart()
+        if self.state is not None:
+            self.state.restart()
 
     def __exit__(self, *_, **__):
         pass
-
-    def exit(self):
-        if self.animation is not None:
-            self.animation.stop()
 
 
 class Transition(object):
@@ -68,6 +67,14 @@ class Transition(object):
 class Animator(BaseComponent):
     """
     A component that controls which animation to play
+
+    Usage :
+        >>> animation1 = Animation()
+        >>> animation2 = Animation()
+        >>> animator = Animator(animation1, animation2)
+        >>>
+        >>> e = kge.Entity()
+        >>> e.addComponent(animator)
     """
 
     @property
@@ -76,30 +83,45 @@ class Animator(BaseComponent):
 
     @entity.setter
     def entity(self, e: 'kge.Entity'):
-        if isinstance(e, kge.Entity):
+        if not isinstance(e, kge.Entity) and e is not None:
+            raise TypeError(f"Entity should be provided")
+
+        elif e is not None:
             if e.getComponent(kind=Animator) is not None:
                 raise AttributeError(f"There is already another Animator component attached to '{e}'")
 
-            # set entity
-            self._entity = e
+        # set entity
+        self._entity = e
 
-    next: Optional[AnimState]
-    current: AnimState
-
-    def __init__(self, *animations: Animation):
+    def __init__(self, first_animation: Animation, *animations: Animation):
         self._entity = None
         super().__init__()
 
-        if not len(animations):
+        if first_animation is None:
             raise ValueError("Your animator should have at least one animation in it !")
 
-        self.current = AnimState(animations[0])
-        self.next = None  # type: Optional[AnimState]
-        self.animations = {anim.name: AnimState(anim) for anim in animations}  # type: Dict[str, AnimState]
+        self.current = None  # type: Optional[AnimState]
+        self.next = AnimState(first_animation)  # type: Optional[AnimState]
+        self.animations = {anim.name: AnimState(anim) for anim in
+                           [first_animation, *animations]}  # type: Dict[str, AnimState]
         self.transitions = {}  # type: Dict[Tuple[AnimState, Condition], Transition]
 
-        self._fields = {}  # type: Dict[str, Any]
         self._conditions = {ALWAYS.prop: set()}  # type: Dict[str, Set[Condition]]
+
+        # If the animator is suspended or not
+        self._pending = False
+        self._paused = False
+        self._dispatch = None  # type: Optional[Callable]
+
+        self._fields = {}  # type: Dict[str, Any]
+
+    @property
+    def pending(self):
+        return self._pending
+
+    @property
+    def paused(self):
+        return self._paused
 
     def add_field(self, name: str, default_value: Any = None):
         if not name in self._fields:
@@ -108,66 +130,117 @@ class Animator(BaseComponent):
         else:
             raise ValueError("This field is already in the animator")
 
+    def _swap_anims(self, anim: AnimState):
+        """
+        Swap the animations
+        """
+        # Restart the animations
+        if anim is not None:
+            with anim, self.current:
+                pass
+        self.next = anim
+
+    def _update(self):
+        """
+        Apply animations states to object
+        """
+        dispatch = self._dispatch
+
+        self.current = self.next
+        finished = next(self.current)
+
+        # If finished and not paused, advance
+        if finished and not self.current.state.paused:
+            t = self.transitions.get((self.current, ALWAYS), None)
+
+            # Find the next animation to play
+            # If there is None, then set next to None
+            state = None
+
+            if t is not None:
+                # Dispatch Animation Changed
+                if dispatch is not None:
+                    dispatch(
+                        AnimChanged(previous=self.current.animation, next=t.next, entity=self.entity)
+                    )
+
+                state = AnimState(t.next)
+
+            self._swap_anims(state)
+
+    def pause(self):
+        """
+        Pause the animator,
+        Stops the execution of the animator and pauses the animation
+        """
+        if self.current.state is not None:
+            self.current.state.pause()
+        pyglet.clock.unschedule(self.animate)
+
+    def unpause(self):
+        """
+        Unpause the animator and continue
+        """
+        if self.current.state is not None:
+            self.current.state.unpause()
+        self.animate()
+
+    def animate(self, dt=None):
+        if not self._pending:
+            self._update()
+
+        if self.next is not None:
+            pyglet.clock.schedule_once(self.animate, self.current.state.current_frame.duration)
+        else:
+            self._pending = True
+
+    def get(self, key: str):
+        return self.__getitem__(key)
+
+    def set(self, **kwargs):
+        for key, val in kwargs.items():
+            self.__setitem__(key, val)
+
     def __setitem__(self, key, value):
         """
         Set a field
         """
-        self._fields[key] = value
+        try:
+            self._fields[key]
+        except KeyError:
+            self.add_field(key, value)
+        else:
+            self._fields[key] = value
 
-        # Check all conditions to get a valid condition
-        for cd in self._conditions[key]:
-            # If from ANY, then check condition
-            t = self.transitions.get((ANY, cd), False)
+            # Check all conditions to get a valid condition
+            for cd in self._conditions[key]:
+                # If from ANY, then check condition
+                t = self.transitions.get((ANY, cd), None)
 
-            if t:
-                if cd.resolve(self):
-                    state = AnimState(t.next)
-                    if self.next != state:
-                        self.next = state
-                    return
-            else:
-                t = self.transitions.get((self.current, cd), False)
-                if cd.resolve(self) and t:
-                    # Set current animation
-                    state = AnimState(t.next)
-                    if self.next != state:
-                        self.next = state
-                    return
+                if t is not None:
+                    if cd.resolve(self):
+                        state = AnimState(t.next)
+                        if self.next != state:
+                            self._swap_anims(state)
 
-    def update(self, dispatch: Callable[[Event], None]):
-        if self.next is not None:
-            # Dispatch Animation Changed
-            if self.next is not None:
-                dispatch(
-                    AnimChanged(previous=self.current.animation, next=self.next.animation, entity=self.entity)
-                )
+                            # Reanimate if dead
+                            if self._pending:
+                                self._pending = False
+                                self.animate()
+                        return
+                else:
+                    t = self.transitions.get((self.current, cd), None)
+                    if cd.resolve(self) and t is not None:
+                        # Set current animation
+                        state = AnimState(t.next)
+                        if self.next != state:
+                            self._swap_anims(state)
 
-                with self.next:
-                    pass
-
-                self.current = self.next
-                self.next = None
-
-        # update the current animation
-        finished = next(self.current)
-
-        if finished:
-            t = self.transitions.get((self.current, ALWAYS), None)
-
-            if t is not None:
-                # Dispatch Animation Changed
-                dispatch(
-                    AnimChanged(previous=self.current.animation, next=t.next, entity=self.entity)
-                )
-
-                state = AnimState(t.next)
-                if self.current != state:
-                    # Exit (Stop the animation)
-                    if state is not None:
-                        with state:
-                            pass
-
-                    self.current = state
+                            # Reanimate if dead
+                            if self._pending:
+                                self._pending = False
+                                self.animate()
+                        return
 
     def __getitem__(self, item):
         try:
@@ -189,9 +262,17 @@ class Animator(BaseComponent):
     def on_init(self, ev: Init, dispatch):
         """
         Start Animations
-        TODO
         """
+        # Start
+        self.animate()
 
+    @property
+    def conditions(self):
+        return self._conditions
+
+    @property
+    def fields(self):
+        return self._fields
 
     def add_transition(self, from_: Union[Animation, AnimState], to: Animation, forward_condition: Condition = ALWAYS,
                        back_condition: Condition = None):
@@ -211,7 +292,7 @@ class Animator(BaseComponent):
             >>> )
         """
         if forward_condition != ALWAYS and (not forward_condition.prop in self._conditions):
-            raise KeyError(f"The condition {forward_condition} is not in animator")
+            raise KeyError(f"The field {forward_condition.prop} is not registered in animator")
 
         # Add conditions
         self._conditions[forward_condition.prop].add(forward_condition)

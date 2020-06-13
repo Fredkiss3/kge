@@ -192,6 +192,11 @@ class Vector:
 
         return self.magnitude > other.magnitude
 
+    def __ge__(self, other):
+        if not isinstance(other, Vector):
+            raise TypeError(f"'>=' not supported between instances of 'Vector' and '{type(other).__name__}")
+
+        return self.magnitude >= other.magnitude
 
     def __getitem__(self, item):
         if item == 0:

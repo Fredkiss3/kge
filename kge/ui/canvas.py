@@ -176,11 +176,11 @@ class Canvas(BaseEntity):
                     if not ui in self._event_set:
                         self._event_set.append(ui)
 
-    def addComponent(self, component: T):
-        """
-        Cannot add a component
-        """
-        raise TypeError("Cannot add another component to the canvas")
+    # def addComponent(self, component: T):
+    #     """
+    #     Cannot add a component
+    #     """
+    #     raise TypeError("Cannot add another component to the canvas")
 
     @property
     def spatial_hash(self):

@@ -80,11 +80,11 @@ class BaseEntity(EventMixin):
         inst = super().__new__(cls)
 
         # Update number of items
-        cls.nbItems += 1
+        type(inst).nbItems += 1
 
         # The components attached to the object
         inst._components = defaultdict(set)
-        inst.name = inst.name = f"new {type(inst).__name__} {cls.nbItems}"
+        inst.name = inst.name = f"new {type(inst).__name__} {type(inst).nbItems}"
         inst._tag = tag
 
         # is this entity initialized ?
@@ -123,7 +123,7 @@ class BaseEntity(EventMixin):
         inst.coroutines = set()
 
         # Pending Components that needs to be dispatched
-        inst.pending = []
+        inst.pending = [] # type: List[BaseComponent]
 
         return inst
 
@@ -185,10 +185,11 @@ class BaseEntity(EventMixin):
         if not isinstance(val, bool):
             raise TypeError("Only boolean values allowed for 'dirty' Flag")
         if self.scene is not None:
-            if val:
-                self.scene.mark_as_dirty(self)
-            elif self.dirty:
-                self.scene.dirties.remove(self)
+            if val != self.dirty:
+                if val:
+                    self.scene.mark_as_dirty(self)
+                elif self.dirty:
+                    self.scene.dirties.remove(self)
 
     @property
     def size(self) -> DottedDict:
@@ -219,11 +220,6 @@ class BaseEntity(EventMixin):
         if rb is not None:
             if rb.body is not None and self._transform.position != rb.position:
                 if not isinstance(self, kge.Camera):
-                    # if self.scene is not None:
-                    #     self.scene.spatial_hash.remove(self._transform.position,
-                    #                                    Vector(self.size.width, self.size.height),
-                    #                                    self)
-                    #     self.scene.spatial_hash.add(rb.position, Vector(self.size.width, self.size.height), self)
 
                     # When position get changed, mark as 'dirty'
                     self.dirty = True
@@ -244,10 +240,6 @@ class BaseEntity(EventMixin):
                 # set as dirty
                 self.dirty = True
                 self.debuggable = True
-
-                # self.scene.spatial_hash.remove(self._transform.position, Vector(self.size.width, self.size.height),
-                #                                self)
-                # self.scene.spatial_hash.add(value, Vector(self.size.width, self.size.height), self)
 
             self._transform.position = Vector(value)
 
@@ -349,7 +341,7 @@ class BaseEntity(EventMixin):
 
     def start_coroutine(self, func: Callable, delay: float = .01, loop: bool = False, *args, **kwargs):
         """
-        TODO: Reformat Coroutines to generators function
+        TODO: Reformat Coroutines to generators functions
         Start a coroutine
 
         when setting a function as coroutine, your function should not have an infinite loop in it
@@ -426,9 +418,9 @@ class BaseEntity(EventMixin):
 
         You can call it either with type (a subtype of component) to get one component
         of type given, that is in the entity :
-            >>> t = player.getComponent(Transform)
+            >>> t = player.getComponent(BaseComponent)
             >>> print(t)
-            >>> "BaseComponent Transform of entity Entity X"
+            >>> "component BaseComponent of entity 'Player'"
 
         :param kind: the kind of component to retrieve
         :return: the component OF type requested or None if there is no component of type requested
@@ -449,8 +441,8 @@ class BaseEntity(EventMixin):
 
         You can call it either with type (a subtype of component) to get all components
         of type given, that are in the entity :
-            >>> player.removeComponent(PlayerMovement)
-            >>> ["BaseComponent PlayerMovement 1 of entity player", "BaseComponent PlayerMovement 2 of entity player"]
+            >>> player.removeComponent(kind=PlayerMovement)
+            >>> ["component PlayerMovement1 of entity player", "component PlayerMovement2 of entity player"]
 
         :param kind: the kind of component to retrieve
         """

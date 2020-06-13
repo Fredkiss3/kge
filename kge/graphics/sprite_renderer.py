@@ -1,8 +1,10 @@
+import time
+
 import math
 import platform
 import random
 import sys
-from typing import Union, Sequence, Optional
+from typing import Union, Sequence, Optional, Dict
 
 import pyglet
 from pyglet.gl import *
@@ -60,10 +62,13 @@ class SpriteRenderer(RenderComponent):
     def __init__(self, entity):
         super().__init__(entity)
 
+        # liste of sprites
+        self._sprite_cache = {} # type: Dict[Image, pyglet.sprite.Sprite]
+
         # Sprite attributes
-        self._next_image = None  # type: Union[Image, None]
-        self._image = None  # type: Union[Image, None]
-        self._sprite = None  # type: Union[pyglet.sprite.Sprite, None]
+        self._next_image = None  # type: Optional[Image]
+        self._image = None  # type: Optional[Image]
+        self._sprite = None  # type: Optional[pyglet.sprite.Sprite]
 
         # Color
         self._color = None  # type: Optional[Color]
@@ -220,25 +225,6 @@ class SpriteRenderer(RenderComponent):
                                                        tuple(color) * self.shape.num_points))
             self._vlist.draw(self.shape.mode)
             return self._vlist, self.shape.mode
-
-            # FIXME: THIS DOES NOT WORK PROPERLY
-            # if self.shape.radius is None:
-            #     self.shape.radius = max(
-            #         self.entity.scale.x, self.entity.scale.y) / 2
-            #
-            # # real world position
-            # pos = self.entity.position
-            #
-            # solid = not isinstance(self.shape, OutlinedCircle)
-            # vertices = self.getCircleVertices(camera,
-            #                                   pos,
-            #                                   self.shape.radius,
-            #                                   self.circle_segments,
-            #                                   solid
-            #                                   )
-            #
-            # self.shape.num_points = len(vertices) // 2
-
         else:
             return
 
@@ -316,14 +302,21 @@ class SpriteRenderer(RenderComponent):
             self._image = self._next_image
             self._next_image = None
 
-            # Set Sprite & delete vertices
+            # Make Sprite Invisible
             if self._sprite is not None:
-                self._sprite.image = self._image.load()
+                self._sprite.batch = None
+
+            # Get Sprite from cache
+            if self._next_image in self._sprite_cache:
+                sprite = self._sprite_cache[self._image]
             else:
-                self._sprite = pyglet.sprite.Sprite(
+                sprite = pyglet.sprite.Sprite(
                     img=self._image.load(), subpixel=True,
                     group=layers[self.entity.layer]
                 )
+                self._sprite_cache[self._image] = sprite
+
+            self._sprite = sprite
 
             # Make the sprite pixelated
             make_pixelated(self._sprite)
@@ -361,11 +354,9 @@ class SpriteRenderer(RenderComponent):
             # Set image only if next image is different
             if self._image != val:
                 self._next_image = val
-                # TODO : IS IT PERFORMANT ?
                 self._changed = True
         else:
             self.shape = val
-            # TODO : IS IT PERFORMANT ?
             self._changed = True
 
     @property
@@ -471,7 +462,6 @@ class SpriteRenderer(RenderComponent):
                         self._t.position = *t.position,
                         self._t.angle = t.angle
                         self._scale = self.entity.transform.scale
-                        # TODO : IS IT PERFORMANT ?
                         self._changed = False
                     else:
                         return
@@ -484,7 +474,6 @@ class SpriteRenderer(RenderComponent):
                             self._vlist = None
                     else:
                         shape = self.draw_shape(camera)
-                        pass
                 else:
                     if not self._visible:
                         if self._sprite.batch is not None:
@@ -501,6 +490,7 @@ class SpriteRenderer(RenderComponent):
 
                         ratio = DEFAULT_PIXEL_RATIO / REFERENCE_PIXEL_RATIO
 
+                        # Update sprite
                         self._sprite.update(pos.x, pos.y, -self.entity.transform.angle,
                                             scale_x=self.entity.transform.scale.x * ratio,
                                             scale_y=self.entity.transform.scale.y * ratio,

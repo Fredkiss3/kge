@@ -40,7 +40,7 @@ class BaseComponent(EventMixin):
                 raise TypeError("entity should be of type 'kge.Entity' or a subclass of 'kge.Entity'")
         self.entity = entity  # type: kge.Entity
         type(self).nbItems += 2
-        self.name = f"new {type(self)} {type(self).nbItems}"
+        self.name = f"new {type(self).__name__} {type(self).nbItems}"
 
         # Used to Initialize component
         self._initialized = False

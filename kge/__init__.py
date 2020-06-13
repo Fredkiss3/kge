@@ -3,17 +3,11 @@ https://github.com/Fredkiss3/kge
 
 Copyright (C) 2020-2021 Fredhel KISSIE
 
-THIS GAME ENGINE USE A COMBINATION OF GAME ENGINES :
-    - PYGLET : FOR RENDERING AND SOUND SYSTEM
-    - PYGAME : FOR JOYSTICK CONTROL
-
 inspired by PPB ENGINE:
 Checkout the repository :  https://github.com/ppb/pursuedpybear/
 """
 #: The release version
-import io
-
-version = '1.1'
+version = '1.2'
 
 import logging
 from typing import Callable
@@ -30,7 +24,7 @@ from kge.core.events import Event
 from kge.core.scene import Scene
 from kge.core.service_provider import ServiceProvider
 from kge.engine import Engine
-from kge.graphics.animation import Animation, Frame
+from kge.graphics.animation import Animation, Frame, EasingFunction
 from kge.graphics.animator import Animator, ANY
 from kge.graphics.image import Image, TiledImage
 from kge.graphics.renderer import Window
@@ -73,6 +67,7 @@ __all__ = [
     "Frame",
     "Animation",
     "Animator",
+    "EasingFunction",
     "ANY",
 
     # Conditions (Mostly used for animations)
@@ -216,10 +211,6 @@ def run(
 
     starting_scene let's you change the scene used by the engine.
     """
-    # output = io.StringIO()
-    # if show_log:
-    #     logging.basicConfig(level=log_level, stream=output)
-    # else:
     logging.basicConfig(level=log_level)
 
     with make_engine(setup,

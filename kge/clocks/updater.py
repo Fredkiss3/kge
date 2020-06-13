@@ -1,5 +1,5 @@
 import time
-from typing import Union
+from typing import Union, Callable
 
 import pyglet
 
@@ -21,11 +21,10 @@ class Updater(System):
         self.sum = 0
 
     def __enter__(self):
-        if type(self) != Updater:
-            pyglet.clock.schedule_interval_soft(
-                self.update, self.time_step)
-        else:
-            pyglet.clock.schedule(self.update)
+        pyglet.clock.schedule(self.update)
+
+    def __exit__(self, *args, **kwargs):
+        pyglet.clock.unschedule(self.update)
 
     def update(self, dt):
         self.engine.append_job(
@@ -41,10 +40,7 @@ class Updater(System):
             self.n_updates += 1
             self.sum += time_delta
             mean = self.sum / self.n_updates
-            if type(self) != Updater:
-                self.engine.fixed_dt = mean
-            else:
-                self.engine.update_dt = mean
+            self.engine.update_dt = mean
 
             event = self.event_to_dispatch.__call__(time_delta, scene)  # type: Union[events.Update, events.FixedUpdate]
 

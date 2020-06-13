@@ -55,12 +55,11 @@ class ContactFilter(b2.b2ContactFilter):
         col1 = fix1.userData
         col2 = fix2.userData
 
-        if isinstance(col1, Collider) and isinstance(col2, Collider):
+        if isinstance(col1, Collider) and isinstance(col2, Collider) and not (col1.isSensor or col2.isSensor):
             layer1 = col1.entity.layer
             layer2 = col2.entity.layer
 
             if (layer1, layer2) in self.system.layers_to_ignore or (layer2, layer1) in self.system.layers_to_ignore:
-                # TODO : Filter collision based on their layer
                 return False
             else:
                 return True
@@ -425,7 +424,7 @@ class DebugDrawer(b2.b2Draw):
         Draw the world
         """
         # Get Debuggable entities
-        entities = scene.debuggable  # scene.entity_layers(kge.Entity, renderable=False, debuggable=True, check_active=False)
+        entities = scene.debuggable
 
         # Draw Debug Data
         for e in set(entities):
@@ -903,7 +902,7 @@ class PhysicsManager(ComponentSystem):
         self.destruction_listener = DestructionListener(self)
 
         # only rigid bodies and colliders supported
-        self.components_supported = [RigidBody, Collider]
+        self.components_supported = (RigidBody, Collider)
 
         # bodies to destroy
         self.garbage_bodies = []  # type: List[b2.b2Body]
@@ -915,11 +914,19 @@ class PhysicsManager(ComponentSystem):
 
         # world
         self.world = None
+        self.n_updates = 0
+        self.sum = 0
 
-    def on_physics_update(self, event: PhysicsUpdate, dispatch: Callable[[Event], None]):
+    def update_physics(self, dt):
         """
         Update physics
         """
+        # Calculate the mean
+        self.n_updates += 1
+        self.sum += dt
+        mean = self.sum / self.n_updates
+        self.engine.fixed_dt = mean
+
         if not self.pause:
             if self.world is not None:
                 # Disable garbage bodies from being simulated
@@ -935,10 +942,10 @@ class PhysicsManager(ComponentSystem):
                 self.new_bodies.clear()
 
                 # Update the physics world
-                # FIXME : Sometimes this line bugs (WHY ?)
                 self.world.Step(
-                    FIXED_DELTA_TIME * event.time_scale, 10, 10)
+                    max(dt, FIXED_DELTA_TIME) * self.engine.time_scale, 10, 10)
                 self.world.ClearForces()
+                self.logger.debug(f"Physics Update")
 
     def on_draw_debug(self, event: events.DrawDebug, dispatch: Callable[[Event], None]):
         self.debug_drawer.StartDraw()
@@ -1004,9 +1011,16 @@ class PhysicsManager(ComponentSystem):
         self.debug_drawer.cam = self.engine.current_scene.main_camera
         self.debug_drawer.StartDraw(rebatch=True)
 
+        # Schedule Physics Update
+        pyglet.clock.schedule_interval(self.update_physics, FIXED_DELTA_TIME)
+
     def on_scene_stopped(self, event: events.SceneStopped, dispatch):
         super(PhysicsManager, self).on_scene_stopped(event, dispatch)
         self.world = None
+
+        # Unschedule physics update
+        pyglet.clock.unschedule(self.update_physics)
+
 
     def create_body(self, rb: RigidBody, e: BaseEntity):
         """
@@ -1063,9 +1077,9 @@ class PhysicsManager(ComponentSystem):
         if rb.is_ghost:
             manager = kge.ServiceProvider.getEntityManager()
             manager.add_component(e, rb)
+            # rb.is_ghost = False
 
         self.logger.debug(f"Body {rb} Created !")
-
         self.new_bodies.append((rb, ev.entity))
 
     def on_body_created(self, event: BodyCreated, dispatch):

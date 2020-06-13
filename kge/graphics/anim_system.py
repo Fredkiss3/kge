@@ -1,8 +1,8 @@
-from typing import Callable
+import pyglet
 
-import kge
 from kge.core import events
 from kge.core.component_system import ComponentSystem
+from kge.core.service import Service
 from kge.graphics.animator import Animator
 
 
@@ -11,21 +11,33 @@ class AnimSystem(ComponentSystem):
     The system that handles animations
     """
 
+    # _pending: Set[Animator] = set()
+
     def __init__(self, **_, ):
         super().__init__(**_)
-        self.components_supported = [Animator]
+        self.components_supported = (Animator,)
 
-    def on_update(self, ev: events.Update, dispatch: Callable[[events.Event], None]):
+    def on_destroy_entity(self, event: events.DestroyEntity, dispatch):
         """
-        Animate by update
-        TODO : TO CHANGE ?
+        Unschedule animator after entity has been destroyed
         """
-        if ev.scene.rendered:
-            # scene = ev.scene
-            # FIXME : REALLY NOT PERFORMANT !!!
-            # anim_e = set(scene.entity_layers(kge.Entity, filter_set=self._entities, renderable=False))
-            anim_e = self._components
+        for animator in event.entity.getComponents(kind=Animator):
+            pyglet.clock.unschedule(animator.animate)
+        super(AnimSystem, self).on_destroy_entity(event, dispatch)
 
-            for animator in anim_e: # type: Animator
-                # animator = e.getComponent(kind=Animator)
-                animator.update(dispatch)
+
+class AnimService(Service):
+    """
+    Animation services
+    FIXME: UNUSED
+    """
+    system_class = AnimSystem
+    _system_instance: AnimSystem
+    #
+    # @classmethod
+    # def append(cls, a: Animator):
+    #     """
+    #     Append animator to list of animators to start
+    #     once the scene will be started
+    #     """
+    #     cls._system_instance.append(a)

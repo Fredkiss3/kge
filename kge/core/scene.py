@@ -7,7 +7,7 @@ from typing import Iterator, Type, Callable, Sequence, Tuple, Union, TypeVar, Se
 import kge
 from kge.core import events
 from kge.core.camera import Camera
-from kge.core.component import BaseComponent
+# from kge.core.component import BaseComponent
 from kge.core.constants import BLACK, DEFAULT_RESOLUTION, DEFAULT_PIXEL_RATIO, MAX_LAYERS
 from kge.core.entity import BaseEntity
 from kge.core.eventlib import EventMixin
@@ -169,7 +169,7 @@ class BaseScene(EntityCollection, EventMixin):
         pass
 
     @classmethod
-    def load(cls, setup_or_scene: Union[Type["BaseScene"], Callable[["BaseScene"], None]], **kwargs, ):
+    def load(cls, setup_or_scene: Union[Type["BaseScene"], Callable[["BaseScene"], None]], *args, **kwargs, ):
         """
         Load a new scene
         """
@@ -190,7 +190,8 @@ class BaseScene(EntityCollection, EventMixin):
 
             cls.engine.dispatch(events.ReplaceScene(
                 new_scene=new_scene,
-                kwargs=kwargs
+                kwargs=kwargs,
+                args=args,
             ), immediate=True)
         else:
             raise AttributeError("Engine not started")
@@ -231,7 +232,7 @@ class BaseScene(EntityCollection, EventMixin):
 
         self.name = f"New {'Scene' if type(self).__name__ == 'BaseScene' else type(self).__name__} {type(self).nbItems}"
 
-        # Spatial Hash for querying visible elements
+        # Spatial Hash for querying UI elements
         self.spatial_hash = SpatialHash(2)
 
         # Main Camera
@@ -258,9 +259,9 @@ class BaseScene(EntityCollection, EventMixin):
         self._debug_list = set()  # type: Set[BaseEntity]
 
         # renderables types
-        self._renderables = [kge.Sprite, kge.Canvas]
+        self._renderables = (kge.Sprite, kge.Canvas,)
 
-        # TODO : IS IT GOOD ?
+        # Used for displaying a loading screen
         self.started  = False
         self.rendered = False
 
@@ -273,21 +274,29 @@ class BaseScene(EntityCollection, EventMixin):
 
     @property
     def debuggable(self):
+        """
+        Get elements to draw on debug
+        """
         return self._debug_list
 
     @property
     def dirties(self):
+        """
+        Get elements to draw on render
+        """
         return self._render_list
 
     def mark_as_dirty(self, e: BaseEntity):
         """
         Add an entity to the render list
         """
-        for type_ in self._renderables:
-            if (isinstance(e, type_)) and e.is_active:
-                self._render_list.add(e)
+        if isinstance(e, self._renderables) and e.is_active:
+            self._render_list.add(e)
 
-    def on_scene_started(self, ev: events.SceneStarted, dispatch):
+    def on_setup_scene(self, ev: events.SetupScene, dispatch):
+        """
+        Setup the scene
+        """
         try:
             if self._setup_function is not None:
                 self._setup_function(self)
@@ -334,13 +343,12 @@ class BaseScene(EntityCollection, EventMixin):
             - (entity, position, layer)
 
         Usage :
-            >>> scene1.setLayer(1, "Foreground")
-            >>> scene1.add( player, position=Vector(1, 2), layer="Foreground" )
+            >>> scene.setLayer(1, "Foreground")
+            >>> scene.add( player, position=Vector(1, 2), layer="Foreground" )
 
         :param entity: the entity to add to the scene
         :param position: the position of the entity in the scene
         :param layer: the layer in which the entity should be
-        :return:
         """
 
         if not isinstance(entity, BaseEntity):
@@ -351,9 +359,6 @@ class BaseScene(EntityCollection, EventMixin):
 
         # Set position
         entity.transform.position = position
-
-        # add entity to the spatial Hash
-        #self.spatial_hash.add(entity.position, Vector(entity.size.width, entity.size.height), entity)
 
         # Set layer
         if isinstance(layer, (int, str)):
@@ -387,19 +392,22 @@ class BaseScene(EntityCollection, EventMixin):
             manager.dispatch_component_operation(entity, p, added=True)
         entity.pending.clear()
 
+        # Register events for the entity
         self.register_events(entity)
 
     def addAll(self, *entities: Tuple[BaseEntity, Union[Tuple[float, float], Vector], Union[str, int]]):
+        # noinspection PyUnresolvedReferences
         """
-        Add Many entities in the scene in one shot in format :
-          - (entity, position, layer)
+                Add Many entities in the scene in one shot in format :
+                  - (entity, position, layer)
 
-        Usage :
-            >>> scene.addAll( (player, Vector(1,1), "Foreground"), (enemy, Vector(1,2), 1),  )
-        """
+                Usage :
+                    >>> scene.addAll( (player, Vector(1,1), "Foreground"), (enemy, Vector(1,2), 1),  )
+                """
         for entity, position, layer in entities:
             self.add(entity, position, layer)
 
+    # TODO : to remove ?
     # def entity_layers(self, *types: Type[BaseEntity],
     #                   filter_set: Set[BaseEntity] = None,
     #                   filter_component: Type[BaseComponent] = None,
@@ -580,8 +588,8 @@ if __name__ == '__main__':
 
     # scene1.add(key, (1, 5))
 
-    for entity in scene1.entity_layers():
-        print(entity, entity._transform.position)
+    # for entity in scene1.entity_layers():
+    #     print(entity, entity._transform.position)
 
     print(deepcopy(scene1))
     # key.destroy()

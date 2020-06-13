@@ -1,5 +1,7 @@
-import time
+from collections import OrderedDict, Callable
 from typing import List, Any, Optional, TypeVar
+
+import pyglet
 
 from kge.core.constants import DEFAULT_FPS
 from kge.graphics.image import Image
@@ -11,15 +13,15 @@ T = TypeVar("T")
 class Frame(object):
     """
     An animation frame
+
+    Example of usage:
+        >>> Frame(image=Image('stand1.jpg'), duration=.1)
     """
 
     def __init__(self, duration: float = .02, **states):
         """
-        :param states: the states of the animations
+        :param states: the states of the frame
         :param duration: duration in seconds
-
-        Example of usage:
-            >>> Frame(image=Image('stand1'), duration=.1)
         """
 
         if not len(states) > 0:
@@ -28,7 +30,7 @@ class Frame(object):
         if not isinstance(duration, (int, float)):
             raise TypeError("duration should a number (in seconds)")
         elif duration < 1 / DEFAULT_FPS:
-            raise ValueError(f"duration should not be less than {1 / DEFAULT_FPS:.3f} seconds")
+            raise ValueError(f"duration should not be less than {1 / DEFAULT_FPS:.3f} seconds not {duration}")
 
         self.states = states
         self.duration = duration
@@ -40,16 +42,56 @@ class Frame(object):
         return f"Animation Frame(states={self.states}, duration={self.duration} seconds)"
 
 
+class EasingFunction(Callable):
+    """
+    Animation Function,
+    if you want to create a custom easing function,
+    you should subclass this class
+
+    Example :
+
+    >>> class CustomEasingFunction(EasingFunction):
+    >>>     def compute(self, t: float) -> float:
+    >>>         # t here represents the time, it goes from 0 to 1
+    >>>         return t ** 3
+
+    Note that you 'compute' method should return a value between 0 & 1, otherwise you
+    will have an error.
+    """
+
+    def __call__(self, value, inMin, inMax, outMin, outMax):
+        """
+        Translate a value from one range to another
+        """
+        out = value - inMin
+        out /= (inMax - inMin)
+
+        out = self.compute(out)
+
+        if not (0 <= out <= 1):
+            raise ValueError("Your compute function should return a value between 0 and 1")
+
+        out *= (outMax - outMin)
+        return out + outMin
+
+    def compute(self, t: float) -> float:
+        raise NotImplementedError("Should be subclassed")
+
+
 class Animation(object):
     """
     An animation clip
     
     Usage : 
+        >>> parent = object()
         >>> run_anim = Animation(
         >>>    owner=parent,
-        >>>    frames=[Frame(image=run1), Frame(image=run2), Frame(image=run3)],
+        >>>    frames=[
+        >>>       Frame(image=Image("run1.png")),
+        >>>       Frame(image=Image("run2.png")),
+        >>>       Frame(image=Image("run3.png"))
+        >>>     ],
         >>>    loop=True,
-        >>>    function=Step
         >>> )
 
     Where :
@@ -58,33 +100,35 @@ class Animation(object):
         - loop: set the animation as looping or not
         - function: The transition function that the animation should apply when
             passing from one frame to another.
-            Use ```Animation.Smooth``` in order to get smooth animations.
-
-    FIXME: REFORMAT WITH PYGLET SCHEDULE FUNCTIONS
+            Use ```Animation.Lerp``` in order to get smooth animations.
     """
 
-    # Override this to change the clock used for frames.
-    _clock = time.monotonic
+    # instance count
     nbItems = 0
 
-    # Animation Curves
-    class Fn:
-        pass
+    class Lerp(EasingFunction):
+        """
+        Linear Interpolation Function
+        """
 
-    Smooth = Fn()  # For smooth animations
-    Step = Fn()  # For immediate animations
+        def compute(self, t: float):
+            return t
 
-    def __init__(self, owner: Any, frames=None, loop: bool = True, name: str = None, function: Fn = Step):
-        if frames is None:
-            frames = []
-        if not (isinstance(len(frames), int) and isinstance(loop, bool)):
+    def __init__(self, owner: Any, frames: List[Frame], loop: bool = True, name: str = None,
+                 easing: EasingFunction = None):
+        if not (isinstance(frames, (tuple, list)) and isinstance(loop, bool)):
             raise TypeError(
-                'Frames should be a list of frames and property should be a string and loop should be a bool')
+                'Frames should be a list of frames and loop should be a bool')
 
-        if not function in [Animation.Step, Animation.Smooth]:
-            raise ValueError("Curve should be a value in list : [Animation.Step, Animation.Lerp]")
+        # Can provide a Type
+        if isinstance(easing, type):
+            easing = easing()
+
+        if easing is not None and not isinstance(easing, EasingFunction):
+            raise ValueError(
+                "Easing function should be provided, try to use 'Animation.Lerp' or subclass the class 'EasingFunction'")
         try:
-            assert len(frames) > 0 or hasattr(self, 'const')
+            assert len(frames) > 0
         except AssertionError:
             raise ValueError("Your animation should have at least one frame in it !")
 
@@ -96,63 +140,106 @@ class Animation(object):
         else:
             self.name = name
 
-        self.frames = frames  # type: List[Frame]
+        # Frames
+        self.frames = [] if frames is None else self._sample(frames, easing)  # type: OrderedDict
+        self._samples = list(self.frames.values())
         self.loop = loop
 
         # Set length
-        self.length = sum([f.duration for f in self.frames])
+        self.length = sum([f.duration for f in self.frames.values()])
 
+        # Owner
         self._owner = owner
-        self._last_frame = None  # type: Optional[Frame]
-        self._cur_frame = frames[0]  # type: Optional[Frame]
-        self._next_frame = None  # type: Optional[Frame]
+        self._next_frame = self._samples[0]  # type: Optional[Frame]
+        self._cur_frame = None  # type: Optional[Frame]
 
         # Time stamps
-        self._cur_time = 0
-        self._last_ftime = 0
-        self._t_dep = 0
-        self._stopped = False
+        self._paused = False
+        self._finished = False
 
         # curves
-        self._fn = function
+        self._fn = easing
+
+    def _sample(self, frames: List[Frame], easing: Optional[EasingFunction]) -> OrderedDict:
+        """
+        Sample the animation
+        :param frames: the list of frames
+        :param easing: the easing Function
+        :return: a Dict with
+            - key: a timestamp corresponding at the time to the next frame
+            - frame: a frame
+        """
+        if not isinstance(frames, list):
+            raise TypeError("frames should be a list of frames")
+
+        # This has to be an ordered dict because we want access from index
+        samples = OrderedDict()
+
+        if len(frames) > 0:
+            samples[0] = frames[0]
+        if len(frames) > 1:
+            if easing is None:
+                x = frames[0].duration
+                for i in range(1, len(frames)):
+                    samples[x] = frames[i]
+                    x += frames[i].duration
+
+            else:
+                # The start variables
+                len_ = sum([f.duration for f in frames[:-1]])
+                lframe = frames[0]
+                nframe = frames[1]
+
+                # the timesteps
+                t0 = 0
+                t = t0
+                t1 = lframe.duration
+                while t <= len_:
+                    t += 1 / DEFAULT_FPS
+
+                    # Time should not pass the next step
+                    if t >= t1:
+                        t = t1
+
+                    # get the states
+                    states = {}
+                    for prop, state in lframe.states.items():
+                        res = easing(t, t0, t1, state, nframe[prop])
+                        states[prop] = res
+
+                    # Build a Frame
+                    f = Frame(1 / DEFAULT_FPS, **states)
+                    samples[t] = f
+
+                    # if time is greater than the last frame
+                    if t >= t1:
+                        try:
+                            nframe = frames[frames.index(nframe) + 1]
+                        except IndexError:
+                            pass
+                        lframe = nframe
+                        t0 = t
+                        t1 = t + lframe.duration
+
+                # Change the duration of the first Frame
+                frames[0].duration = 1 / DEFAULT_FPS
+
+        return samples
 
     @property
     def finished(self):
-        return False if self.loop else (
-                (self._cur_frame is not None
-                 and self.frames.index(self._cur_frame) == len(self.frames) - 1)
-                or self._stopped
-        )
+        return self._finished
 
-    def update(self):
-        """
-        Apply the properties to owner
-        :return:
-        """
-        frame = next(self)
-        # print(self.frames.index(frame), len(self.frames) - 1, self.finished)
-
-        if frame is not None:
-            # Set state only if different
-            for prop, state in frame.states.items():
-                if self._fn == Animation.Step:
-                    if getattr(self._owner, prop) != state:
-                        setattr(self._owner, prop, state)
-                elif self._fn == Animation.Smooth:
-                    p = (self._cur_time - self._last_ftime) / frame.duration
-
-                    try:
-                        val = self.lerp(state, self._next_frame[prop], p)
-                    except TypeError:
-                        if getattr(self._owner, prop) != state:
-                            setattr(self._owner, prop, state)
-                    else:
-                        if getattr(self._owner, prop) != val:
-                            setattr(self._owner, prop, val)
+    @property
+    def paused(self):
+        return self._paused
 
     @property
     def last_frame(self):
-        return self._last_frame
+        i = self._samples.index(self._cur_frame) - 1
+        if i == -1:
+            return None
+        return self._samples[i]
 
     @property
     def next_frame(self):
@@ -162,91 +249,69 @@ class Animation(object):
     def current_frame(self):
         return self._cur_frame
 
-    @staticmethod
-    def lerp(a: T, b: T, p: float) -> T:
-        """
-        Linear interpolation function
-        """
-        return a + (b - a) * p
-
     def restart(self):
-        self._t_dep = 0
-        self._cur_frame = None
-        self._stopped = False
-
-    def stop(self):
-        self._t_dep = 0
-        self._cur_frame = None
-        self._stopped = True
-
-    # TODO: FOR INSPIRATION
-    # def _animate(self, dt):
-    #     self._frame_index += 1
-    #     if self._frame_index >= len(self._animation.frames):
-    #         self._frame_index = 0
-    #         self.dispatch_event('on_animation_end')
-    #         if self._vertex_list is None:
-    #             return  # Deleted in event handler.
-    #
-    #     frame = self._animation.frames[self._frame_index]
-    #     self._set_texture(frame.image.get_texture())
-    #
-    #     if frame.duration is not None:
-    #         duration = frame.duration - (self._next_dt - dt)
-    #         duration = min(max(0, duration), frame.duration)
-    #         clock.schedule_once(self._animate, duration)
-    #         self._next_dt = duration
-    #     else:
-    #         self.dispatch_event('on_animation_end')
-
-    def __next__(self) -> Optional[Frame]:
         """
-        :return:
+        Restart the animation
         """
-        if self._stopped:
-            return None
+        self._finished = False
+        self._paused = False
+        self._next_frame = self._samples[0]
 
-        self._cur_time = self._clock()
+    def play(self, dt=None):
+        """
+        Play & apply the animation
+        """
+        if not self._paused:
+            self._update()
 
-        if self._t_dep == 0:
-            self._t_dep = self._cur_time
-            self._last_ftime = self._cur_time
-            self._cur_frame = self.frames[0]
-            self._last_frame = self._cur_frame
+    def pause(self):
+        """
+        Pause the animation
+        """
+        self._paused = True
 
-            if len(self.frames) > 1:
-                self._next_frame = self.frames[1]
-            else:
-                self._next_frame = self._cur_frame
+    def unpause(self):
+        """
+        Continue the animation
+        """
+        self._paused = False
 
-            return self._cur_frame
+    def _update(self):
+        """
+        Apply the properties of the current frame to the owner
+        """
+        # get current frame
+        if self._next_frame is not None:
+            self._cur_frame = self._next_frame
+
+            # Set state only if different
+            for prop, state in self._cur_frame.states.items():
+                if getattr(self._owner, prop) != state:
+                    setattr(self._owner, prop, state)
+
+        # Set next frame
+        next(self)
+
+    def __next__(self):
+        """
+        Swap animations
+        """
+        if self._finished or self._paused:
+            return
         else:
-            if self._cur_time - self._t_dep > self.length + .04:
-                # If arrived to the end of the animation
-                # FIXME : SKIPPING THE LAST FRAME ?
+            i = self._samples.index(self._next_frame)
+
+            try:
+                self._next_frame = self._samples[i + 1]
+            except IndexError:
+                # if index out of range
                 if self.loop:
-                    self._t_dep = 0
+                    self._next_frame = self._samples[0]
                 else:
-                    self.stop()
-                self._last_ftime = self._cur_time
-                self._last_frame = self._cur_frame
-                self._cur_frame = self.frames[-1]
-                self._next_frame = self.frames[0]
-
-                return self._cur_frame
-            elif self._cur_time >= self._last_ftime + self._cur_frame.duration:
-                # Change Frame
-                self._last_ftime = self._cur_time
-
-                i = self.frames.index(self._cur_frame) + 2
-                if i >= len(self.frames):
-                    i = -1
-
-                self._last_frame = self._cur_frame
-                self._cur_frame = self._next_frame
-                self._next_frame = self.frames[i]
-
-        return self._cur_frame
+                    self._next_frame = None
+                    self._finished = True
+                    # Stop
+                    # pyglet.clock.unschedule(self.play)
 
     @classmethod
     def from_sequence(cls, owner: Any,
@@ -304,9 +369,6 @@ class Animation(object):
 
 
 if __name__ == '__main__':
-    import pyglet
-
-
     class O:
         name = ''
         lname = ''
@@ -316,19 +378,19 @@ if __name__ == '__main__':
 
 
     frames = [
-        Frame(name='kiss', lname="Boss"),
-        Frame(name='game'),
-        Frame(name='engine'),
-        Frame(name='by'),
-        Frame(name='FredKiss', lname="Badass"),
+        Frame(name='kiss', lname="Boss", duration=1),
+        Frame(name='game', duration=1),
+        Frame(name='engine', duration=1),
+        Frame(name='by', duration=1),
+        Frame(name='FredKiss', lname="Badass", duration=1),
     ]
 
     o = O()
     anim = Animation(o, frames, loop=True)
+    anim.play()
 
 
     def up(dt):
-        anim.update()
         print(o)
 
 

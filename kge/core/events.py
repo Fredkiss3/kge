@@ -1,4 +1,4 @@
-from typing import Union, Dict, Any, Type, Collection, Set, List
+from typing import Union, Dict, Any, Type, Collection, Set, List, Tuple
 
 from dataclasses import dataclass
 
@@ -103,7 +103,7 @@ class MouseDown(Event):
 @dataclass
 class MouseScroll(Event):
     """
-    Fired when the mouse wheel is being used 
+    Fired when the mouse wheel is being used
     """
     position: Vector  # Scene position
     screen_position: Vector
@@ -263,14 +263,6 @@ class EntityDestroyed(Event):
     scene: "kge.Scene" = None
 
 
-# @dataclass
-# class PreRender(Event):
-#     """
-#     Fired before rendering.
-#     """
-#     scene: 'kge.Scene' = None
-
-
 @dataclass
 class WindowResized(Event):
     """
@@ -301,13 +293,6 @@ class Render(Event):
     scene: 'kge.Scene' = None
 
 
-# @dataclass
-# class Rendered(Event):
-#     """
-#     Fired after the window has been drawn
-#     """
-#     scene: 'kge.Scene' = None
-
 
 @dataclass
 class EntityEnabled(Event):
@@ -336,6 +321,14 @@ class StartScene(Event):
 
 
 @dataclass
+class SetupScene(Event):
+    """
+    Fired when we need to Prepare the scene before to start everything
+    """
+    scene: 'kge.Scene' = None
+
+
+@dataclass
 class ReplaceScene(Event):
     """
     Fired to replace the current scene with a new one.
@@ -350,9 +343,10 @@ class ReplaceScene(Event):
     a SceneStarted event will be sent.
 
     Examples:
-        * `dispatch(new_scene=ReplaceScene(MyScene(player=player))`
+        * `dispatch(new_scene=ReplaceScene(MyScene, kwargs={'player': player}))`
     """
     new_scene: Union['kge.Scene', Type['kge.Scene']]
+    args: Tuple[Any, ...] = None
     kwargs: Dict[str, Any] = None
     scene: 'kge.Scene' = None
 
@@ -423,26 +417,6 @@ class StopScene(Event):
     scene: 'kge.Scene' = None
 
 
-# @dataclass
-# class Idle(Event):
-#     """
-#     An engine plumbing event to pump timing information to subsystems.
-#     """
-#     time_delta: float
-#     scene: 'kge.Scene' = None
-
-#
-# @dataclass
-# class AddComponent(Event):
-#     """
-#     Fired when we need to add a component to an entity
-#     """
-#     entity: 'kge.Entity'
-#     # key: str
-#     component: Type['kge.Component']
-#     scene: 'kge.Scene' = None
-
-
 @dataclass
 class ComponentAdded(Event):
     """
@@ -453,15 +427,6 @@ class ComponentAdded(Event):
     scene: 'kge.Scene' = None
 
 
-# @dataclass
-# class RemoveComponent(Event):
-#     """
-#     Fired when we need to remove a component to an entity
-#     """
-#     entity: 'kge.Entity'
-#     kind: Union[Type['kge.Component'], "kge.Component", str]
-#     scene: 'kge.Scene' = None
-#
 
 @dataclass
 class ComponentRemoved(Event):

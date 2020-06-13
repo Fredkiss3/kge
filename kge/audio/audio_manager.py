@@ -85,7 +85,7 @@ class AudioManager(System):
 
 class Audio(Service):
     """
-    Note that, we can only use 'wav' and 'ogg' format for sounds
+    Note : we can only use 'wav' and 'ogg' format for sounds
     """
     system_class = AudioManager
     _system_instance: AudioManager

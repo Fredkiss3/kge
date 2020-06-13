@@ -15,8 +15,11 @@ logger = logging.getLogger(__name__)
 class Image(AbstractAsset):
     """
     Asset for image
+
+    Usage :
+        >>> image = Image(path='image.png')
     """
-    root_folder = ''
+    root_folder = None  # type: Optional[str]
     _cache = {}  # type: Dict[str, pyglet.image.AbstractImage]
 
     def __init__(self, path: str):
@@ -33,7 +36,7 @@ class Image(AbstractAsset):
         if file is None and self.name in self._cache:
             return self._cache[self.name]
 
-        if Image.root_folder:
+        if Image.root_folder is not None:
             name = f"{Image.root_folder}/{self.name}"
         else:
             name = self.name
@@ -60,6 +63,7 @@ class Image(AbstractAsset):
         # Add to cache only if file object is not Provided
         if file is None:
             self._cache[self.name] = img
+
         return img
 
     def cropped(self, origin: Vector, size: Vector) -> "SlicedImage":
@@ -102,12 +106,16 @@ class Image(AbstractAsset):
 
     def __repr__(self):
         return f"<{type(self).__name__} name={self.root_folder}{self.name!r}  size=({self.size.x}X{self.size.y}) " \
-               f"{'' if self.is_loaded() else 'Not '}loaded>"
+            f"{'' if self.is_loaded() else 'Not '}loaded>"
 
 
 class SlicedImage(Image):
     """
-    A Sliced Image
+    A Sliced Image.
+
+    Usage :
+        >>> parent = Image(path='image.png')
+        >>> sliced = parent.cropped(origin=Vector.Zero(), size=Vector(16, 16))
     """
 
     def __init__(self, path: str, region: DottedDict = None):
@@ -138,7 +146,7 @@ class SlicedImage(Image):
         return \
             f"""<{type(
                 self).__name__} name={self.root_folder}{self.name!r} region=(origin={self._origin}, area={self._area}) """ \
-            f"""size=({self.size.x}X{self.size.y}) {'' if self.is_loaded() else 'Not '}loaded>"""
+                f"""size=({self.size.x}X{self.size.y}) {'' if self.is_loaded() else 'Not '}loaded>"""
 
 
 class TiledImage(Image):

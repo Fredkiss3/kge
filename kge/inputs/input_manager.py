@@ -20,8 +20,8 @@ class InputManager(System):
     A system that converts Pyglet events to Kge Events
     TODO :
         - HANDLE JOYSTICK EVENTS
-        - FOR AS MANY JOYS AS POSSIBLE (SET A MAX JOYS)
-        - USE PYGAME
+            --> FOR AS MANY JOYS AS POSSIBLE (SET A MAX JOYS)
+            --> USE PYGAME FOR THAT ?
 
     """
 

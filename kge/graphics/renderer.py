@@ -2,12 +2,13 @@ import io
 import logging
 import sys
 import time
-from typing import Union, List, Optional, Tuple
+from typing import Union, List, Optional, Tuple, Callable
 
 import imgui
 import pyglet
 from imgui.integrations.pyglet import PygletRenderer
 from pyglet.gl import *
+from pyglet.gl import gl_info as info
 
 import kge
 from kge.core import events
@@ -15,13 +16,14 @@ from kge.core.component_system import ComponentSystem
 from kge.core.constants import DEFAULT_RESOLUTION, IS_FULLSCREEN, IS_RESIZABLE, DEFAULT_FPS, BLACK, \
     MAX_LAYERS, RED, WHITE, YELLOW
 from kge.core.service import Service
+from kge.graphics.image import Image
 from kge.graphics.render_component import RenderComponent
 from kge.utils.color import Color
 from kge.utils.dotted_dict import DottedDict
 from kge.utils.vector import Vector
 
 
-class DebugConsole(object):
+class DebugPanel(object):
     """
     Console Used For DEBUG, it aims to wraps IMGUI calls
     """
@@ -29,6 +31,9 @@ class DebugConsole(object):
     items: List[Tuple[str, Color]] = []
     output_stream: io.StringIO = io.StringIO()
     scroll_down: bool = False
+
+    # No more than 200 lines
+    LIMIT_ITEMS = 200
 
     def add_log(self, log: str):
         self.items.append((log, YELLOW))
@@ -39,27 +44,26 @@ class DebugConsole(object):
     def add_output(self, output: str):
         self.items.append((output, WHITE))
 
-    def render(self, metrics: str, window: pyglet.window.Window, console: bool):
+    def render(self, window: pyglet.window.Window, console: bool, _debug_fun: Callable = None):
         # Imgui Renderer
         imgui.new_frame()
         imgui.set_next_window_position(0, 18)
-        imgui.set_next_window_size(window.width, window.height-18)
+        imgui.set_next_window_size(window.width, window.height - 18)
         imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 0)
         imgui.push_style_var(imgui.STYLE_WINDOW_BORDERSIZE, 0)
         imgui.push_style_var(imgui.STYLE_WINDOW_PADDING, (0, 0))
         imgui.push_style_var(imgui.STYLE_ALPHA, 0.01)
         window_flags = imgui.WINDOW_NO_TITLE_BAR | imgui.WINDOW_NO_COLLAPSE | \
-        imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE | \
-        imgui.WINDOW_NO_BRING_TO_FRONT_ON_FOCUS | imgui.WINDOW_NO_NAV_FOCUS | \
-        imgui.WINDOW_NO_DOCKING
+                       imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE | \
+                       imgui.WINDOW_NO_BRING_TO_FRONT_ON_FOCUS | imgui.WINDOW_NO_NAV_FOCUS | \
+                       imgui.WINDOW_NO_DOCKING
         imgui.begin('DockSpace', True, window_flags)
         imgui.pop_style_var(4)
         imgui.push_style_var(imgui.STYLE_ALPHA, 1)
         imgui.dock_space("Window Dock Space", 0., 0., 1 << 3)
         imgui.pop_style_var(1)
 
-
-        imgui.begin("Debug Console", False, imgui.WINDOW_NO_FOCUS_ON_APPEARING)
+        imgui.begin("Debug Panel", False, imgui.WINDOW_NO_FOCUS_ON_APPEARING)
         if imgui.begin_main_menu_bar():
             # first menu dropdown
             if imgui.begin_menu('File'):
@@ -71,17 +75,38 @@ class DebugConsole(object):
             imgui.end_main_menu_bar()
 
         # Show Everything
-        if metrics is not None:
-            self._show_metrics(metrics)
+        if _debug_fun is not None and callable(_debug_fun):
+            _debug_fun()
+
         if console:
             self._show_input_line()
             self._show_text_output()
+
+        self._show_hardware_infos()
 
         imgui.end()
         imgui.end()
 
         # Render Imgui
         imgui.render()
+
+    def _show_hardware_infos(self):
+        # [SECTION] HARDWARE INFOS
+        imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 5)
+        imgui.push_style_var(imgui.STYLE_WINDOW_BORDERSIZE, 0)
+        imgui.push_style_var(imgui.STYLE_WINDOW_PADDING, (10, 10))
+        imgui.set_next_window_size(330, 70)
+        window_flags = imgui.WINDOW_NO_TITLE_BAR | \
+                       imgui.WINDOW_NO_COLLAPSE | \
+                       imgui.WINDOW_NO_RESIZE | \
+                       imgui.WINDOW_NO_FOCUS_ON_APPEARING
+
+        imgui.begin("HARDWARE INFOS", False, window_flags)
+        imgui.text(f'OpenGL Version: {info.get_version()}')
+        imgui.text(f'Vendor: {info.get_vendor()}')
+        imgui.text(f'Renderer : {info.get_renderer()}')
+        imgui.pop_style_var(3)
+        imgui.end()
 
     def _show_input_line(self):
         # [SECTION] INPUT LINE
@@ -118,6 +143,9 @@ class DebugConsole(object):
             "TEXT OUTPUT", border=True,
             flags=imgui.WINDOW_HORIZONTAL_SCROLLING_BAR)
 
+        if len(self.items) > self.LIMIT_ITEMS:
+            self.items.clear()
+
         items = filter(lambda i: self.input.lower() in i[0].lower(), self.items)
         for item, color in items:
             # if self.input.lower() in item.lower():
@@ -126,13 +154,6 @@ class DebugConsole(object):
         if self.scroll_down or imgui.get_scroll_y() >= imgui.get_scroll_max_y():
             imgui.set_scroll_here(1.0)
 
-        imgui.end_child()
-
-    def _show_metrics(self, metrics: str):
-        # [SECTION] FPS
-        imgui.begin_child(
-            "METRICS", height=80, border=True, )
-        imgui.text(f"{metrics}")
         imgui.end_child()
 
 
@@ -211,18 +232,15 @@ class Renderer(ComponentSystem):
     The system which task is to render all elements in a scene
     TODO:
         - Set Pixel Ratio Dynamically
-        - Set FullScreen by script
-        - Resize Window by script
+        - Set FullScreen by script --> WIP
+        - Resize Window by script --> WIP
         - LOOK FOR 'pyglet Z ordering with Sprite' -> For Applying 'Order in layer' (?)
-        - Camera Jittering :
-            -> Clocks Out of sync
     """
 
     def __init__(self,
                  resolution=DEFAULT_RESOLUTION,
                  show_output=False,
                  show_fps=False,
-                 # console_output: io.StringIO = io.StringIO(),
                  fullscreen=IS_FULLSCREEN, resizable=IS_RESIZABLE, vsync=False,
                  **_):
         super().__init__(**_)
@@ -232,28 +250,27 @@ class Renderer(ComponentSystem):
         self.display_fps = show_fps
 
         # String IO for console debugging
-        # self.log_output = console_output
         self.err_output = io.StringIO()
         self.output = io.StringIO()
 
         # Debug Console
-        self._console = DebugConsole()
+        self._console = DebugPanel()
 
         # To Draw
         self.to_draw = []
 
-        self.components_supported = [RenderComponent]
+        self.components_supported = (RenderComponent,)
         self.accumulated_time = 0
         self.last_tick = None
         self.start_time = None
         self.time_step = 1 / DEFAULT_FPS
         self.window = None  # type: Union[pyglet.window.Window, None]
+        self.resolution = resolution
         self._vsync = vsync
 
-        # TODO : THESE ATTRIBUTES DO NOT WORK PROPERLY
+        # FIXME : THESE ATTRIBUTES DO NOT WORK PROPERLY
         self._is_fullscreen = fullscreen
         self._is_resizable = resizable
-        self.resolution = resolution
 
         self.window_size = Vector.Zero()
 
@@ -287,20 +304,37 @@ class Renderer(ComponentSystem):
         # Mean of renders
         self.sum = 0
         self.n_render = 0
+        # Elements rendered at each pass
+        self._dirties = 0
+
+        # Time took to draw a batch
+        self.draw_time = 0
+        self.draws = 0
 
     def on_window_resized(self, event: events.WindowResized, dispatch):
         """
-        FIXME : CHANGE THIS
+        TODO
         :param event:
         :param dispatch:
         :return:
         """
-        # scene = self.engine.current_scene
-        # if scene is not None:
-        #     for canvas in scene.entity_layers(kge.Canvas, renderable=False):  # type: kge.Canvas
-        #         canvas.renderer.delete()
-        #         canvas.dirty = True
         pass
+
+    def _show_metrics(self):
+        """
+        Show Metrics
+        """
+        imgui.begin_child(
+            "METRICS", height=100, border=True, flags=imgui.WINDOW_HORIZONTAL_SCROLLING_BAR)
+
+        draw_call = 1 if self.draws == 0 else (self.draw_time / self.draws) * 1000
+        imgui.text(f"""
+Entities in scene : {len(self.engine.current_scene.all)} | {len(self.engine.current_scene.dirties)} elements rendered 
+DRAW FPS : {self.FPS} | {draw_call} ms took to draw one frame
+UPDATE TIME : {self.engine.update_dt * 1000:.4f} ms -> {1 / self.engine.update_dt:.2f} FPS
+PHYSICS TIME : {self.engine.fixed_dt * 1000:.4f} ms -> {1 / self.engine.fixed_dt:.2f} FPS
+RENDER TIME : {self.engine.render_dt * 1000:.4f} ms -> {self.engine.render_dt * self._dirties * 1000:.4f} ms total""")
+        imgui.end_child()
 
     def on_disable_entity(self, event: events.DisableEntity, dispatch):
         if hasattr(event.entity, "renderer"):
@@ -346,6 +380,7 @@ class Renderer(ComponentSystem):
             fullscreen=self._is_fullscreen,
             caption=f"{self.engine.window_title}"
         )
+        self.window.set_location(50, 50)
 
         # show console ?
         if self.display_log:
@@ -390,7 +425,7 @@ class Renderer(ComponentSystem):
             self.engine.event_loop.has_exit = True
 
     def close(self):
-        self._dispatch(events.Quit(), immediate=True)
+        # self._dispatch(events.Quit(), immediate=True)
         self.window.close()
         return pyglet.event.EVENT_HANDLED
 
@@ -398,16 +433,11 @@ class Renderer(ComponentSystem):
         """
         Render calculations
         """
-        # print(f"RENDER TIME {dt}")
+        self.logger.debug("Calling Renderer.render")
+
         scene = self.engine.current_scene
         if not scene.started:
             return
-
-        if scene.rendered:
-            # Calculate Mean Between 'render' calls
-            self.n_render += 1
-            self.sum += dt
-            self.engine.render_dt = self.sum / self.n_render
 
         if scene is not None:
             # set scene color
@@ -418,6 +448,7 @@ class Renderer(ComponentSystem):
             # Shapes to draw (MOSTLY CIRCLES)
             self.to_draw = []
             dirties = set(scene.dirties)
+            self._dirties = len(dirties)
 
             if self._load_feedback is not None:
                 if not self._load_feedback.loaded:
@@ -425,11 +456,26 @@ class Renderer(ComponentSystem):
                     self._load_feedback.loaded = True
                     return
 
+            n_render = 0
+            sum_ = 0
+
+            self.n_render += 1
+
             for entity in dirties:  # type: Union[kge.Sprite, kge.Canvas]
                 # Render elements
+                dep = time.monotonic()
                 shape = entity.renderer.render(scene)
+                t = time.monotonic() - dep
+                n_render += 1
+                sum_ += t
+                # print(f"Took {t} sec to render {entity}")
                 if shape is not None:
                     self.to_draw.append(shape)
+
+            if self._dirties > 0:
+                dt = sum_ / n_render
+                self.sum += dt
+                self.engine.render_dt = self.sum / self.n_render
 
             if self._load_feedback is not None:
                 scene.rendered = True
@@ -454,14 +500,10 @@ class Renderer(ComponentSystem):
                 debug.rebatch()
                 self._dispatch(events.DrawDebug())
 
-    def set2d(self, ):
+    def set2d(self):
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        # width, height = self.window.width, self.window.height
-        # glOrtho(-self.window.width / 2, self.window.width / 2, -self.window.height / 2, self.window.height / 2, -1, 1)
         gluOrtho2D(-self.window.width / 2, self.window.width / 2, -self.window.height / 2, self.window.height / 2)
-        # gluOrtho2D(0, self.window.width, 0, self.window.height)
-        # glOrtho(0, window.width, 0, window.height, -1, 1)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
@@ -484,16 +526,15 @@ class Renderer(ComponentSystem):
         # Push the Matrix and Translate ViewPort
         glPushMatrix()
         self.set2d()
-        # FIXME : NOT SYNCED WITH CAMERA POSITION ?
-        # print("Translating...")
+
+        # Translate to camera
         glTranslatef(*self.cam_transform.pos, 0)
 
         # Set ZOOM
-        # print("Zooming...")
         glScalef(self.cam_transform.zoom, self.cam_transform.zoom, 0)
 
         # Draw the current Batch
-        # print("DRAWING BATCH")
+        self.logger.debug("Calling Renderer.on_draw")
         self.batch.draw()
         for shape, mode in self.to_draw:
             glPointSize(2.0)
@@ -503,23 +544,14 @@ class Renderer(ComponentSystem):
         # Draw physics data
         if self.logger.getEffectiveLevel() == logging.DEBUG:
             debug = kge.DebugDraw
-            # self.batch._draw_list
-            # print(debug.debug_batch.group_map,debug.debug_batch._draw_list,)
             debug.world_batch.draw()
             debug.debug_batch.draw()
-            # debug.rebatch()
 
         glPopMatrix()
 
-        # Display Debug Console
+        # Display Debug Panel
         if self.display_log or self.display_fps:
-            # print("DRAWING CONSOLE...")
-            self.show_console(f"""DRAW FPS : {self.FPS}
-UPDATE TIME : {self.engine.update_dt:.4f} ms -> {1 / self.engine.update_dt:.2f} FPS
-FIXED UPDATE TIME : {self.engine.fixed_dt:.4f} ms -> {1 / self.engine.fixed_dt:.2f} FPS
-RENDER TIME : {self.engine.render_dt:.4f} ms -> {1 / self.engine.render_dt:.2f} FPS
-"""
-                              if self.display_fps else None)
+            self.show_debug_panel()
 
         # Draw the feedback
         if self._load_feedback is not None:
@@ -527,9 +559,13 @@ RENDER TIME : {self.engine.render_dt:.4f} ms -> {1 / self.engine.render_dt:.2f} 
 
         self.imgui_impl.render(imgui.get_draw_data())
 
+        # Calculate draw time
+        self.draw_time += time.monotonic() - now
+        self.draws += 1
+
         return pyglet.event.EVENT_HANDLED
 
-    def show_console(self, metrics: str):
+    def show_debug_panel(self):
         """
         Show the console
         """
@@ -540,13 +576,6 @@ RENDER TIME : {self.engine.render_dt:.4f} ms -> {1 / self.engine.render_dt:.2f} 
             self.output.seek(0)
             self._console.add_output(val)
 
-        # # Log Output
-        # val = self.log_output.getvalue()
-        # if len(val) > 0:
-        #     self.log_output.truncate(0)
-        #     self.log_output.seek(0)
-        #     self._console.add_log(val)
-
         # Error Output
         val = self.err_output.getvalue()
         if len(val) > 0:
@@ -554,27 +583,135 @@ RENDER TIME : {self.engine.render_dt:.4f} ms -> {1 / self.engine.render_dt:.2f} 
             self.err_output.seek(0)
             self._console.add_error(val)
 
-        self._console.render(metrics, self.window, self.display_log)
+        self._console.render(self.window, self.display_log, self._show_metrics)
 
 
 class Window(Service):
     system_class = Renderer
     _system_instance: Renderer
 
+    #: The default mouse cursor.
+    CURSOR_DEFAULT = None
+    #: A crosshair mouse cursor.
+    CURSOR_CROSSHAIR = 'crosshair'
+    #: A pointing hand mouse cursor.
+    CURSOR_HAND = 'hand'
+    #: A "help" mouse cursor; typically a question mark and an arrow.
+    CURSOR_HELP = 'help'
+    #: A mouse cursor indicating that the selected operation is not permitted.
+    CURSOR_NO = 'no'
+    #: A mouse cursor indicating the element can be resized.
+    CURSOR_SIZE = 'size'
+    #: A mouse cursor indicating the element can be resized from the top
+    #: border.
+    CURSOR_SIZE_UP = 'size_up'
+    #: A mouse cursor indicating the element can be resized from the
+    #: upper-right corner.
+    CURSOR_SIZE_UP_RIGHT = 'size_up_right'
+    #: A mouse cursor indicating the element can be resized from the right
+    #: border.
+    CURSOR_SIZE_RIGHT = 'size_right'
+    #: A mouse cursor indicating the element can be resized from the lower-right
+    #: corner.
+    CURSOR_SIZE_DOWN_RIGHT = 'size_down_right'
+    #: A mouse cursor indicating the element can be resized from the bottom
+    #: border.
+    CURSOR_SIZE_DOWN = 'size_down'
+    #: A mouse cursor indicating the element can be resized from the lower-left
+    #: corner.
+    CURSOR_SIZE_DOWN_LEFT = 'size_down_left'
+    #: A mouse cursor indicating the element can be resized from the left
+    #: border.
+    CURSOR_SIZE_LEFT = 'size_left'
+    #: A mouse cursor indicating the element can be resized from the upper-left
+    #: corner.
+    CURSOR_SIZE_UP_LEFT = 'size_up_left'
+    #: A mouse cursor indicating the element can be resized vertically.
+    CURSOR_SIZE_UP_DOWN = 'size_up_down'
+    #: A mouse cursor indicating the element can be resized horizontally.
+    CURSOR_SIZE_LEFT_RIGHT = 'size_left_right'
+    #: A text input mouse cursor (I-beam).
+    CURSOR_TEXT = 'text'
+    #: A "wait" mouse cursor; typically an hourglass or watch.
+    CURSOR_WAIT = 'wait'
+    #: The "wait" mouse cursor combined with an arrow.
+    CURSOR_WAIT_ARROW = 'wait_arrow'
+
+    # Current Cursor
+    _cursor = CURSOR_DEFAULT
+
     @property
     def window(self) -> pyglet.window.Window:
         return self._system_instance.window
 
     # FIXME : FULLSCREEN NOT WORKING PROPERLY ?
-    @property
-    def fullscreen(self) -> bool:
+    @classmethod
+    def get_fullscreen(self) -> bool:
         return self._system_instance.window.fullscreen
 
-    @fullscreen.setter
-    def fullscreen(self, value: bool):
+    @classmethod
+    def set_fullscreen(self, value: bool):
         if not isinstance(value, bool):
             raise TypeError("Fullscreen should be a bool")
+        self.window.maximize()
         self._system_instance.window.set_fullscreen(value, width=self.window.width, height=self.window.height)
+
+    @classmethod
+    def get_cursor(self):
+        return self._cursor
+
+    @classmethod
+    def set_icon(self, image: Image):
+        """
+        Set window Icon
+        """
+        if not isinstance(image, Image):
+            raise TypeError("Icon should be an Image")
+        self._system_instance.window.set_icon(image.load())
+
+    @classmethod
+    def set_cursor(self, value: Union[str, Image]):
+        if not isinstance(value, (str, Image)):
+            raise TypeError("Cursor should be a str or an Image")
+        if isinstance(value, Image):
+            cursor = pyglet.window.ImageMouseCursor(value.load())
+        else:
+            _cursors = [
+                self.CURSOR_CROSSHAIR,
+                self.CURSOR_HELP,
+                self.CURSOR_NO,
+                self.CURSOR_SIZE,
+                self.CURSOR_SIZE_UP,
+                self.CURSOR_SIZE_UP_RIGHT,
+                self.CURSOR_SIZE_RIGHT,
+                self.CURSOR_SIZE_DOWN_RIGHT,
+                self.CURSOR_SIZE_DOWN,
+                self.CURSOR_SIZE_DOWN_LEFT,
+                self.CURSOR_SIZE_LEFT,
+                self.CURSOR_SIZE_UP_LEFT,
+                self.CURSOR_SIZE_UP_DOWN,
+                self.CURSOR_SIZE_LEFT_RIGHT,
+                self.CURSOR_TEXT,
+                self.CURSOR_WAIT,
+                self.CURSOR_WAIT_ARROW,
+            ]
+
+            if not value in _cursors:
+                raise ValueError("This cursor is not a valid cursor")
+
+            cursor = self._system_instance.window.get_system_mouse_cursor(value)
+        self._system_instance.window.set_mouse_cursor(cursor)
+        self._cursor = value
+
+    @classmethod
+    def get_size(self) -> Vector:
+        return Vector(self.window.width, self.window.height)
+
+    @classmethod
+    def set_size(self, value: Vector):
+        if not isinstance(value, Vector):
+            raise TypeError("Size should be a vector")
+        self.window.set_size(*value)
 
     @property
     def batch(self) -> pyglet.graphics.Batch:

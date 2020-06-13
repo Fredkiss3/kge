@@ -5,3 +5,4 @@ dist/
 kge.egg-info/
 kge_1.0.1/
 *.sh
+*.pyx

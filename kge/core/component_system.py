@@ -1,4 +1,4 @@
-from typing import List, Type, Dict, Set
+from typing import List, Type, Dict, Set, Tuple, Sequence
 
 import kge
 from kge.core import events
@@ -27,7 +27,7 @@ class ComponentSystem(System):
         super().__init__(engine, **_)
 
         # components types and components associated to this entity
-        self.components_supported = []  # type: List[Type[Component]]
+        self.components_supported = ()  # type: Tuple
         self._components = set()  # type: Set[Component]
         self._entities = set() # type: Set[kge.Entity]
 
@@ -38,12 +38,11 @@ class ComponentSystem(System):
     def on_component_added(self, event: events.ComponentAdded, dispatch):
         component = event.component
 
-        for type_ in self.components_supported:
-            if isinstance(component, type_):
-                self._components.add(component)
-                self._entities.add(component.entity)
-                self.register_events(event.component)
-                event.component.__fire_event__(events.Init(event.scene), dispatch)
+        if isinstance(component, self.components_supported):
+            self._components.add(component)
+            self._entities.add(component.entity)
+            self.register_events(component)
+            event.component.__fire_event__(events.Init(event.scene), dispatch)
 
     def register_events(self, b: Component):
         """

@@ -68,13 +68,13 @@ class AnimTestCase(unittest.TestCase):
             easing=None
         )
 
-        self.assertEqual(len(frames), len(anim.frames))
+        self.assertEqual(len(frames), len(anim.samples))
         self.assertEqual(sum([f.duration for f in frames]), anim.length)
-        self.assertIsInstance(anim.frames, dict)
-        self.assertEqual(f1, anim.frames[0])
-        self.assertEqual(f2, anim.frames[0.1])
-        self.assertEqual(f3, anim.frames[0.6])
-        self.assertEqual(f4, anim.frames[1.35])
+        self.assertIsInstance(anim.samples, dict)
+        self.assertEqual(f1, anim.samples[0])
+        self.assertEqual(f2, anim.samples[0.1])
+        self.assertEqual(f3, anim.samples[0.6])
+        self.assertEqual(f4, anim.samples[1.35])
 
     def test_sample_lerp_animation_duration(self):
         f1 = Frame(position=Vector.Up(), duration=.1)
@@ -93,10 +93,10 @@ class AnimTestCase(unittest.TestCase):
 
         self.assertLessEqual(anim.length, sum([f.duration for f in frames]) + .16)
         self.assertGreaterEqual(anim.length, sum([f.duration for f in frames]) - .16)
-        self.assertGreaterEqual(len(anim.frames), int(sum([f.duration for f in frames[:-1]]) * DEFAULT_FPS) - 3)
+        self.assertGreaterEqual(len(anim.samples), int(sum([f.duration for f in frames[:-1]]) * DEFAULT_FPS) - 3)
         # self.assertLessEqual(len(anim.frames), int(sum([f.duration for f in frames[:-1]]) * DEFAULT_FPS) + 3)
 
-        for k, f in anim.frames.items():
+        for k, f in anim.samples.items():
             self.assertLessEqual(f["position"], Vector.Down())
             if k > .6:
                 self.assertAlmostEqual(.61, k, 1)
@@ -116,7 +116,7 @@ class AnimTestCase(unittest.TestCase):
             easing=Animation.Lerp
         )
 
-        for f in anim.frames.values():
+        for f in anim.samples.values():
             self.assertLessEqual(f["position"], Vector.Down())
 
     def test_lerp_animation_states_distribued_correctly(self):
@@ -134,8 +134,8 @@ class AnimTestCase(unittest.TestCase):
             easing=Animation.Lerp
         )
 
-        k = max([k for k in anim.frames])
-        last = anim.frames[k]
+        k = max([k for k in anim.samples])
+        last = anim.samples[k]
         self.assertGreater(last["position"], Vector.Down())
 
     def test_smoothstart_animation_states_distribued_correctly(self):
@@ -153,8 +153,8 @@ class AnimTestCase(unittest.TestCase):
             easing=SmoothStart2
         )
 
-        k = max([k for k in anim.frames])
-        last = anim.frames[k]
+        k = max([k for k in anim.samples])
+        last = anim.samples[k]
         self.assertGreater(last["position"], Vector.Down())
 
     def test_invalid_easing_function(self):
@@ -185,7 +185,7 @@ class AnimTestCase(unittest.TestCase):
             easing=None
         )
 
-        self.assertEqual(len(anim.frames), 1)
+        self.assertEqual(len(anim.samples), 1)
         self.assertEqual(anim.length, sum([f.duration for f in frames]))
 
     def test_single_frame_eased_anim(self):
@@ -200,7 +200,7 @@ class AnimTestCase(unittest.TestCase):
             easing=Animation.Lerp()
         )
 
-        self.assertEqual(len(anim.frames), 1)
+        self.assertEqual(len(anim.samples), 1)
         self.assertEqual(anim.length, sum([f.duration for f in frames]))
 
     def test_stepped_anim_played_correctly(self):
@@ -218,7 +218,7 @@ class AnimTestCase(unittest.TestCase):
         self.assertIsNone(anim.current_frame)
         self.assertEqual(f1, anim.next_frame)
         anim.play()
-        self.assertEqual(len(anim.frames), 1)
+        self.assertEqual(len(anim.samples), 1)
         self.assertEqual(self.e.name, 'hello')
         self.assertIsNone(anim.next_frame)
         self.assertEqual(f1, anim.current_frame)
@@ -233,7 +233,7 @@ class AnimTestCase(unittest.TestCase):
         self.assertIsNone(anim.current_frame)
         self.assertEqual(f1, anim.next_frame)
         anim.play()
-        self.assertEqual(len(anim.frames), 1)
+        self.assertEqual(len(anim.samples), 1)
         self.assertEqual(self.e.name, 'hello')
         self.assertIsNotNone(anim.next_frame)
         self.assertEqual(f1, anim.current_frame)
@@ -267,7 +267,7 @@ class AnimTestCase(unittest.TestCase):
             easing=Animation.Lerp
         )
 
-        self.assertEqual(1 / DEFAULT_FPS, anim.frames[0].duration)
+        self.assertEqual(1 / DEFAULT_FPS, anim.samples[0].duration)
 
     def test_lerp_anim_sampled_correctly_with_int_reversed(self):
         anim = Animation(
@@ -331,7 +331,7 @@ class AnimTestCase(unittest.TestCase):
         ]
 
         anim = self.s_anim(frames)
-        self.assertEqual(3, len(anim.frames))
+        self.assertEqual(3, len(anim.samples))
         anim.play()
         self.assertEqual(f1, anim.current_frame)
         self.assertEqual(f2, anim.next_frame)
@@ -351,7 +351,7 @@ class AnimTestCase(unittest.TestCase):
         ]
 
         anim = self.s_anim(frames, loop=True)
-        self.assertEqual(3, len(anim.frames))
+        self.assertEqual(3, len(anim.samples))
         anim.play()
         self.assertEqual(f1, anim.current_frame)
         self.assertEqual(f2, anim.next_frame)
@@ -418,7 +418,7 @@ class AnimTestCase(unittest.TestCase):
         ]
 
         anim = self.s_anim(frames)
-        self.assertEqual(3, len(anim.frames))
+        self.assertEqual(3, len(anim.samples))
         anim.play()
         self.assertEqual(f1, anim.current_frame)
         self.assertEqual(f2, anim.next_frame)

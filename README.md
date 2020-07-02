@@ -1,4 +1,4 @@
-# KISS GAME ENGINE
+# KISS GAME ENGINE (C++ REWRITE)
 
 KISS GAME ENGINE (`kge`) is a 2D Game Engine written in Python, running in Python and For Python Game Developers.
 

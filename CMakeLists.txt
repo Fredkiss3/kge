@@ -1,0 +1,112 @@
+cmake_minimum_required(VERSION 3.16)
+project(KGE)
+
+set(CMAKE_CXX_STANDARD 17)
+
+include_directories(KGE/src)
+include_directories(KGE/src/KGE)
+include_directories(KGE/src/KGE/Core)
+include_directories(KGE/vendor)
+
+add_executable(KGE
+        KGE/src/KGE/Core/Entity.cpp
+        KGE/src/KGE/Core/Entity.h
+        KGE/src/KGE/Core/Layer.cpp
+        KGE/src/KGE/Core/Layer.h
+        KGE/src/KGE/Core/Log.cpp
+        KGE/src/KGE/Core/Log.h
+        KGE/src/KGE/Core/Scene.cpp
+        KGE/src/KGE/Core/Scene.h
+        KGE/src/KGE/Base.h
+        KGE/src/KGE/Engine.cpp
+        KGE/src/KGE/Engine.h
+        KGE/src/headers.h
+        KGE/src/KGE.h
+        KGE/vendor/spdlog/cfg/argv.h
+        KGE/vendor/spdlog/cfg/env.h
+        KGE/vendor/spdlog/cfg/helpers-inl.h
+        KGE/vendor/spdlog/cfg/helpers.h
+        KGE/vendor/spdlog/cfg/log_levels.h
+        KGE/vendor/spdlog/details/backtracer-inl.h
+        KGE/vendor/spdlog/details/backtracer.h
+        KGE/vendor/spdlog/details/circular_q.h
+        KGE/vendor/spdlog/details/console_globals.h
+        KGE/vendor/spdlog/details/file_helper-inl.h
+        KGE/vendor/spdlog/details/file_helper.h
+        KGE/vendor/spdlog/details/fmt_helper.h
+        KGE/vendor/spdlog/details/log_msg-inl.h
+        KGE/vendor/spdlog/details/log_msg.h
+        KGE/vendor/spdlog/details/log_msg_buffer-inl.h
+        KGE/vendor/spdlog/details/log_msg_buffer.h
+        KGE/vendor/spdlog/details/mpmc_blocking_q.h
+        KGE/vendor/spdlog/details/null_mutex.h
+        KGE/vendor/spdlog/details/os-inl.h
+        KGE/vendor/spdlog/details/os.h
+        KGE/vendor/spdlog/details/periodic_worker-inl.h
+        KGE/vendor/spdlog/details/periodic_worker.h
+        KGE/vendor/spdlog/details/registry-inl.h
+        KGE/vendor/spdlog/details/registry.h
+        KGE/vendor/spdlog/details/synchronous_factory.h
+        KGE/vendor/spdlog/details/tcp_client-windows.h
+        KGE/vendor/spdlog/details/tcp_client.h
+        KGE/vendor/spdlog/details/thread_pool-inl.h
+        KGE/vendor/spdlog/details/thread_pool.h
+        KGE/vendor/spdlog/details/windows_include.h
+        KGE/vendor/spdlog/fmt/bundled/chrono.h
+        KGE/vendor/spdlog/fmt/bundled/color.h
+        KGE/vendor/spdlog/fmt/bundled/compile.h
+        KGE/vendor/spdlog/fmt/bundled/core.h
+        KGE/vendor/spdlog/fmt/bundled/format-inl.h
+        KGE/vendor/spdlog/fmt/bundled/format.h
+        KGE/vendor/spdlog/fmt/bundled/locale.h
+        KGE/vendor/spdlog/fmt/bundled/ostream.h
+        KGE/vendor/spdlog/fmt/bundled/posix.h
+        KGE/vendor/spdlog/fmt/bundled/printf.h
+        KGE/vendor/spdlog/fmt/bundled/ranges.h
+        KGE/vendor/spdlog/fmt/bin_to_hex.h
+        KGE/vendor/spdlog/fmt/fmt.h
+        KGE/vendor/spdlog/fmt/ostr.h
+        KGE/vendor/spdlog/sinks/android_sink.h
+        KGE/vendor/spdlog/sinks/ansicolor_sink-inl.h
+        KGE/vendor/spdlog/sinks/ansicolor_sink.h
+        KGE/vendor/spdlog/sinks/base_sink-inl.h
+        KGE/vendor/spdlog/sinks/base_sink.h
+        KGE/vendor/spdlog/sinks/basic_file_sink-inl.h
+        KGE/vendor/spdlog/sinks/basic_file_sink.h
+        KGE/vendor/spdlog/sinks/daily_file_sink.h
+        KGE/vendor/spdlog/sinks/dist_sink.h
+        KGE/vendor/spdlog/sinks/dup_filter_sink.h
+        KGE/vendor/spdlog/sinks/msvc_sink.h
+        KGE/vendor/spdlog/sinks/null_sink.h
+        KGE/vendor/spdlog/sinks/ostream_sink.h
+        KGE/vendor/spdlog/sinks/ringbuffer_sink.h
+        KGE/vendor/spdlog/sinks/rotating_file_sink-inl.h
+        KGE/vendor/spdlog/sinks/rotating_file_sink.h
+        KGE/vendor/spdlog/sinks/sink-inl.h
+        KGE/vendor/spdlog/sinks/sink.h
+        KGE/vendor/spdlog/sinks/stdout_color_sinks-inl.h
+        KGE/vendor/spdlog/sinks/stdout_color_sinks.h
+        KGE/vendor/spdlog/sinks/stdout_sinks-inl.h
+        KGE/vendor/spdlog/sinks/stdout_sinks.h
+        KGE/vendor/spdlog/sinks/syslog_sink.h
+        KGE/vendor/spdlog/sinks/systemd_sink.h
+        KGE/vendor/spdlog/sinks/tcp_sink.h
+        KGE/vendor/spdlog/sinks/win_eventlog_sink.h
+        KGE/vendor/spdlog/sinks/wincolor_sink-inl.h
+        KGE/vendor/spdlog/sinks/wincolor_sink.h
+        KGE/vendor/spdlog/async.h
+        KGE/vendor/spdlog/async_logger-inl.h
+        KGE/vendor/spdlog/async_logger.h
+        KGE/vendor/spdlog/common-inl.h
+        KGE/vendor/spdlog/common.h
+        KGE/vendor/spdlog/formatter.h
+        KGE/vendor/spdlog/fwd.h
+        KGE/vendor/spdlog/logger-inl.h
+        KGE/vendor/spdlog/logger.h
+        KGE/vendor/spdlog/pattern_formatter-inl.h
+        KGE/vendor/spdlog/pattern_formatter.h
+        KGE/vendor/spdlog/spdlog-inl.h
+        KGE/vendor/spdlog/spdlog.h
+        KGE/vendor/spdlog/tweakme.h
+        KGE/vendor/spdlog/version.h
+        SandBox.cpp KGE/src/KGE/Core/Event.h KGE/src/KGE/Core/Component.cpp KGE/src/KGE/Core/Component.h KGE/src/KGE/Core/System.cpp KGE/src/KGE/Core/System.h KGE/src/KGE/Utils/K_Allocator.cpp KGE/src/KGE/Utils/K_Allocator.h KGE/src/KGE/Utils/K_Random.h KGE/src/KGE/Utils/K_Timer.cpp KGE/src/KGE/Utils/K_Timer.h KGE/src/KGE/Core/EntityManager.cpp KGE/src/KGE/Core/EntityManager.h KGE/src/KGE/Core/Event.cpp KGE/src/KGE/Core/Events.h)

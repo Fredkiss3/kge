@@ -6,7 +6,7 @@
 
 #define EVENT_CLASS_TYPE(type)                           \
     static const char *GetStaticType() { return #type; } \
-    virtual const char *GetEventType() const override { return GetStaticType(); }
+    virtual const char *GetType() const override { return GetStaticType(); }
 #define EVENT_TYPE(type) #type
 
 namespace KGE
@@ -19,6 +19,7 @@ namespace KGE
     {
 
         virtual std::string GetData() const = 0;
+
         std::string Print() const
         {
             return GetTypeName() + "{ " + (scene != nullptr ? scene->GetName() + ", " : "") + "Handled=" +
@@ -27,14 +28,16 @@ namespace KGE
 
         virtual ~Event() = default;
 
-        Scene *scene = nullptr;
-        Entity *onlyEntity = nullptr;
+        Ref<Scene> scene = nullptr;
+        Ref<Entity> onlyEntity = nullptr;
 
         bool handled = false;
-        virtual const char *GetEventType() const = 0;
+
+        virtual const char *GetType() const = 0;
 
         // to give full control to the queue only
         friend class EventQueue;
+
         static const char *GetStaticType() { return "Event"; }
 
     protected:
@@ -58,13 +61,16 @@ namespace KGE
         void Dispatch(Event *e, bool immediate = false)
         {
             K_CORE_DEBUG("Adding Event : {} to the queue", e->Print());
+
+            // Casting the raw pointer to a shared_ptr
+            Ref<Event> ev(e);
             if (immediate)
             {
-                m_EventList.push_front(e);
+                m_EventList.push_front(ev);
             }
             else
             {
-                m_NextEventList.push_back(e);
+                m_NextEventList.push_back(ev);
             }
         }
 
@@ -72,9 +78,9 @@ namespace KGE
          * Swap & get the next event to process
          * @return the next event to process
          */
-        Event *GetNextEvent()
+        Ref<Event> GetNextEvent()
         {
-            Event *e = nullptr;
+            Ref<Event> e = nullptr;
             if (m_EventList.size() > 0)
             {
                 // Pick event
@@ -107,59 +113,14 @@ namespace KGE
         }
 
     private:
-        std::deque<Event *> m_EventList;
-        std::deque<Event *> m_NextEventList;
+        std::deque<Ref<Event>> m_EventList;
+        std::deque<Ref<Event>> m_NextEventList;
         //Event *m_Cursor;
         static EventQueue *s_Instance;
+
         EventQueue() : m_EventList(0), m_NextEventList(0) {}
 
     }; // namespace KGE
-
-    // This is the interface for EventHandler that each specialization will use
-    class HandlerBase
-    {
-    public:
-        // Call the member function
-        void exec(Event *evnt)
-        {
-            call(evnt);
-        }
-
-        virtual std::string GetEventName() const { return m_EventName; }
-
-    private:
-        // Implemented by EventHandler
-        virtual void call(Event *evnt) = 0;
-
-    protected:
-        std::string m_EventName;
-    };
-
-    template <class T, typename EventType>
-    class EventHandler : public HandlerBase
-    {
-    public:
-        typedef void (T::*EventCallBack)(EventType *);
-
-        EventHandler(T *instance, EventCallBack callBack) : instance{instance},
-                                                            m_CallBack{callBack}
-        {
-            m_EventName = EventType::GetStaticType();
-        };
-
-        void call(Event *evnt) override
-        {
-            // Cast event to the correct type and call member function
-            (instance->*m_CallBack)(static_cast<EventType *>(evnt));
-        }
-
-    private:
-        // Pointer to class instance of the callback to call
-        T *instance;
-
-        // Pointer to member function
-        EventCallBack m_CallBack;
-    };
 
     class EventListener
     {
@@ -174,61 +135,33 @@ namespace KGE
             return fullName;
         };
 
-        template <typename EventType>
-        void handle(EventType *event)
+        std::vector<std::string> GetSupportedEvents() const
         {
-            std::string type(event->GetEventType());
-            if (m_HandlersMap.find(type) != m_HandlersMap.end())
-            {
-                auto handler = m_HandlersMap[type];
-                handler->exec(event);
-            }
+            return m_SupportedEvents;
         }
 
-        /**
-         * For registering listeners in container
-         */
-        virtual std::vector<HandlerBase *> GetHandlers() const
-        {
-            return m_HandlerCache;
-        }
+        virtual ~EventListener() = default;
+
+        virtual void OnEvent(Event const &e) {}
 
     protected:
-        void DumpHandlerCache() const
+        void Bind(const char *event)
         {
-            for (auto it = m_HandlersMap.begin(); it != m_HandlersMap.end(); ++it)
-            {
-                K_CORE_TRACE("Found Handler {1} for {0}", it->first, it->second->GetEventName());
-            }
+            m_SupportedEvents.push_back(std::string(event));
         }
 
-        /**
-         * Register handlers to be called when this type of event occurs
-         */
-        template <class T, class EventType>
-        void Bind(T *instance, void (T::*eventCallBack)(EventType *))
-        {
-
-            // get event Name and add it to the map
-            HandlerBase *handler = new EventHandler<T, EventType>(instance, eventCallBack);
-            m_HandlersMap[EventType::GetStaticType()] = handler;
-            // Add event to list in order to access it from container
-            m_HandlerCache.push_back(m_HandlersMap[EventType::GetStaticType()]);
-        };
-
     private:
-        std::vector<HandlerBase *> m_HandlerCache;
-        std::map<std::string, HandlerBase *> m_HandlersMap;
+        std::vector<std::string> m_SupportedEvents;
     };
 
     class ListenerContainer
     {
     public:
-        void Register(EventListener *listener);
+        void Add(EventListener &listener);
 
-        void UnRegister(EventListener *listener);
+        void Remove(EventListener &listener);
 
-        std::vector<EventListener *> Get(const char *event) const;
+        std::vector<Ref<EventListener>> Get(const char *event) const;
 
         void DumpListenerMap() const
         {
@@ -242,7 +175,8 @@ namespace KGE
         }
 
     protected:
-        std::map<std::string, std::vector<EventListener *>> m_ListenerMap;
+        std::vector<Ref<EventListener>> m_Listeners;
+        std::map<std::string, std::vector<Ref<EventListener>>> m_ListenerMap;
     };
 
 } // namespace KGE

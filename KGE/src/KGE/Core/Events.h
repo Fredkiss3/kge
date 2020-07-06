@@ -42,4 +42,18 @@ namespace KGE
         EVENT_CLASS_TYPE(Quit);
     };
 
+    struct Dummy : public Event
+    {
+        Dummy(int data) : data(data) {}
+
+        int data;
+
+        std::string GetData() const override
+        {
+            return "data=" + std::to_string(data);
+        }
+
+        EVENT_CLASS_TYPE(Quit);
+    };
+
 } // namespace KGE

@@ -2,6 +2,7 @@
 
 #include <headers.h>
 #include <KGE/Core/Log.h>
+#include <KGE/Base.h>
 #include <KGE/Core/Event.h>
 #include <KGE/Core/EntityManager.h>
 

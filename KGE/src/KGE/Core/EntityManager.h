@@ -16,12 +16,19 @@ namespace KGE
     public:
         EntityManager()
         {
-            Bind(this, &EntityManager::OnInit);
+            Bind(EVENT_TYPE(Init));
         }
 
-        void OnInit(Init *e)
+        void OnEvent(Event const &e) override
         {
-            // TODO : DO STUFF...
+            if (e.GetType() == EVENT_TYPE(Init))
+            {
+                OnInit((Init &)e);
+            }
+        }
+
+        void OnInit(Init const &e)
+        {
             EventQueue::GetInstance()->Dispatch(new Quit);
         }
     };

@@ -11,8 +11,6 @@ include_directories(KGE/vendor)
 add_executable(KGE
         KGE/src/KGE/Core/Entity.cpp
         KGE/src/KGE/Core/Entity.h
-        KGE/src/KGE/Core/Layer.cpp
-        KGE/src/KGE/Core/Layer.h
         KGE/src/KGE/Core/Log.cpp
         KGE/src/KGE/Core/Log.h
         KGE/src/KGE/Core/Scene.cpp
@@ -109,4 +107,18 @@ add_executable(KGE
         KGE/vendor/spdlog/spdlog.h
         KGE/vendor/spdlog/tweakme.h
         KGE/vendor/spdlog/version.h
-        SandBox.cpp KGE/src/KGE/Core/Event.h KGE/src/KGE/Core/Component.cpp KGE/src/KGE/Core/Component.h KGE/src/KGE/Core/System.cpp KGE/src/KGE/Core/System.h KGE/src/KGE/Utils/K_Allocator.cpp KGE/src/KGE/Utils/K_Allocator.h KGE/src/KGE/Utils/K_Random.h KGE/src/KGE/Utils/K_Timer.cpp KGE/src/KGE/Utils/K_Timer.h KGE/src/KGE/Core/EntityManager.cpp KGE/src/KGE/Core/EntityManager.h KGE/src/KGE/Core/Event.cpp KGE/src/KGE/Core/Events.h)
+        SandBox.cpp
+        KGE/src/KGE/Core/Event.h
+        KGE/src/KGE/Core/Component.cpp
+        KGE/src/KGE/Core/Component.h
+        KGE/src/KGE/Core/System.cpp
+        KGE/src/KGE/Core/System.h
+        KGE/src/KGE/Utils/K_Allocator.cpp
+        KGE/src/KGE/Utils/K_Allocator.h
+        KGE/src/KGE/Utils/K_Random.h
+        KGE/src/KGE/Utils/K_Timer.cpp
+        KGE/src/KGE/Utils/K_Timer.h
+        KGE/src/KGE/Core/EntityManager.cpp
+        KGE/src/KGE/Core/EntityManager.h
+        KGE/src/KGE/Core/Event.cpp
+        KGE/src/KGE/Core/Events.h)

@@ -10,18 +10,12 @@ namespace KGE
                        m_EntityManager(),
                        m_Queue(EventQueue::GetInstance())
     {
-        Register(&m_EntityManager);
         // Enqueue Init Event
-        m_Queue->Dispatch(new Init());
+        m_Queue->Dispatch(new Init);
     }
 
     Engine::~Engine()
     {
-        //        if (m_CurScene != nullptr) {
-        //            delete m_CurScene;
-        //            m_CurScene = nullptr;
-        //        }
-
         delete m_Queue;
         m_Queue = nullptr;
     }
@@ -57,24 +51,24 @@ namespace KGE
         m_Queue->SwapEvents();
         while (auto e = m_Queue->GetNextEvent())
         {
-            // K_CORE_TRACE("Getting listeners for key {}", e->GetEventType());
-            auto listeners = Get(e->GetEventType());
+            auto listeners = Get(e->GetType());
             for (auto listener : listeners)
             {
                 if (!e->handled)
                 {
-                    K_CORE_TRACE("Calling Handler {0} for {1}", listener->GetTypeName(), e->Print());
-                    listener->handle(e);
+                    K_CORE_TRACE("Calling Listener {0} for {1}", listener->GetTypeName(), e->Print());
+                    listener->OnEvent(*e);
                 }
             }
 
+            // EntityManager should always handle the event
+            m_EntityManager.OnEvent(*e);
+
             // ShutDown the engine, if we should Quit
-            if (e->GetEventType() == Quit::GetStaticType())
+            if (e->GetType() == EVENT_TYPE(Quit))
             {
                 ShutDown();
             }
-            delete e;
-            e = nullptr;
         }
     }
 

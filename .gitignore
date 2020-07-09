@@ -1,6 +1,16 @@
+# Binaries
+!vendor/bin/premake/
+bin-int/
+
 /bin
 /build
 /cmake-build-debug
 .vscode
-.vs
 .idea
+
+# Visual Studio files and folder
+.vs/
+**.sln
+**.vcxproj
+**.vcxproj.filters
+**.vcxproj.user

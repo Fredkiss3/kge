@@ -2,10 +2,13 @@
 
 #include <memory>
 #include <iostream>
-#include <KGE/Core/Log.h>
+#include <KGE/Utils/Log.h>
 
-#define K_PLATFORM_WINDOWS
-#define K_DEBUG
+//#define K_PLATFORM_WINDOWS
+//#define K_DEBUG
+
+#define TYPE_NAME std::string GetTypeName() { return type(*this); }
+
 
 #ifdef K_DEBUG
 #ifdef K_PLATFORM_WINDOWS
@@ -75,9 +78,14 @@ std::string type(const T &t)
     return demangle(typeid(t).name());
 }
 
+template <class T>
+std::string type()
+{
+    return demangle(typeid(T).name());
+}
+
 namespace KGE
 {
-
     template <typename T>
     using Scope = std::unique_ptr<T>;
     template <typename T, typename... Args>
@@ -94,4 +102,8 @@ namespace KGE
         return std::make_shared<T>(std::forward<Args>(args)...);
     }
 
+    template<typename T, typename Y>
+    T& castRef(Ref<Y> ref) {
+        return dynamic_cast<T&>(*ref);
+    }
 } // namespace KGE

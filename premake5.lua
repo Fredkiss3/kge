@@ -19,6 +19,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 -- Include directories relative to root folder (solution directory)
 IncludeDir = {}
 IncludeDir["spdlog"] = "KGE/vendor/spdlog"
+IncludeDir["entt"] = "KGE/vendor/entt"
 -- IncludeDir["GLFW"] = "Hazel/vendor/GLFW/include"
 -- IncludeDir["Glad"] = "Hazel/vendor/Glad/include"
 -- IncludeDir["ImGui"] = "Hazel/vendor/imgui"
@@ -50,6 +51,9 @@ project "KGE"
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/vendor/**.h",
+		"%{prj.name}/vendor/**.hpp",
+		"%{prj.name}/vendor/**.cpp",
+		-- "%{prj.name}/vendor/**.cpp",
 	}
 
 	defines
@@ -68,6 +72,7 @@ project "KGE"
 
 	filter "system:windows"
 		systemversion "latest"
+		defines "K_PLATFORM_WINDOWS"
 
 		defines
 		{
@@ -117,6 +122,7 @@ project "Sandbox"
 
 	filter "system:windows"
 		systemversion "latest"
+		defines "K_PLATFORM_WINDOWS"
 		
 	filter "configurations:Debug"
 		defines "K_DEBUG"
@@ -132,3 +138,19 @@ project "Sandbox"
 		defines "K_DIST"
 		runtime "Release"
 		optimize "on"
+
+project "EntityComponentSystem"
+	location "ECS"
+	kind "ConsoleApp"
+	language "C++"
+	cppdialect "C++17"
+	staticruntime "on"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"ECS/**.h",
+		"ECS/**.cpp"
+	}

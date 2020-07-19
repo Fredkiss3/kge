@@ -1,24 +1,64 @@
-#include <headers.h>
+#include "headers.h"
 #include "Scene.h"
+#include "KGE/Engine.h"
+#include "Components.h"
 
 namespace KGE {
-    int Scene::s_NumInstances = 0;
 
-    Scene::Scene() : m_Entities(0), m_Name("New Scene") {
-        ++s_NumInstances;
-        m_Name += " " + std::to_string(s_NumInstances);
+    Scene::~Scene()
+    {
+        K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before adding an entity");
+        m_Pool.deadEntities.clear();
+        m_Pool.inactiveEntities.clear();
+        m_Pool.activeEntities.clear();
+        m_Pool.currentEntities.clear();
+        K_CORE_ERROR("Deleting the scene {}", GetName());
     }
 
-    void Scene::add(Entity const &e) {
-        m_Entities.push_back(e);
+    void Scene::add(Entity& e, EntityData* data) {
+        K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before adding an entity");
+
+        // Construct components, then add entity to the scene
+        for (auto cp : data->GetComponents()) {
+            e.addComponent(cp);
+        }
+
+        add(e);
     }
 
-    void Scene::remove(Entity const &e) {
-        for (unsigned int i(0); i < m_Entities.size(); ++i) {
-            if (m_Entities[i] == e) {
-                m_Entities.erase(m_Entities.begin() + i);
-                break;
-            }
+
+    void Scene::add(Entity& e)
+    {
+        K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before adding an entity");
+
+        ++m_lastID;
+        e.scene = Ref<Scene>(this);
+        e.m_ID = m_lastID;
+
+        if (e.IsAlive()) {
+            m_Pool.activeEntities.push_back(e);
+        }
+        else {
+            m_Pool.inactiveEntities.push_back(e);
         }
     }
+
+    void Scene::Load(int index)
+    {
+        K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before loading a new scene");
+        Engine::GetInstance()->StartScene(index);
+    }
+
+    void Scene::Load(const char* name)
+    {
+        K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before loading a new scene");
+        Engine::GetInstance()->StartScene(name);
+    }
+
+    void Scene::Pop()
+    {
+        K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before loading a new scene");
+        Engine::GetInstance()->PopScene();
+    }
+
 } // namespace KGE

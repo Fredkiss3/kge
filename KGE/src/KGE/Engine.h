@@ -1,47 +1,84 @@
 #pragma once
 
-#include <headers.h>
-#include <KGE/Core/Log.h>
-#include <KGE/Base.h>
-#include <KGE/Core/Event.h>
-#include <KGE/Core/EntityManager.h>
+#include "headers.h"
+#include "Base.h"
+#include "Utils/Log.h"
+#include "Core/ComponentManager.h"
+#include "Events/Event.h"
+#include <KGE/Core/Scene.h>
+#include "KGE/Core/ScriptManager.h"
 
 /*
  * The Engine class is a singleton that launches the game
  * */
 namespace KGE
 {
-    class Scene;
+    typedef void(*SetupFn)(Scene*);
+    typedef std::chrono::high_resolution_clock Clock;
+    
+    struct SceneData {
+        SetupFn fn;
+        std::string name;
+    };
+
+    //class Scene;
 
     class Engine : public ListenerContainer
     {
     public:
         ~Engine();
 
-        static void Run();
+        void Run();
 
         void ShutDown();
 
-        static Engine *GetInstance();
 
-        void RegisterScene(Scene *scene) {}
+        //static Ref<Engine> GetInstance(void(*fn)(Scene*));
 
-        //        Scene *GetCurrentScene() { return m_CurScene; }
+        //void StartScene(void(*fn)(Scene*));
+        void StartScene(int index);
+        void StartScene(const char* name);
+        void PopScene();
+        void RegisterScene(SetupFn, const char* name="new Scene");
+        //void StartScene(void(*fn)(Scene*));
+
+        Ref<Scene>& GetCurrentScene();
+        
+    public:
+        static const Ref<Engine>& GetInstance();
+
+        static const Ref<Engine>& Engine::GetStaticInstance()
+        {
+            return s_Instance;
+        }
 
     private:
         Engine();
 
-        void LoadScene(int index);
-        void LoadScene(std::string name);
-
+        //void SetupScene();
         void MainLoop();
+        bool DispatchEvents();
+        void UpdateSystems();
 
     private:
         bool m_Running;
-        EntityManager m_EntityManager;
-        EventQueue *m_Queue;
-        static Engine *s_Instance;
+        int m_CurrentSceneIndex;
 
-        void DispatchEvents();
+        ScriptManager m_ScriptManager;
+
+        std::vector<ComponentManager*> m_Managers;
+        
+        Ref<EventQueue> m_Queue;
+        
+        static Ref<Engine> s_Instance;
+
+        Ref<Scene> m_CurScene;
+
+        //std::vector<Scene> m_Scenes;
+        std::vector<SceneData> m_ScenesData;
+
+        // the clock we will be using
+        std::chrono::time_point<std::chrono::steady_clock> m_Clock;
     };
+
 } // namespace KGE

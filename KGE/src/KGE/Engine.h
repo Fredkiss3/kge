@@ -13,72 +13,71 @@
  * */
 namespace KGE
 {
-    typedef void(*SetupFn)(Scene*);
-    typedef std::chrono::high_resolution_clock Clock;
-    
-    struct SceneData {
-        SetupFn fn;
-        std::string name;
-    };
+typedef void (*SetupFn)(Scene *);
+typedef std::chrono::high_resolution_clock Clock;
 
-    //class Scene;
+struct SceneData
+{
+    SetupFn fn;
+    std::string name;
+};
 
-    class Engine : public ListenerContainer
+//class Scene;
+
+class Engine : public ListenerContainer
+{
+public:
+    ~Engine();
+
+    void Run();
+
+    void ShutDown();
+
+    //static Ref<Engine> GetInstance(void(*fn)(Scene*));
+
+    //void StartScene(void(*fn)(Scene*));
+    void StartScene(int index);
+    void StartScene(const char *name);
+    void PopScene();
+    void RegisterScene(SetupFn, const char *name = "new Scene");
+    //void StartScene(void(*fn)(Scene*));
+
+    Ref<Scene> &GetCurrentScene();
+
+public:
+    static const Ref<Engine> &GetInstance();
+
+    static const Ref<Engine> &GetStaticInstance()
     {
-    public:
-        ~Engine();
+        return s_Instance;
+    }
 
-        void Run();
+private:
+    Engine();
 
-        void ShutDown();
+    //void SetupScene();
+    void MainLoop();
+    bool DispatchEvents();
+    void UpdateSystems();
 
+private:
+    bool m_Running;
+    int m_CurrentSceneIndex;
 
-        //static Ref<Engine> GetInstance(void(*fn)(Scene*));
+    ScriptManager m_ScriptManager;
 
-        //void StartScene(void(*fn)(Scene*));
-        void StartScene(int index);
-        void StartScene(const char* name);
-        void PopScene();
-        void RegisterScene(SetupFn, const char* name="new Scene");
-        //void StartScene(void(*fn)(Scene*));
+    std::vector<ComponentManager *> m_Managers;
 
-        Ref<Scene>& GetCurrentScene();
-        
-    public:
-        static const Ref<Engine>& GetInstance();
+    Ref<EventQueue> m_Queue;
 
-        static const Ref<Engine>& Engine::GetStaticInstance()
-        {
-            return s_Instance;
-        }
+    static Ref<Engine> s_Instance;
 
-    private:
-        Engine();
+    Ref<Scene> m_CurScene;
 
-        //void SetupScene();
-        void MainLoop();
-        bool DispatchEvents();
-        void UpdateSystems();
+    std::vector<SceneData> m_ScenesData;
 
-    private:
-        bool m_Running;
-        int m_CurrentSceneIndex;
-
-        ScriptManager m_ScriptManager;
-
-        std::vector<ComponentManager*> m_Managers;
-        
-        Ref<EventQueue> m_Queue;
-        
-        static Ref<Engine> s_Instance;
-
-        Ref<Scene> m_CurScene;
-
-        //std::vector<Scene> m_Scenes;
-        std::vector<SceneData> m_ScenesData;
-
-        // the clock we will be using
-        std::chrono::time_point<std::chrono::steady_clock> m_Clock;
-    };
+    // the clock we will be using
+    std::chrono::time_point<std::chrono::system_clock> m_Clock;
+};
 
 } // namespace KGE

@@ -33,7 +33,8 @@ def lib_files() -> str:
         src_dir,
         os.path.join(src_dir, 'KGE'),
         os.path.join(src_dir, 'KGE', 'Core'),
-        #os.path.join(src_dir, 'KGE', 'Utils'),
+        os.path.join(src_dir, 'KGE', 'Utils'),
+        os.path.join(src_dir, 'KGE', 'Events'),
         os.path.join(src_dir, 'KGE', 'Physics'),
     ]
 

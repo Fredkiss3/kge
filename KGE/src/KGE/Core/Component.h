@@ -6,70 +6,76 @@
 #include "KGE/Base.h"
 #include "headers.h"
 
-namespace KGE {
-    enum class ComponentCategory {
-        Transform = 1,
-        Behaviour = 2,
-    };
-    
-    class Entity;
+namespace KGE
+{
+enum class ComponentCategory
+{
+    Transform = 1,
+    Behaviour = 2,
+};
 
-    struct Component {
-    public:
-        /*
+class Entity;
+
+struct Component
+{
+public:
+    /*
         * Called when the component is attached to the entity
         */
-        virtual void Init() {};
+    virtual void Init()
+    {
+        K_CORE_INFO("Initizaling the component");
+    };
 
-        /*
+    /*
         * Get the category of the component
         */
-        const virtual ComponentCategory GetCategory() const = 0;
+    const virtual ComponentCategory GetCategory() const = 0;
 
-        Entity* entity = nullptr;
+    Entity *entity = nullptr;
 
-        /*
+    /*
         * Return a pointer to the Component if found, otherwise it returns a nullptr
         */
-        Ref<Component> GetComponent(const char* type);
-        Ref<Component> GetComponent(ComponentCategory category);
+    Ref<Component> GetComponent(const char *type);
+    Ref<Component> GetComponent(ComponentCategory category);
 
-        /*
+    /*
         * For Usage in C++ only
         */
-        template<ComponentCategory category>
-        Ref<Component> GetComponent() {
-            return GetComponent(category);
-        }
-       
-        /*
+    template <ComponentCategory category>
+    Ref<Component> GetComponent()
+    {
+        return GetComponent(category);
+    }
+
+    /*
         * For Usage in C++ only 
         */
-        template<typename T>
-        T& GetComponent() {
-            return castRef<T>(GetComponent(T::GetStaticType));
-        }
+    template <typename T>
+    T &GetComponent()
+    {
+        return castRef<T>(GetComponent(T::GetStaticType));
+    }
 
-        //template<typename T>
-        //T& cast() {
-        //    auto ref = Ref<Component>(this);
-        //    return castRef<T>(ref);
-        //}
+    //template<typename T>
+    //T& cast() {
+    //    auto ref = Ref<Component>(this);
+    //    return castRef<T>(ref);
+    //}
 
-       
+    bool active = true;
 
-        bool active = true;
-
-        /*
+    /*
         * Get real type
         */
-        virtual std::string GetTypeName() { return type(*this); }
-        
-        static std::string GetStaticTypeName() { return type<Component>(); }
+    virtual std::string GetTypeName() { return type(*this); }
 
-        static const char* GetStaticType() { return "Component"; }
-        virtual const char* GetType() const { return GetStaticType(); }
+    static std::string GetStaticTypeName() { return type<Component>(); }
 
-        virtual ~Component();
-    };
-}
+    static const char *GetStaticType() { return "Component"; }
+    virtual const char *GetType() const { return GetStaticType(); }
+
+    virtual ~Component();
+};
+} // namespace KGE

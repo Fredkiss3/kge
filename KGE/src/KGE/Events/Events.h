@@ -4,127 +4,68 @@
 #pragma once
 
 #include "headers.h"
-#include "Event.h"
+#include "KGE/Events/Event.h"
 
 namespace KGE
 {
-    struct Update : public Event
-    {
-        explicit Update(double d) : deltaTime(d) {}
+	struct Init : public Event
+	{
+		CLASS_TYPE(Init);
+	};
 
-        double deltaTime;
+	struct EnableEntity : public Event
+	{
+		EnableEntity(Entity& e)
+		{
+			entity = Ref<Entity>(&e);
+		}
 
-        std::string GetData() const override
-        {
-            return "deltaTime=" + std::to_string(deltaTime);
-        }
+		CLASS_TYPE(EnableEntity);
+	};
 
-        CLASS_TYPE(Update);
-    };
+	struct DisableEntity : public Event
+	{
+		DisableEntity(Entity& e)
+		{
+			entity = Ref<Entity>(&e);
+		}
 
-    struct Init : public Event
-    {
-        std::string GetData() const override
-        {
-            return "";
-        }
+		CLASS_TYPE(DisableEntity);
+	};
 
-        CLASS_TYPE(Init);
-    };
-    
-    struct EnableEntity : public Event
-    {
-        EnableEntity(Entity& e)  
-        {
-            entity = Ref<Entity>(&e);
-        }
+	struct DestroyEntity : public Event
+	{
+		DestroyEntity(Entity& e)
+		{
+			entity = Ref<Entity>(&e);
+		}
 
-        std::string GetData() const override
-        {
-            return "entity=" + entity->GetName();
-        }
+		CLASS_TYPE(DestroyEntity);
+	};
 
-        CLASS_TYPE(EnableEntity);
-    };
+	struct Quit : public Event
+	{
+		CLASS_TYPE(Quit);
+	};
 
-    struct DisableEntity : public Event
-    {
-        DisableEntity(Entity& e)
-        {
-            entity = Ref<Entity>(&e);
-        }
+	struct StartScene : public Event
+	{
+		CLASS_TYPE(StartScene);
+	};
 
-        std::string GetData() const override
-        {
-            return "entity=" + entity->GetName();
-        }
+	struct StopScene : public Event
+	{
+		CLASS_TYPE(StopScene);
+	};
 
-        CLASS_TYPE(DisableEntity);
-    };
-    
-    struct DestroyEntity : public Event
-    {
-        DestroyEntity(Entity& e)
-        {
-            entity = Ref<Entity>(&e);
-        }
+	struct PauseScene : public Event
+	{
+		CLASS_TYPE(PauseScene);
+	};
 
-        std::string GetData() const override
-        {
-            return "entity=" + entity->GetName();
-        }
-
-        CLASS_TYPE(DestroyEntity);
-    };
-
-    struct Quit : public Event
-    {
-        std::string GetData() const override
-        {
-            return "";
-        }
-
-        CLASS_TYPE(Quit);
-    };
-
-    struct StartScene : public Event
-    {
-        std::string GetData() const override
-        {
-            return "";
-        }
-
-        CLASS_TYPE(StartScene);
-    };
-
-    struct StopScene : public Event
-    {
-        std::string GetData() const override
-        {
-            return "";
-        }
-
-        CLASS_TYPE(StopScene);
-    };
-
-    struct PauseScene : public Event
-    {
-        std::string GetData() const override
-        {
-            return "";
-        }
-
-        CLASS_TYPE(PauseScene);
-    };
-
-    struct ContinueScene : public Event
-    {
-        std::string GetData() const override
-        {
-            return "";
-        }
-
-        CLASS_TYPE(ContinueScene);
-    };
+	struct ContinueScene : public Event
+	{
+		CLASS_TYPE(ContinueScene);
+	};
 
 } // namespace KGE

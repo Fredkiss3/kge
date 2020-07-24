@@ -1,139 +1,143 @@
 #include "headers.h"
 #include "Scene.h"
 #include "KGE/Engine.h"
-#include "Components.h"
+#include "entt/entt.hpp"
 
 namespace KGE
 {
+	template<typename Cp>
+	void InitC(entt::registry& reg, entt::entity e) 
+	{
+		auto cp = reg.try_get<Cp>(e);
 
-Scene::~Scene()
-{
-    K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before adding an entity");
-    m_Pool.deadEntities.clear();
-    m_Pool.inactiveEntities.clear();
-    m_Pool.activeEntities.clear();
-    m_Pool.currentEntities.clear();
-    K_CORE_ERROR("Deleting the scene {}", GetName());
-}
+		if (cp) {
+			cp->Init();
+		}
+	}
 
-void Scene::add(Entity &e, EntityData *data)
-{
-    K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before adding an entity");
+	Scene::Scene(const SetupFn& fn, const std::string& name) 
+		: m_SetupFn(fn), m_Name(name)
+	{
+		// Initialize on construct
+		m_Registry.on_construct<ScriptComponent>().connect<&InitC<ScriptComponent>>();
+	}
 
-    // Construct components, then add entity to the scene
-    for (auto cp : data->GetComponents())
-    {
-        e.addComponent(cp);
-    }
+	Scene::~Scene()
+	{
+		K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before adding an entity");
+		m_Registry.clear();
+		m_EntityMap.clear();
+		K_CORE_ERROR("Deleting the scene {}", GetName());
+	}
 
-    add(e);
-}
+	Entity& Scene::Create(EntityData& data)
+	{
+		K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before adding an entity");
 
-void Scene::add(Entity &e)
-{
-    K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before adding an entity");
+		auto id = m_Registry.create();
 
-    ++m_lastID;
-    e.scene = Ref<Scene>(this);
-    e.m_ID = m_lastID;
+		// Keep a reference to entity in order to not prevent it from deletion
+		m_EntityMap[id] = Entity(id);
+		auto& e = m_EntityMap[id];
 
-    Ref<Entity> ref(&e);
+		e.scene = this;
 
-    if (e.IsAlive())
-    {
-        m_Pool.activeEntities.push_back(ref);
-        EventQueue::Dispatch(new EnableEntity(e));
-    }
-    else
-    {
-        m_Pool.inactiveEntities.push_back(ref);
-    }
-}
+		// add a transform & set name and stuff
+		auto& transform = m_Registry.emplace<TransformComponent>(e.m_ID, data.GetXf());
+		e.m_Name = data.GetName();
+		e.m_Tag = data.GetTag();
+		e.transform = transform;
+		e.transform.entity = &e;
 
-void Scene::Load(int index)
-{
-    K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before loading a new scene");
-    Engine::GetInstance()->StartScene(index);
-}
+		// add components to registry
+		for (auto& cp : data.GetComponents())
+		{
+			cp->entity = &e;
 
-void Scene::Load(const char *name)
-{
-    K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before loading a new scene");
-    Engine::GetInstance()->StartScene(name);
-}
+			switch (cp->GetCategory())
+			{
+			case ComponentCategory::Behaviour:
+				m_Registry.get_or_emplace<ScriptComponent>(e.m_ID)
+					.Add(dynamic_cast<Behaviour&>(*cp));
+				break;
+			default:
+				K_CORE_WARN("Invalid component type : {}", cp->GetTypeName());
+				break;
+			}
+		}
 
-void Scene::Pop()
-{
-    K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before loading a new scene");
-    Engine::GetInstance()->PopScene();
-}
+		return e;
+	}
 
-void Scene::Disable(Entity &e)
-{
-    if (e.scene != nullptr)
-    {
-        auto &active = m_Pool.activeEntities;
-        auto &inactive = m_Pool.inactiveEntities;
-        const auto &it = std::find(active.begin(), active.end(), Ref<Entity>(&e));
 
-        if (it != active.end())
-        {
-            inactive.push_back(*it);
-            active.erase(it);
-            EventQueue::Dispatch(new DisableEntity(e));
-        }
-    }
-}
+	void Scene::Load(int index)
+	{
+		K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before loading a new scene");
+		Engine::GetInstance()->LoadScene(index);
+	}
 
-void Scene::Enable(Entity &e)
-{
-    if (e.scene != nullptr)
-    {
-        auto &active = m_Pool.activeEntities;
-        auto &inactive = m_Pool.inactiveEntities;
-        const auto &it = std::find(inactive.begin(), inactive.end(), Ref<Entity>(&e));
+	void Scene::Load(const char* name)
+	{
+		K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before loading a new scene");
+		Engine::GetInstance()->LoadScene(name);
+	}
 
-        if (it != inactive.end())
-        {
-            active.push_back(*it);
-            inactive.erase(it);
-            EventQueue::Dispatch(new EnableEntity(e));
-        }
-    }
-}
+	void Scene::Pop()
+	{
+		K_CORE_ASSERT(Engine::GetStaticInstance(), "Engine should be started before loading a new scene");
+		Engine::GetInstance()->PopScene();
+	}
 
-void Scene::remove(Entity &e)
-{
-    Ref<Entity> ref(&e);
-    if (e.IsActive())
-    {
-        auto &active = m_Pool.activeEntities;
-        auto &dead = m_Pool.deadEntities;
-        const auto &it = std::find(active.begin(), active.end(), ref);
+	void Scene::Disable(Entity& e)
+	{
+		e.m_Active = false;
+		EventQueue::Dispatch(new DisableEntity(e));
+	}
 
-        if (it != active.end())
-        {
-            dead.push_back(*it);
-            active.erase(it);
-            EventQueue::Dispatch(new DestroyEntity(e));
-        }
-    }
-    else
-    {
-        auto &inactive = m_Pool.inactiveEntities;
-        auto &dead = m_Pool.deadEntities;
-        const auto &it = std::find(inactive.begin(), inactive.end(), ref);
+	void Scene::Enable(Entity& e)
+	{
+		e.m_Active = true;
+		EventQueue::Dispatch(new EnableEntity(e));
+	}
 
-        if (it != inactive.end())
-        {
-            dead.push_back(*it);
-            inactive.erase(it);
-            EventQueue::Dispatch(new DestroyEntity(e));
-        }
-    }
+	Component* Scene::GetComponent(const ComponentCategory& category, Entity& e)
+	{
+		Component* ref(nullptr);
 
-    // Reset ID
-    e.m_ID = 0;
-}
+		switch (category)
+		{
+		case ComponentCategory::Transform:
+			ref = &m_Registry.get<TransformComponent>(e.GetID());
+			break;
+		default:
+			K_CORE_WARN("Invalid component category : {}", category);
+			break;
+		}
 
+		return ref;
+	}
+
+	const bool Scene::hasComponent(const ComponentCategory &category, Entity& e) const
+	{
+		switch (category)
+		{
+		case ComponentCategory::Transform:
+			return m_Registry.has<TransformComponent>(e.GetID());
+		default:
+			K_CORE_WARN("Invalid component category : {}", category);
+			return false;
+		}
+	}
+
+	void Scene::Destroy(Entity& e)
+	{
+		m_Registry.destroy(e.GetID());
+
+		// Remove reference to entity
+		if (m_EntityMap.find(e.GetID()) != m_EntityMap.end()) {
+			m_EntityMap.erase(e.GetID());
+		}
+
+		EventQueue::Dispatch(new DestroyEntity(e));
+	}
 } // namespace KGE

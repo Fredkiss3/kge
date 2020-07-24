@@ -7,23 +7,24 @@ namespace KGE
 {
 	Ref<Engine> Engine::s_Instance = nullptr;
 
-	Engine::Engine() : m_Running(false),
-		m_Queue(EventQueue::GetInstance()),
-		m_CurScene(nullptr),
-		m_CurrentSceneIndex(0),
-		m_Clock(Clock::now())
+	Engine::Engine() 
+		: m_Running(false),
+		  m_Queue(EventQueue::GetInstance()),
+		  m_CurScene(nullptr),
+		  m_CurrentSceneIndex(-1),
+		  m_NextSceneIndex(0),
+		  m_Clock(Clock::now())
 	{
-		// Enqueue Init Event
-		// Only for tests
-		// m_Queue->Dispatch(new Init);
 		m_Managers.push_back(&m_ScriptManager);
 	}
 
 	Engine::~Engine()
 	{
 		// teardown the current scene
-		if (m_CurScene) {
-			if (m_CurScene->m_Started) {
+		if (m_CurScene)
+		{
+			if (m_CurScene->m_Started)
+			{
 				m_CurScene->tearDown();
 			}
 		}
@@ -52,85 +53,76 @@ namespace KGE
 		return s_Instance;
 	}
 
-	void Engine::StartScene(int index)
+	void Engine::LoadScene(int index)
 	{
-		if (index < m_ScenesData.size()) {
-			// Tear down any current scene
-			if (m_CurScene) {
-				m_CurScene->tearDown();
-			}
-
-			auto& data = m_ScenesData[index];
-
-			// Then register a new scene and setup the new scene
-			m_CurScene = CreateRef<Scene>(data.fn, data.name);
-			m_CurScene->setUp();
+		if (index < m_ScenesData.size() && index >= 0)
+		{
+			m_NextSceneIndex = index;
 		}
-		else {
+		else
+		{
 			K_CORE_ERROR("The scene at index {} is not registered", index);
 		}
 	}
 
-
-
-	void Engine::StartScene(const char* name)
+	void Engine::LoadScene(const char* name)
 	{
 		bool found = false;
-		for (int i(0); i < m_ScenesData.size(); ++i) {
+		for (int i(0); i < m_ScenesData.size(); ++i)
+		{
 			auto& data = m_ScenesData[i];
 
-			if (data.name == name) {
+			if (data.name == name)
+			{
 				found = true;
-				m_CurrentSceneIndex = i;
-
-				// Tear down any current scene
-				if (m_CurScene) {
-					m_CurScene->tearDown();
-				}
-
-				// Then register a new scene
-				m_CurScene = CreateRef<Scene>(data.fn, data.name);
-				m_CurScene->setUp();
+				m_NextSceneIndex  = i;
 				break;
 			}
 		}
 
-		if (!found) {
+		if (!found)
+		{
 			K_CORE_ERROR("The scene named '{}' is not registered", name);
 		}
 	}
 
 	void Engine::PopScene()
 	{
-		m_CurrentSceneIndex--;
-		if (m_CurrentSceneIndex < 0) {
+		m_NextSceneIndex--;
+		if (m_NextSceneIndex < 0)
+		{
 			m_Queue->Dispatch(new Quit);
 		}
-		else {
-			StartScene(m_CurrentSceneIndex);
-		}
+		//else
+		//{
+		//	//LoadScene(m_CurrentSceneIndex);
+		//}
 	}
 
 	void Engine::RegisterScene(SetupFn fn, const char* name)
 	{
 		bool found = false;
-		for (int i(0); i < m_ScenesData.size(); ++i) {
+		for (size_t i(0); i < m_ScenesData.size(); ++i)
+		{
 			auto& data = m_ScenesData[i];
-			if (data.name == name) {
+			if (data.name == name)
+			{
 				found = true;
 				K_CORE_ERROR("There cannot be two scenes with the name '{}'", name);
 			}
 		}
 
-		if (!found) {
+		if (!found)
+		{
 			m_ScenesData.push_back({ fn, name });
 		}
 	}
 
 	Ref<Scene>& Engine::GetCurrentScene()
 	{
-		return m_CurScene; 
+		return m_CurScene;
 	}
+
 	bool Engine::DispatchEvents()
 	{
 		// Swap Events
@@ -148,7 +140,8 @@ namespace KGE
 					K_CORE_TRACE("Calling Listener {0} for {1}", manager->GetTypeName(), e->Print());
 					manager->OnEvent(*e);
 				}
-				else {
+				else
+				{
 					break;
 				}
 			}
@@ -164,7 +157,8 @@ namespace KGE
 		return shouldUpdate;
 	}
 
-	void Engine::UpdateSystems() {
+	void Engine::UpdateSystems()
+	{
 		auto now = Clock::now();
 
 		std::chrono::duration<double> duration = (now - m_Clock);
@@ -174,14 +168,43 @@ namespace KGE
 		m_Clock = now;
 	}
 
+	void Engine::CheckNextScene()
+	{
+		if (m_NextSceneIndex != m_CurrentSceneIndex && m_ScenesData.size() > 0) {
+			m_CurrentSceneIndex = m_NextSceneIndex;
+
+			// Dispatch the event to managers before doing anything
+			if (m_CurScene != nullptr) {
+				DispatchEvents();
+			}
+
+			StartScene(m_NextSceneIndex);
+		}
+	}
+
+	void Engine::StartScene(int index)
+	{
+		// Tear down any current scene
+		if (m_CurScene)
+		{
+			m_CurScene->tearDown();
+		}
+
+		// Then register a new scene and setup the new scene
+		auto& data = m_ScenesData[index];
+		m_CurScene = CreateRef<Scene>(data.fn, data.name);
+		m_CurScene->setUp();
+	}
+
 	void Engine::MainLoop()
 	{
 		// Setup the first scene
-		StartScene(0);
 		while (m_Running)
 		{
 			//K_CORE_WARN("BEGIN FRAME");
-			if (DispatchEvents()) {
+			CheckNextScene();
+			if (DispatchEvents())
+			{
 				UpdateSystems();
 			}
 			//K_CORE_WARN("END FRAME");

@@ -7,27 +7,31 @@
 #include "Scene.h"
 #include "Entity.h"
 
-namespace KGE {
+namespace KGE
+{
 
-	Ref<Component> Component::GetComponent(const char* type)
+	Behaviour* Component::GetBehaviour(const std::string& type)
 	{
-        Ref<Component> result = nullptr;
-        if (entity) {
-            result = entity->GetComponent(type);
-        }
-		return result;
+		return entity ? entity->GetBehaviour(type) : nullptr;
 	}
-	Ref<Component> Component::GetComponent(ComponentCategory category)
+
+	Component* Component::GetComponent(ComponentCategory category)
 	{
-		Ref<Component> result = nullptr;
-		if (entity) {
-			result = entity->GetComponent(category);
-		}
-		return result;
+		return entity ? entity->GetComponent(category) : nullptr;
+	}
+
+	const bool Component::HasBehaviour(const std::string& type) const
+	{
+		return entity ? entity->hasBehaviour(type) : false;
+	}
+
+	const bool Component::HasComponent(ComponentCategory category) const
+	{
+		return entity ? entity->hasComponent(category) : false;
 	}
 
 	Component::~Component()
 	{
-		K_CORE_ERROR("Deleting component {0} of {1}", type(*this), (entity ? entity->GetName() : "Null"));
+		//K_CORE_ERROR("Deleting component {0} of {1}", type(*this), (entity ? entity->GetName() : "Null"));
 	}
-}
+} // namespace KGE

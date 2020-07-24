@@ -8,6 +8,14 @@ bin-int/
 .vscode
 .idea
 
+# C++ garbage files
+Hasher.cc
+Hasher.hpp
+Runner.cc
+Runner.hpp
+
+Scene.old.*
+
 # Visual Studio files and folder
 .vs/
 **.sln
@@ -16,3 +24,6 @@ bin-int/
 **.vcxproj.user
 *.vssettings
 *.gch
+
+# Other
+ECS/

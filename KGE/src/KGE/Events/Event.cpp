@@ -1,87 +1,52 @@
 //
 // Created by Fredkiss3 on 04/07/2020.
 //
-#include <headers.h>
-#include "Event.h"
+#include "headers.h"
+#include "KGE/Events/Event.h"
 #include "KGE/Core/Scene.h"
+#include "KGE/Core/Entity.h"
 
 namespace KGE
 {
 
-const std::string Event::Print() const
-{
-    return std::string(GetType()) + "{ scene=" +
-           (scene != nullptr ? scene->GetName() + ", " : "nullptr, ") + "Handled=" +
-           (handled ? "true, " : "false, ") + GetData() +
-           " }";
-}
+	Ref<EventQueue> EventQueue::s_Instance = nullptr;
 
-Ref<EventQueue> EventQueue::s_Instance = nullptr;
+	const std::string Event::Print() const
+	{
+		std::string str = GetType();
 
-void ListenerContainer::Add(EventListener &listener)
-{
-    // create a ref to the pointer, this will be added both to our listeners' list and to the cache
-    Ref<EventListener> ref(&listener);
-    for (auto eventName : listener.GetSupportedEvents())
-    {
-        if (m_ListenerMap.find(eventName) != m_ListenerMap.end())
-        {
-            // If key exists then add the listener to the cache
-            m_ListenerMap[eventName].push_back(ref);
-        }
-        else
-        {
-            // create a new pair of  "eventName <-> listener"
-            m_ListenerMap[eventName] = std::vector<Ref<EventListener>>(1, ref);
-        }
-    }
+		str += "{ ";
+		str += "scene=";
 
-    // add listener to the list of events
-    m_Listeners.push_back(Ref<EventListener>(ref));
-}
+		if (scene != nullptr)
+		{
+			str += scene->GetName();
+		}
+		else
+		{
+			str += "None";
+		}
 
-void ListenerContainer::Remove(EventListener &listener)
-{
-    // create a ref to the pointer, in order to test equality between listeners
-    Ref<EventListener> ref(&listener);
+		str += ", Handled=";
 
-    for (auto eventName : listener.GetSupportedEvents())
-    {
-        auto it = m_ListenerMap.find(eventName);
-        if (it != m_ListenerMap.end())
-        {
-            // Get List of listeners associated with key
-            auto eList = it->second;
+		if (handled)
+		{
+			str += "true";
+		}
+		else
+		{
+			str += "false";
+		}
 
-            // find listener onto the cache
-            auto found = std::find(eList.begin(), eList.end(), ref);
-            if (found != eList.end())
-            {
-                // remove listener from the cache
-                eList.erase(found);
-            }
-        }
+		if (entity != nullptr) {
+			str += ", entity=";
+			str += entity->GetName();
+		}
 
-        // Remove listener from listeners attached to this container
-        auto found = std::find(m_Listeners.begin(), m_Listeners.end(), ref);
-        if (found != m_Listeners.end())
-        {
-            // remove listener from the list of listeners
-            m_Listeners.erase(found);
-        }
-    }
-}
+		str += GetData();
+		str += " }";
 
-std::vector<Ref<EventListener>> ListenerContainer::Get(const char *eventName) const
-{
-    // Initialize to size zero vector
-    std::vector<Ref<EventListener>> eList(0);
-    auto it = m_ListenerMap.find(eventName);
-    if (it != m_ListenerMap.end())
-    {
-        eList = it->second;
-    }
-    return eList;
-}
+		return str;
+	}
 
 } // namespace KGE

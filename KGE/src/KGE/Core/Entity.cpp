@@ -5,164 +5,70 @@
 
 namespace KGE
 {
-void Entity::SetActive(bool active)
-{
-	m_Active = active;
-	if (scene != nullptr)
+	void Entity::SetActive(bool active)
 	{
-		if (active)
+		m_Active = active;
+		if (scene != nullptr)
 		{
-			scene->Enable(*this);
-		}
-		else
-		{
-			scene->Disable(*this);
-		}
-	}
-}
-
-void Entity::destroy()
-{
-	if (scene != nullptr)
-	{
-		scene->remove(*this);
-	}
-}
-
-void Entity::addComponent(Component *&c)
-{
-	Ref<Component> ref(c);
-	ref->entity = this;
-
-	m_CategorySignature = Hasher::computeSignature(c->GetCategory(), m_CategorySignature);
-	m_ComponentSignature = Hasher::computeSignature(c->GetType(), m_ComponentSignature);
-
-	// add component to components
-	const auto &bit1 = Hasher::getSignature(c->GetType());
-	const auto &bit2 = Hasher::getSignature(c->GetCategory());
-	m_ComponentTypesMap[bit1].push_back(ref);
-	m_CategoryComponentMap[bit2].push_back(ref);
-
-	// Initialize component
-	ref->Init();
-	c = nullptr;
-}
-
-const bool Entity::hasComponent(const ComponentCategory &category) const
-{
-	const auto &bit2 = Hasher::getSignature(category);
-	auto &bit1 = m_CategorySignature;
-	bool has = (bit1 & bit2) == bit2;
-	return (bit1 & bit2) == bit2;
-}
-
-const bool Entity::hasComponent(const std::string &type) const
-{
-	const auto &bit2 = Hasher::getSignature(type);
-	auto &bit1 = m_ComponentSignature;
-	return (bit1 & bit2) == bit2;
-}
-
-Ref<Component> Entity::GetComponent(const std::string &type)
-{
-	Ref<Component> ref = nullptr;
-
-	if (hasComponent(type))
-	{
-		// Get type signature
-		auto &cMap = m_ComponentTypesMap;
-		const auto &sign = Hasher::getSignature(type);
-
-		// if signature has been found then get the first component of this type
-		const auto &it = cMap.find(sign);
-		if (it != cMap.end())
-		{
-			auto &cList = it->second;
-			if (cList.size() > 0)
+			if (active)
 			{
-				ref = cList[0];
+				scene->Enable(*this);
 			}
-		}
-	}
-	return ref;
-}
-
-ComponentList Entity::GetComponents(const std::string &type)
-{
-	ComponentList ref;
-
-	if (hasComponent(type))
-	{
-		// Get type signature
-		auto &cMap = m_ComponentTypesMap;
-		const auto &sign = Hasher::getSignature(type);
-
-		// if signature has been found then get the first component of this type
-		const auto &it = cMap.find(sign);
-		if (it != cMap.end())
-		{
-			auto &cList = it->second;
-			if (cList.size() > 0)
+			else
 			{
-				ref = cList;
-			}
-		}
-	}
-	return ref;
-}
-
-Ref<Component> Entity::GetComponent(ComponentCategory category)
-{
-	Ref<Component> ref = nullptr;
-	if (hasComponent(category))
-	{
-		auto &cMap = m_CategoryComponentMap;
-		const auto &sign = Hasher::getSignature(category);
-
-		// if signature has been found then get the first component of this type
-		const auto &it = cMap.find(sign);
-		if (it != cMap.end())
-		{
-			auto &cList = it->second;
-			if (cList.size() > 0)
-			{
-				ref = cList[0];
+				scene->Disable(*this);
 			}
 		}
 	}
 
-	return ref;
-}
-
-ComponentList Entity::GetComponents()
-{
-	ComponentList ref;
-	return ref;
-}
-
-ComponentList Entity::GetComponents(ComponentCategory category)
-{
-	ComponentList ref;
-
-	// if signature has been found then get the first component of this type
-	if (hasComponent(category))
+	void Entity::destroy()
 	{
-		auto &cMap = m_CategoryComponentMap;
-		const auto &sign = Hasher::getSignature(category);
-
-		// if signature has been found then get the first component of this type
-		const auto &it = cMap.find(sign);
-		if (it != cMap.end())
+		if (scene != nullptr)
 		{
-			auto &cList = it->second;
-			if (cList.size() > 0)
-			{
-				ref = cList;
-			}
+			scene->Destroy(*this);
 		}
 	}
 
-	return ref;
-}
+	Behaviour* Entity::GetBehaviour(const std::string& type)
+	{
+		if (!scene) return nullptr;
+		if (!scene->Reg().has<ScriptComponent>(m_ID)) return nullptr;
+
+		auto& b = scene->Reg().get<ScriptComponent>(m_ID).Get(type);
+		return &(*b);
+	}
+
+	Component* Entity::GetComponent(ComponentCategory category)
+	{
+		if (!scene) return nullptr;
+
+		//auto cp = scene->GetComponent(category, *this);
+		return scene->GetComponent(category, *this);
+	}
+
+	const bool Entity::IsAlive() const
+	{
+		if (scene == nullptr)
+			return false;
+
+		return scene->Reg().valid(m_ID);
+	}
+
+	const bool Entity::hasComponent(const ComponentCategory& category) {
+		if (!scene) return false;
+
+		return scene->hasComponent(category, *this);
+	}
+
+	const bool Entity::hasBehaviour(const std::string& type) const {
+		if (!scene) return false;
+
+		return scene->Reg().has<ScriptComponent>(m_ID) ?
+			scene->Reg().get<ScriptComponent>(m_ID).Has(type) : false;
+	}
+
+	TransformComponent& Entity::GetXF() {
+		return scene->Reg().get<TransformComponent>(m_ID);
+	}
 
 } // namespace KGE

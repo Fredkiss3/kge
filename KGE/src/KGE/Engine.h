@@ -13,7 +13,7 @@
  * */
 namespace KGE
 {
-typedef void (*SetupFn)(Scene *);
+typedef std::function<void(Scene *)> SetupFn;
 typedef std::chrono::high_resolution_clock Clock;
 
 struct SceneData
@@ -24,7 +24,7 @@ struct SceneData
 
 //class Scene;
 
-class Engine : public ListenerContainer
+class Engine //: public ListenerContainer
 {
 public:
     ~Engine();
@@ -36,8 +36,8 @@ public:
     //static Ref<Engine> GetInstance(void(*fn)(Scene*));
 
     //void StartScene(void(*fn)(Scene*));
-    void StartScene(int index);
-    void StartScene(const char *name);
+    void LoadScene(int index);
+    void LoadScene(const char *name);
     void PopScene();
     void RegisterScene(SetupFn, const char *name = "new Scene");
     //void StartScene(void(*fn)(Scene*));
@@ -59,10 +59,14 @@ private:
     void MainLoop();
     bool DispatchEvents();
     void UpdateSystems();
+    void CheckNextScene();
+    void StartScene(int index);
 
 private:
     bool m_Running;
     int m_CurrentSceneIndex;
+    // In order to defer the start of a scene
+    int m_NextSceneIndex;
 
     ScriptManager m_ScriptManager;
 
@@ -76,8 +80,12 @@ private:
 
     std::vector<SceneData> m_ScenesData;
 
-    // the clock we will be using
+    // Use different clocks depending if we are using mvsc or gcc
+#ifdef __GNUG__
     std::chrono::time_point<std::chrono::system_clock> m_Clock;
+#else
+    std::chrono::time_point<std::chrono::steady_clock> m_Clock;
+#endif
 };
 
 } // namespace KGE

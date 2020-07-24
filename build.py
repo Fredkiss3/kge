@@ -9,7 +9,8 @@ from glob import glob
 lib_dir = "E:\\PROJETS PERSOS\\CC\\Programmes\\C++\\KGE\\KGE"
 
 libs = [
-    "spdlog"
+    "spdlog",
+    "entt",
 ]
 
 
@@ -54,6 +55,7 @@ def setup(file: str, warning: str = None):
     if warning is not None:
         cmd += f" {warning}"
     print(cmd)
+
     print()
     dep = time.time()
     print(f"\x1B[94mCompiling...\033[0m")

@@ -1,7 +1,7 @@
 # Binaries
 !vendor/bin/premake/
 bin-int/
-
+bin/
 /bin
 /build
 /cmake-build-debug

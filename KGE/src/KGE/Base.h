@@ -77,41 +77,41 @@ class AssertException
 #include <string>
 #include <typeinfo>
 
-std::string demangle(const char *name);
+std::string demangle(const char* name);
 
 template <class T>
-std::string type(const T &t)
+std::string type(const T& t)
 {
-    return demangle(typeid(t).name());
+	return demangle(typeid(t).name());
 }
 
 template <class T>
 std::string type()
 {
-    return demangle(typeid(T).name());
+	return demangle(typeid(T).name());
 }
 
 namespace KGE
 {
-template <typename T>
-using Scope = std::unique_ptr<T>;
-template <typename T, typename... Args>
-constexpr Scope<T> CreateScope(Args &&... args)
-{
-    return std::make_unique<T>(std::forward<Args>(args)...);
-}
+	template <typename T>
+	using Scope = std::unique_ptr<T>;
+	template <typename T, typename... Args>
+	constexpr Scope<T> CreateScope(Args&&... args)
+	{
+		return std::make_unique<T>(std::forward<Args>(args)...);
+	}
 
-template <typename T>
-using Ref = std::shared_ptr<T>;
-template <typename T, typename... Args>
-constexpr Ref<T> CreateRef(Args &&... args)
-{
-    return std::make_shared<T>(std::forward<Args>(args)...);
-}
+	template <typename T>
+	using Ref = std::shared_ptr<T>;
+	template <typename T, typename... Args>
+	constexpr Ref<T> CreateRef(Args&&... args)
+	{
+		return std::make_shared<T>(std::forward<Args>(args)...);
+	}
 
-template <typename T, typename Y>
-T *castRef(Ref<Y> ref)
-{
-    return dynamic_cast<T *>(&(*ref));
-}
+	template <typename T, typename Y>
+	T* castRef(Ref<Y> ref)
+	{
+		return dynamic_cast<T*>(&(*ref));
+	}
 } // namespace KGE

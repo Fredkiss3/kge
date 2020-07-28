@@ -68,4 +68,38 @@ namespace KGE
 		CLASS_TYPE(ContinueScene);
 	};
 
+	struct WindowResize : public Event
+	{
+		WindowResize(int w, int h) : width(w), height(h) {
+
+		}
+
+		const std::string GetData() const override
+		{
+			auto str = std::string("width=") + std::to_string(width) + "px, ";
+			str += "Height=" + std::to_string(height) + "px";
+			return str;
+		};
+
+
+		int width, height;
+
+		CLASS_TYPE(WindowResize);
+	};
+
+	struct FixedUpdate : public Event
+	{
+		FixedUpdate(double t) : dt(t) {}
+
+		const std::string GetData() const override
+		{
+			auto str = std::string("delta_time=") + std::to_string(dt) + " s";
+			return str;
+		};
+
+		double dt;
+		CLASS_TYPE(FixedUpdate);
+	};
+
+
 } // namespace KGE

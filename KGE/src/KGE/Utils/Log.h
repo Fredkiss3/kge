@@ -1,9 +1,9 @@
 #pragma once
 
-#include <headers.h>
-#include <KGE/Base.h>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include "headers.h"
+#include "KGE/Base.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 namespace KGE
 {

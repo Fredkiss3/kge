@@ -59,6 +59,12 @@ namespace KGE
 			case ComponentCategory::Behaviour:
 				m_Registry.get_or_emplace<ScriptComponent>(e.m_ID)
 					.Add(dynamic_cast<Behaviour&>(*cp));
+				
+				m_Registry.sort<ScriptComponent>([](const ScriptComponent& lhs, const ScriptComponent& rhs)
+					{
+						return lhs.entity->GetLayer() > rhs.entity->GetLayer();
+					}
+				);
 				break;
 			default:
 				K_CORE_WARN("Invalid component type : {}", cp->GetTypeName());

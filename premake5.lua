@@ -18,19 +18,18 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 -- Include directories relative to root folder (solution directory)
 IncludeDir = {}
-IncludeDir["spdlog"] = "KGE/vendor/spdlog"
-IncludeDir["entt"] = "KGE/vendor/entt"
--- IncludeDir["GLFW"] = "Hazel/vendor/GLFW/include"
--- IncludeDir["Glad"] = "Hazel/vendor/Glad/include"
--- IncludeDir["ImGui"] = "Hazel/vendor/imgui"
--- IncludeDir["glm"] = "Hazel/vendor/glm"
--- IncludeDir["stb_image"] = "Hazel/vendor/stb_image"
+IncludeDir["spdlog"] = "KGE/vendor/spdlog/include"
+IncludeDir["entt"] = "KGE/vendor/entt/include"
+IncludeDir["GLFW"] = "KGE/vendor/GLFW/include"
+IncludeDir["Glad"] = "KGE/vendor/Glad/include"
+IncludeDir["ImGui"] = "KGE/vendor/imgui"
+-- IncludeDir["glm"] = "KGE/vendor/glm"
+-- IncludeDir["stb_image"] = "KGE/vendor/stb_image"
 
 group "Dependencies"
-	-- include "KGE/vendor/spdlog"
-	-- include "Hazel/vendor/GLFW"
-	-- include "Hazel/vendor/Glad"
-	-- include "Hazel/vendor/imgui"
+	include "KGE/vendor/GLFW"
+	include "KGE/vendor/Glad"
+	include "KGE/vendor/imgui"
 group ""
 
 project "KGE"
@@ -50,24 +49,34 @@ project "KGE"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/vendor/**.h",
-		"%{prj.name}/vendor/**.hpp",
-		"%{prj.name}/vendor/**.cpp",
+		-- "%{prj.name}/vendor/**.h",
+		-- "%{prj.name}/vendor/**.hpp",
+		-- "%{prj.name}/vendor/**.cpp",
 		-- "%{prj.name}/vendor/**.cpp",
 	}
 
 	defines
 	{
+		"_CRT_SECURE_NO_WARNINGS",
+		"GLFW_INCLUDE_NONE"
 	}
 
 	includedirs
 	{
 		"%{prj.name}/src",
-		"%{prj.name}/vendor/",
+		"%{IncludeDir.entt}",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.Glad}",
+		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.ImGui}",
 	}
 
 	links 
 	{ 
+		"GLFW",
+		"Glad",
+		"ImGui",
+		"opengl32.lib"
 	}
 
 	filter "system:windows"
@@ -112,12 +121,22 @@ project "Sandbox"
 	includedirs
 	{
 		"KGE/src",
-		"KGE/vendor",
+		"%{IncludeDir.entt}",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.Glad}",
+		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.ImGui}",
 	}
 
 	links
 	{
 		"KGE"
+	}
+
+	defines
+	{
+		"_CRT_SECURE_NO_WARNINGS",
+		"GLFW_INCLUDE_NONE"
 	}
 
 	filter "system:windows"

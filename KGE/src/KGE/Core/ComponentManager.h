@@ -17,6 +17,7 @@ namespace KGE
 	class ComponentManager : public EventListener
 	{
 	public:
+		ComponentManager(bool debugPrint = true): EventListener(debugPrint) {}
 		TYPE_NAME
 	};
 

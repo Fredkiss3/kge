@@ -1,6 +1,7 @@
 #pragma once
 #include "Component.h"
 #include "KGE/Events/Events.h"
+#include "KGE/Utils/Math.h"
 
 namespace KGE
 {
@@ -40,14 +41,9 @@ namespace KGE
 
 
 		void Init() {
-			// Init Behaviours
-			/*for (auto& b : behaviours) {
-				b->Init();
-			}*/
-
 			for (auto& p : m_behaviourMap) {
 				auto& b = p.second;
-				b->Init();
+				b->OnInit();
 			}
 		}
 
@@ -111,12 +107,6 @@ namespace KGE
 	// TODO Change this to use glm instead
 	struct TransformComponent : public Component
 	{
-		struct Vec2
-		{
-			double x, y;
-		};
-
-
 		TransformComponent(Vec2 pos = { 0, 0 }, Vec2 scale = { 1, 1 }, float angle = 0)
 			: pos(pos), scale(scale), angle(angle) {}
 

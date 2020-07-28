@@ -27,3 +27,6 @@ Scene.old.*
 
 # Other
 ECS/
+*.ini
+*.lib
+*.exe

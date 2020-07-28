@@ -1,21 +1,29 @@
 #include <headers.h>
 #include <KGE/Core/ComponentManager.h>
 #include <KGE/Events/Events.h>
+#include <KGE/Graphics/Events.h>
 #include "Engine.h"
 
 namespace KGE
 {
 	Ref<Engine> Engine::s_Instance = nullptr;
 
-	Engine::Engine() 
-		: m_Running(false),
+	Engine::Engine(bool Debug) 
+		: m_DebugMode(Debug),
+		  m_Running(false),
 		  m_Queue(EventQueue::GetInstance()),
 		  m_CurScene(nullptr),
 		  m_CurrentSceneIndex(-1),
 		  m_NextSceneIndex(0),
 		  m_Clock(Clock::now())
 	{
+		// Add Debug Manager only if engine should be run on Debug Mode
+		if (m_DebugMode) {
+			m_Managers.push_back(&m_DebugManager);
+		}
+
 		m_Managers.push_back(&m_ScriptManager);
+		m_Managers.push_back(&m_PhysicsManager);
 	}
 
 	Engine::~Engine()
@@ -34,6 +42,7 @@ namespace KGE
 	{
 		K_CORE_WARN("Starting KGE");
 		s_Instance->m_Running = true;
+		s_Instance->Init();
 		s_Instance->MainLoop();
 		K_CORE_WARN("Exiting KGE");
 	}
@@ -43,11 +52,12 @@ namespace KGE
 		m_Running = false;
 	}
 
-	const Ref<Engine>& Engine::GetInstance()
+	const Ref<Engine>& Engine::GetInstance(const std::string& name, bool Debug)
 	{
 		if (s_Instance == nullptr)
 		{
-			s_Instance = Ref<Engine>(new Engine);
+			s_Instance = Ref<Engine>(new Engine(Debug));
+			s_Instance->m_ApplicationName = name;
 		}
 
 		return s_Instance;
@@ -128,6 +138,13 @@ namespace KGE
 		// Swap Events
 		m_Queue->SwapEvents();
 		bool shouldUpdate = true;
+
+		// Debug Drawing only on debug  
+		if (m_DebugMode) {
+			m_Queue->Dispatch(new DrawGizMos);
+			m_Queue->Dispatch(new ImGuiDraw);
+		}
+
 		while (auto e = m_Queue->GetNextEvent())
 		{
 			e->scene = m_CurScene;
@@ -137,7 +154,6 @@ namespace KGE
 			{
 				if (!e->handled)
 				{
-					K_CORE_TRACE("Calling Listener {0} for {1}", manager->GetTypeName(), e->Print());
 					manager->OnEvent(*e);
 				}
 				else
@@ -162,8 +178,25 @@ namespace KGE
 		auto now = Clock::now();
 
 		std::chrono::duration<double> duration = (now - m_Clock);
-		// Update scripts
+		
+		// Update scripts for each frame
 		m_ScriptManager.OnUpdate(duration.count());
+
+
+		// Physics Framerate is fixed to 50 FPS
+		m_Accumulated_Time += duration.count();
+		if (m_Accumulated_Time >= PHYSICS_FPS) {
+			
+			// Send Fixed Update then dispatch to scripts
+			m_Queue->Dispatch(new FixedUpdate{m_Accumulated_Time});
+			DispatchEvents();
+
+			m_PhysicsManager.OnUpdate(m_Accumulated_Time);
+			m_Accumulated_Time = 0.0f;
+		}
+
+		// Update Renderer
+		m_Renderer.OnUpdate();
 
 		m_Clock = now;
 	}
@@ -196,6 +229,19 @@ namespace KGE
 		m_CurScene->setUp();
 	}
 
+	void Engine::Init()
+	{
+		m_Renderer.OnInit();
+		if (m_DebugMode) {
+			m_DebugManager.OnInit();
+		}
+	}
+
+	void Engine::PreUpdate()
+	{
+		m_Renderer.OnPreUpdate();
+	}
+
 	void Engine::MainLoop()
 	{
 		// Setup the first scene
@@ -203,6 +249,7 @@ namespace KGE
 		{
 			//K_CORE_WARN("BEGIN FRAME");
 			CheckNextScene();
+			PreUpdate();
 			if (DispatchEvents())
 			{
 				UpdateSystems();

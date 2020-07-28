@@ -1,57 +1,54 @@
 #include "headers.h"
 #include "PhysicsManager.h"
-#include "KGE/Engine.h"
+//#include "KGE/Engine.h"
+//#include "KGE/Events/Events.h"
 
 namespace KGE
 {
 
-void PhysicsManager::OnEvent(Event const &e)
-{
-    auto &scene = Engine::GetInstance()->GetCurrentScene();
+	PhysicsManager::PhysicsManager()
+	{
+		Bind<DestroyEntity>(K_BIND_EVENT_FN(PhysicsManager::OnDestroyEntity));
+		Bind<EnableEntity>(K_BIND_EVENT_FN(PhysicsManager::OnEnableEntity));
+		Bind<DisableEntity>(K_BIND_EVENT_FN(PhysicsManager::OnDisableEntity));
+		Bind<StartScene>(K_BIND_EVENT_FN(PhysicsManager::OnStartScene));
+		Bind<StopScene>(K_BIND_EVENT_FN(PhysicsManager::OnStopScene));
+		Bind<PauseScene>(K_BIND_EVENT_FN(PhysicsManager::OnPauseScene));
+	}
 
-    // delegate to event handlers
-    // switch (e.GetType())
-    // {
-    // case EVENT_TYPE(DestroyEntity):
-    //     OnDestroyEntity(*(dynamic_cast<DestroyEntity>(e)));
-    //     break;
-    // default:
-    //     break;
-    // }
-}
+	void PhysicsManager::OnUpdate(double ts)
+	{
+		// Update the world
+		//K_CORE_DEBUG("Physics Update !!");
+	}
 
-void PhysicsManager::OnUpdate(double ts)
-{
-    // Update the world
-}
+	void PhysicsManager::OnDestroyEntity(DestroyEntity& e)
+	{
+		// Destroy the rb and colliders attached
+	}
 
-void OnDestroyEntity(DestroyEntity const &e)
-{
-    // Destroy the rb and colliders attached
-}
+	void PhysicsManager::OnEnableEntity(EnableEntity& e)
+	{
+		// Enable the Rb & colliders
+	}
 
-void OnEnableEntity(EnableEntity const &e)
-{
-    // Enable the Rb & colliders
-}
+	void PhysicsManager::OnDisableEntity(DisableEntity& e)
+	{
+		// Disable the Rb & colliders
+	}
 
-void OnDisableEntity(DisableEntity const &e)
-{
-    // Disable the Rb & colliders
-}
+	void PhysicsManager::OnStartScene(StartScene& e)
+	{
+		// Assign the world
+	}
 
-void OnStartScene(StartScene const &e)
-{
-    // Assign the world
-}
+	void PhysicsManager::OnStopScene(StopScene& e)
+	{
+		// Set the world to NULL
+	}
 
-void OnStopScene(StopScene const &e)
-{
-    // Set the world to NULL
-}
-
-void OnPauseScene(PauseScene const &e)
-{
-    // Pause the world
-}
+	void PhysicsManager::OnPauseScene(PauseScene& e)
+	{
+		// Pause the world
+	}
 } // namespace KGE

@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+#define GLFW_INCLUDE_NONE
 #include <KGE.h>
 
 using namespace KGE;
@@ -10,12 +12,65 @@ void setup2(Scene *scene)
 class MyScript : public Behaviour
 {
 public:
-	void OnUpdate(double ts) override
+	MyScript() 
 	{
-		++i;
+		Bind<WindowResize>(K_BIND_EVENT_FN(MyScript::OnWindowResize));
+		//Bind<KeyPressed>(K_BIND_EVENT_FN(MyScript::OnKeyPressed));
+		Bind<KeyReleased>(K_BIND_EVENT_FN(MyScript::OnKeyReleased));
+		Bind<MouseReleased>(K_BIND_EVENT_FN(MyScript::OnMouseReleased));
+		//Bind<MousePressed>(K_BIND_EVENT_FN(MyScript::OnMousePressed));
+		//Bind<MouseMoved>(K_BIND_EVENT_FN(MyScript::OnMouseMoved));
+		Bind<MouseScrolled>(K_BIND_EVENT_FN(MyScript::OnMouseScrolled));
 	}
 
-	int i = 0;
+	void OnUpdate(double ts) override
+	{
+		K_TRACE("Mouse Position : {}, {}", Input::GetMousePos().x, Input::GetMousePos().y);
+
+		if (Input::IsKeyPressed(Key::Space)) {
+			K_TRACE("Key Space Pressed !");
+		}
+
+		if (Input::IsMousePressed(Mouse::Button0)) {
+			K_TRACE("Mouse Primary Pressed !");
+		}
+	}
+
+	void OnWindowResize(WindowResize& ev) 
+	{
+		K_INFO("Window has been resized to : {} px, {} px", ev.width, ev.height);
+	}
+	
+	void OnKeyPressed(KeyPressed& ev)
+	{
+		K_INFO("Key is being pressed : {} ", (char)ev.keyCode);
+	}
+
+	void OnKeyReleased(KeyReleased& ev)
+	{
+		K_INFO("Key is released : {}", (char)ev.keyCode);
+	}
+	
+	void OnMousePressed(MousePressed& ev)
+	{
+		K_INFO("Mouse is pressed : {}", ev.button);
+	}
+	
+	void OnMouseReleased(MouseReleased& ev)
+	{
+		K_INFO("Mouse is released : {}", ev.button);
+	}
+	
+	void OnMouseMoved(MouseMoved& ev)
+	{
+		K_INFO("mouse is moving : {}, {}", ev.pos.x, ev.pos.y);
+	}
+	
+	void OnMouseScrolled(MouseScrolled& ev)
+	{
+		K_INFO("mouse is scrolling : {}, {}", ev.offset.x, ev.offset.y);
+	}
+
 
 	CLASS_TYPE(MyScript);
 };
@@ -58,12 +113,6 @@ public:
 		}
 	}
 
-	void OnEvent(Event &e) override
-	{
-		K_INFO("I am catching this event: {}", e.Print());
-		//EventQueue::Dispatch(new Quit);
-	}
-
 	CLASS_TYPE(StopWatch);
 
 private:
@@ -92,15 +141,14 @@ public:
 	const std::vector<Component*> GetComponents() const override
 	{
 		return {
-			new StopWatch,
-			//new MyScript,
+			//new StopWatch,
+			new MyScript,
 		};
 	}
 };
 
 class Prefab2 : public EntityData
 {
-	using  Vec2 = TransformComponent::Vec2;
 private:
 	std::string m_Name;
 	Vec2 pos;
@@ -136,24 +184,27 @@ public:
 
 void setup(Scene *scene)
 {
-	for (int i(0); i < 5000; ++i)
-	{
-		auto e = Prefab2("player-" + std::to_string(i), { (double)i, (double)i });
-		scene->Create(e);
-	}
-	K_TRACE("Added 5000 entities to {}", scene->GetName());
+	int n(5);
+	auto prefab = Prefab();
+	auto &e = scene->Create(prefab);
 
-	auto &e = scene->Create(Prefab());
+	//for (int i(0); i < n; ++i)
+	//{
+	//	auto e = Prefab2("player-" + std::to_string(i), { (double)i, (double)i });
+	//	scene->Create(e);
+	//}
+	//K_TRACE("Added 5000 entities to {}", scene->GetName());
 
-	if (scene->Reg().has<TransformComponent>(e.GetID()))
-	{
-		auto &t = scene->Reg().get<TransformComponent>(e.GetID());
-		K_TRACE("Entity {} has a transform ! ({}, {})", e.GetName(), t.pos.x, t.pos.y);
-	}
-	else
-	{
-		K_TRACE("Entity {} has a transform !", e.GetName());
-	}
+
+	//if (scene->Reg().has<TransformComponent>(e.GetID()))
+	//{
+	//	auto &t = scene->Reg().get<TransformComponent>(e.GetID());
+	//	K_TRACE("Entity {} has a transform ! ({}, {})", e.GetName(), t.pos.x, t.pos.y);
+	//}
+	//else
+	//{
+	//	K_TRACE("Entity {} has a transform !", e.GetName());
+	//}
 	//EventQueue::Dispatch(new Quit);
 }
 
@@ -177,7 +228,7 @@ int main()
 	//fp(1);
 
 	// Start the engine
-	auto e = Engine::GetInstance();
+	auto e = Engine::GetInstance("SandBox");
 	auto func = [&](Scene* scene)
 	{
 		Scene::Load(2);

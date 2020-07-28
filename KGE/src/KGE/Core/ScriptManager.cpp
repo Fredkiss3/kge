@@ -11,18 +11,15 @@ namespace KGE
 	void ScriptManager::OnEvent(Event& e)
 	{
 		auto& scene = Engine::GetInstance()->GetCurrentScene();
-		K_CORE_DEBUG("Sending event {} to scripts", e.Print());
 
 		if (scene) {
-			scene->Reg().view<ScriptComponent>()
-				.each([&](auto entity, ScriptComponent& script)
+			scene->Reg().view<ScriptComponent>().each([&](auto entity, ScriptComponent& script)
 					{
+						if (e.handled) return;
 						script.OnEvent(e);
 					}
 			);
 		}
-
-		K_CORE_DEBUG("event sent");
 	}
 
 	void ScriptManager::OnUpdate(double ts)
@@ -32,6 +29,12 @@ namespace KGE
 
 		//K_CORE_DEBUG("Updating scripts");
 		if (scene) {
+			scene->Reg().sort<ScriptComponent>([](const ScriptComponent& lhs, const ScriptComponent& rhs)
+				{
+					return lhs.entity->GetLayer() > rhs.entity->GetLayer();
+				}
+			);
+
 			scene->Reg().view<ScriptComponent>()
 				.each([&](auto entity, ScriptComponent& script)
 					{

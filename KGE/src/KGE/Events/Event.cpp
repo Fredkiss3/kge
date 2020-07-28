@@ -43,6 +43,7 @@ namespace KGE
 			str += entity->GetName();
 		}
 
+		str += ", ";
 		str += GetData();
 		str += " }";
 

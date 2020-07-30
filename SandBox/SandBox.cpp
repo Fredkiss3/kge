@@ -8,11 +8,10 @@ void setup2(Scene *scene)
 	EventQueue::Dispatch(new Quit);
 }
 
-
 class MyScript : public Behaviour
 {
 public:
-	MyScript() 
+	MyScript()
 	{
 		Bind<WindowResize>(K_BIND_EVENT_FN(MyScript::OnWindowResize));
 		//Bind<KeyPressed>(K_BIND_EVENT_FN(MyScript::OnKeyPressed));
@@ -27,54 +26,54 @@ public:
 	{
 		K_TRACE("Mouse Position : {}, {}", Input::GetMousePos().x, Input::GetMousePos().y);
 
-		if (Input::IsKeyPressed(Key::Space)) {
+		if (Input::IsKeyPressed(Key::Space))
+		{
 			K_TRACE("Key Space Pressed !");
 		}
 
-		if (Input::IsMousePressed(Mouse::Button0)) {
+		if (Input::IsMousePressed(Mouse::Button0))
+		{
 			K_TRACE("Mouse Primary Pressed !");
 		}
 	}
 
-	void OnWindowResize(WindowResize& ev) 
+	void OnWindowResize(WindowResize &ev)
 	{
 		K_INFO("Window has been resized to : {} px, {} px", ev.width, ev.height);
 	}
-	
-	void OnKeyPressed(KeyPressed& ev)
+
+	void OnKeyPressed(KeyPressed &ev)
 	{
 		K_INFO("Key is being pressed : {} ", (char)ev.keyCode);
 	}
 
-	void OnKeyReleased(KeyReleased& ev)
+	void OnKeyReleased(KeyReleased &ev)
 	{
 		K_INFO("Key is released : {}", (char)ev.keyCode);
 	}
-	
-	void OnMousePressed(MousePressed& ev)
+
+	void OnMousePressed(MousePressed &ev)
 	{
 		K_INFO("Mouse is pressed : {}", ev.button);
 	}
-	
-	void OnMouseReleased(MouseReleased& ev)
+
+	void OnMouseReleased(MouseReleased &ev)
 	{
 		K_INFO("Mouse is released : {}", ev.button);
 	}
-	
-	void OnMouseMoved(MouseMoved& ev)
+
+	void OnMouseMoved(MouseMoved &ev)
 	{
 		K_INFO("mouse is moving : {}, {}", ev.pos.x, ev.pos.y);
 	}
-	
-	void OnMouseScrolled(MouseScrolled& ev)
+
+	void OnMouseScrolled(MouseScrolled &ev)
 	{
 		K_INFO("mouse is scrolling : {}, {}", ev.offset.x, ev.offset.y);
 	}
 
-
 	CLASS_TYPE(MyScript);
 };
-
 
 class StopWatch : public Behaviour
 {
@@ -98,13 +97,18 @@ public:
 			K_CORE_TRACE("Has None ? {} ", HasComponent(ComponentCategory::None) ? "true" : "false");
 			K_CORE_TRACE("Has Transform ? {} ", HasComponent(ComponentCategory::Transform) ? "true" : "false");
 
-			if (script) {
+			if (script)
+			{
 				K_INFO("Got Custom Script => {}", script->GetType());
 			}
 
-			if (tptr) {
-				auto transform = (TransformComponent*)tptr;
-				K_INFO("Got Transform => ({}, {})", transform->pos.x, transform->pos.y);
+			if (tptr)
+			{
+				auto transform = (TransformComponent *)tptr;
+				K_INFO("Got Transform => position : {} || rotation : {} || scale : {}",
+					   transform->pos,
+					   transform->scale,
+					   transform->rotation);
 			}
 
 			K_INFO("Current Transform => ({}, {})", entity->GetXF().pos.x, entity->GetXF().pos.y);
@@ -123,22 +127,22 @@ private:
 class Prefab : public EntityData
 {
 public:
-	const char* GetName() const override 
+	const char *GetName() const override
 	{
 		return "Other";
 	}
 
 	const TransformComponent GetXf() const override
 	{
-		return TransformComponent({ 5.0f , 6.5f });
+		return TransformComponent(Vec2{5.0f, 6.5f});
 	}
 
-	const char* GetTag() const override
+	const char *GetTag() const override
 	{
 		return "timer";
 	}
 
-	const std::vector<Component*> GetComponents() const override
+	const std::vector<Component *> GetComponents() const override
 	{
 		return {
 			//new StopWatch,
@@ -152,17 +156,17 @@ class Prefab2 : public EntityData
 private:
 	std::string m_Name;
 	Vec2 pos;
+
 public:
 	Prefab2(const std::string &name, Vec2 v)
 		: m_Name(name), pos(v)
 	{
 	}
 
-	const std::vector<Component*> GetComponents() const override
+	const std::vector<Component *> GetComponents() const override
 	{
 		return {
-			new MyScript
-		};
+			new MyScript};
 	}
 
 	const TransformComponent GetXf() const override
@@ -170,13 +174,12 @@ public:
 		return TransformComponent(pos);
 	}
 
-
-	const char* GetName() const override
+	const char *GetName() const override
 	{
 		return m_Name.c_str();
 	}
 
-	const char* GetTag() const override
+	const char *GetTag() const override
 	{
 		return "player";
 	}
@@ -194,7 +197,6 @@ void setup(Scene *scene)
 	//	scene->Create(e);
 	//}
 	//K_TRACE("Added 5000 entities to {}", scene->GetName());
-
 
 	//if (scene->Reg().has<TransformComponent>(e.GetID()))
 	//{
@@ -229,8 +231,7 @@ int main()
 
 	// Start the engine
 	auto e = Engine::GetInstance("SandBox");
-	auto func = [&](Scene* scene)
-	{
+	auto func = [&](Scene *scene) {
 		Scene::Load(2);
 	};
 	e->RegisterScene(setup, "level 1");

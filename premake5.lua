@@ -22,9 +22,10 @@ IncludeDir["spdlog"] = "KGE/vendor/spdlog/include"
 IncludeDir["entt"] = "KGE/vendor/entt/include"
 IncludeDir["GLFW"] = "KGE/vendor/GLFW/include"
 IncludeDir["Glad"] = "KGE/vendor/Glad/include"
+IncludeDir["box2d"] = "KGE/vendor/box2d/include"
 IncludeDir["ImGui"] = "KGE/vendor/imgui"
--- IncludeDir["glm"] = "KGE/vendor/glm"
--- IncludeDir["stb_image"] = "KGE/vendor/stb_image"
+IncludeDir["glm"] = "KGE/vendor/glm"
+IncludeDir["stb_image"] = "KGE/vendor/stb_image"
 
 group "Dependencies"
 	include "KGE/vendor/GLFW"
@@ -49,10 +50,12 @@ project "KGE"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		-- "%{prj.name}/vendor/**.h",
-		-- "%{prj.name}/vendor/**.hpp",
-		-- "%{prj.name}/vendor/**.cpp",
-		-- "%{prj.name}/vendor/**.cpp",
+		"%{prj.name}/vendor/stb_image/**.h",
+		"%{prj.name}/vendor/stb_image/**.cpp",
+		"%{prj.name}/vendor/glm/glm/**.hpp",
+		"%{prj.name}/vendor/glm/glm/**.inl",
+		"%{prj.name}/vendor/box2d/src/**.cpp",
+		"%{prj.name}/vendor/box2d/src/**.h",
 	}
 
 	defines
@@ -69,6 +72,9 @@ project "KGE"
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.box2d}",
+		"%{IncludeDir.stb_image}",
 	}
 
 	links 
@@ -126,6 +132,9 @@ project "Sandbox"
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.box2d}",
+		"%{IncludeDir.stb_image}",
 	}
 
 	links

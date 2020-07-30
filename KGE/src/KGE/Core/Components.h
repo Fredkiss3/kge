@@ -6,121 +6,125 @@
 namespace KGE
 {
 
-	// Component Category
-#define CC(type_) const ComponentCategory GetCategory() const override { return ComponentCategory::type_; }
+// Component Category
+#define CC(type_) \
+	const ComponentCategory GetCategory() const override { return ComponentCategory::type_; }
 
-	struct Behaviour : public EventListener, public Component
+struct Behaviour : public EventListener, public Component
+{
+public:
+	virtual void OnUpdate(double ts){};
+
+	~Behaviour()
 	{
-	public:
-		virtual void OnUpdate(double ts) {};
+		//K_CORE_ERROR("Deleting A Behaviour");
+	}
 
-		~Behaviour()
-		{
-			//K_CORE_ERROR("Deleting A Behaviour");
-		}
+	friend struct ScriptComponent;
+	CC(Behaviour);
+};
 
-		friend struct ScriptComponent;
-		CC(Behaviour);
-	};
+// Allow usage of both 'Behaviour & Behavior'
+typedef Behaviour Behavior;
 
-	// Allow usage of both 'Behaviour & Behavior'
-	typedef Behaviour Behavior;
-
-	/*
+/*
 	* A Script can have multiple behaviours attached
 	*/
-	struct ScriptComponent : public Component
-	{
-	public:
-		/*ScriptComponent(Behaviour bh)
+struct ScriptComponent : public Component
+{
+public:
+	/*ScriptComponent(Behaviour bh)
 		{
 			behaviours.push_back(Ref<Behavior>(&bh));
 		};*/
 
-		ScriptComponent() = default;
+	ScriptComponent() = default;
 
-
-		void Init() {
-			for (auto& p : m_behaviourMap) {
-				auto& b = p.second;
-				b->OnInit();
-			}
-		}
-
-
-		Ref<Behavior> Get(const std::string& type) {
-			return  (m_behaviourMap.find(type) != m_behaviourMap.end()) ?  
-				m_behaviourMap[type] : nullptr;
-		}
-
-		const bool Has(const std::string& type) const {
-			return m_behaviourMap.find(type) != m_behaviourMap.end();
-		}
-		
-
-		void OnEvent(Event& e) {
-			/*for (auto& b : behaviours) {
-				b->OnEvent(e);
-			}*/
-
-			for (auto& p : m_behaviourMap) {
-				auto& b = p.second;
-				b->OnEvent(e);
-			}
-		}
-
-		void Add(Behaviour& bh)
-		{
-			//m_behaviourMap
-			//behaviours.push_back(Ref<Behavior>(&bh));
-
-			// Add behaviour
-			m_behaviourMap[bh.GetType()] = Ref<Behavior>(&bh);
-		};
-
-		void OnUpdate(double ts) {
-			/*for (auto& b : behaviours) {
-				b->OnUpdate(ts);
-			}*/
-
-			for (auto& p : m_behaviourMap) {
-				auto& b = p.second;
-				b->OnUpdate(ts);
-			}
-		}
-
-		~ScriptComponent()
-		{
-			//behaviours.clear();
-			m_behaviourMap.clear();
-			//K_CORE_ERROR("Deleting Script Component");
-		}
-
-		CC(Script);
-		CLASS_TYPE(ScriptComponent);
-
-	public:
-		//std::vector<Ref<Behaviour>> behaviours;
-		std::unordered_map<std::string, Ref<Behaviour>> m_behaviourMap;
-	};
-
-	// TODO Change this to use glm instead
-	struct TransformComponent : public Component
+	void Init()
 	{
-		TransformComponent(Vec2 pos = { 0, 0 }, Vec2 scale = { 1, 1 }, float angle = 0)
-			: pos(pos), scale(scale), angle(angle) {}
-
-		Vec2 pos;
-		Vec2 scale;
-		float angle;
-
-		CC(Transform);
-
-		~TransformComponent()
+		for (auto &p : m_behaviourMap)
 		{
-			//K_CORE_ERROR("Deleting Transform Component");
+			auto &b = p.second;
+			b->OnInit();
 		}
+	}
 
-		CLASS_TYPE(TransformComponent);
+	Ref<Behavior> Get(const std::string &type)
+	{
+		return (m_behaviourMap.find(type) != m_behaviourMap.end()) ? m_behaviourMap[type] : nullptr;
+	}
+
+	const bool Has(const std::string &type) const
+	{
+		return m_behaviourMap.find(type) != m_behaviourMap.end();
+	}
+
+	void OnEvent(Event &e)
+	{
+		/*for (auto& b : behaviours) {
+				b->OnEvent(e);
+			}*/
+
+		for (auto &p : m_behaviourMap)
+		{
+			auto &b = p.second;
+			b->OnEvent(e);
+		}
+	}
+
+	void Add(Behaviour &bh)
+	{
+		//m_behaviourMap
+		//behaviours.push_back(Ref<Behavior>(&bh));
+
+		// Add behaviour
+		m_behaviourMap[bh.GetType()] = Ref<Behavior>(&bh);
 	};
+
+	void OnUpdate(double ts)
+	{
+		/*for (auto& b : behaviours) {
+				b->OnUpdate(ts);
+			}*/
+
+		for (auto &p : m_behaviourMap)
+		{
+			auto &b = p.second;
+			b->OnUpdate(ts);
+		}
+	}
+
+	~ScriptComponent()
+	{
+		//behaviours.clear();
+		m_behaviourMap.clear();
+		//K_CORE_ERROR("Deleting Script Component");
+	}
+
+	CC(Script);
+	CLASS_TYPE(ScriptComponent);
+
+public:
+	//std::vector<Ref<Behaviour>> behaviours;
+	std::unordered_map<std::string, Ref<Behaviour>> m_behaviourMap;
+};
+
+struct TransformComponent : public Component
+{
+	TransformComponent(Vec2 _pos = {0, 0}, Vec2 _scale = {1, 1}, float _angle = 0)
+		: pos(_pos), scale(_scale), rotation(_angle) {}
+
+	Vec2 pos;
+	Vec2 scale;
+	float rotation;
+
+	CC(Transform);
+
+	~TransformComponent()
+	{
+		//K_CORE_ERROR("Deleting Transform Component");
+	}
+
+	CLASS_TYPE(TransformComponent);
+};
 } // namespace KGE

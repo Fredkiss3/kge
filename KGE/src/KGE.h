@@ -14,5 +14,7 @@
 
 #include <KGE/Core/Entity.h>
 #include <KGE/Core/Components.h>
+#include <KGE/Graphics/Components.h>
 #include <KGE/Core/Scene.h>
 #include <KGE/Engine.h>
+#include <imgui.h>

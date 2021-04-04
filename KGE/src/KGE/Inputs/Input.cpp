@@ -22,6 +22,6 @@ namespace KGE {
 		auto window = Renderer::GetWindow()->GetNativeWindow();
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
-		return Vec2{ xpos, ypos };
+		return Vec2{ (float)xpos, (float)ypos };
 	}
 }

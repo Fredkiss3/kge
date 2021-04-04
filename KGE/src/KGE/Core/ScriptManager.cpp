@@ -4,6 +4,7 @@
 #include "KGE/Engine.h"
 #include "KGE/Base.h"
 #include "KGE/Events/Events.h"
+#include "KGE/Core/Scene.h"
 
 namespace KGE
 {
@@ -14,10 +15,10 @@ namespace KGE
 
 		if (scene) {
 			scene->Reg().view<ScriptComponent>().each([&](auto entity, ScriptComponent& script)
-					{
-						if (e.handled) return;
-						script.OnEvent(e);
-					}
+				{
+					if (e.handled) return;
+					script.OnEvent(e);
+				}
 			);
 		}
 	}
@@ -38,11 +39,11 @@ namespace KGE
 			scene->Reg().view<ScriptComponent>()
 				.each([&](auto entity, ScriptComponent& script)
 					{
-						script.OnUpdate(ts);
+						if(script.behaviour) script.OnUpdate(ts);
 					}
 			);
 		}
-		
+
 		//K_CORE_INFO("Updated {} Scripts", count);
 	}
 } // namespace KGE

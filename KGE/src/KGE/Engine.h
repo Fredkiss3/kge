@@ -50,7 +50,7 @@ namespace KGE
 		const std::string& GetApplicationName() { return m_ApplicationName; }
 
 	public:
-		static const Ref<Engine>& GetInstance(const std::string& name = "Kiss Game Engine", bool Debug = true);
+		static const Ref<Engine>& GetInstance(const WindowProps& props = {}, bool Debug = true);
 
 		static const Ref<Engine>& GetStaticInstance()
 		{
@@ -58,7 +58,7 @@ namespace KGE
 		}
 
 	private:
-		Engine(bool Debug=true);
+		Engine(const WindowProps& props, bool Debug=true);
 
 		void MainLoop();
 		bool DispatchEvents();
@@ -87,6 +87,9 @@ namespace KGE
 		// For Physics Updating
 		const double PHYSICS_FPS = 1.0f / 50.0f;
 		double m_Accumulated_Time = 0.0f;
+
+		// For Systems Update
+		float timeMultiplier = 1.0f;
 
 		// Event Queue & Scene Stuff
 		Ref<EventQueue> m_Queue;

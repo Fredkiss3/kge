@@ -2,26 +2,32 @@
 #include "Component.h"
 #include "KGE/Events/Events.h"
 #include "KGE/Utils/Math.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace KGE
 {
 
 // Component Category
 #define CC(type_) \
-	const ComponentCategory GetCategory() const override { return ComponentCategory::type_; }
+	const ComponentCategory GetCategory() const override { return ComponentCategory::type_; } \
+	static const ComponentCategory GetStaticCategory() { return ComponentCategory::type_; }
 
-struct Behaviour : public EventListener, public Component
+struct Behaviour : public EventListener
 {
 public:
 	virtual void OnUpdate(double ts){};
 
-	~Behaviour()
-	{
-		//K_CORE_ERROR("Deleting A Behaviour");
-	}
+	~Behaviour() = default;
+	Behaviour() = default;
+	
+	//{
+	//	//K_CORE_ERROR("Deleting A Behaviour");
+	//}
 
 	friend struct ScriptComponent;
-	CC(Behaviour);
+	Entity* entity;
+	//CC(Behaviour);
 };
 
 // Allow usage of both 'Behaviour & Behavior'
@@ -33,98 +39,120 @@ typedef Behaviour Behavior;
 struct ScriptComponent : public Component
 {
 public:
-	/*ScriptComponent(Behaviour bh)
-		{
-			behaviours.push_back(Ref<Behavior>(&bh));
-		};*/
-
-	ScriptComponent() = default;
-
-	void Init()
+	operator Behavior& ()
 	{
-		for (auto &p : m_behaviourMap)
-		{
-			auto &b = p.second;
-			b->OnInit();
-		}
+		return *behaviour;
 	}
 
-	Ref<Behavior> Get(const std::string &type)
+	ScriptComponent(Behaviour* bh): behaviour(bh)
 	{
-		return (m_behaviourMap.find(type) != m_behaviourMap.end()) ? m_behaviourMap[type] : nullptr;
+		behaviour->entity = entity;
+	};
+
+	template<typename T, typename... Args>
+	void Attach(Args&&... args)
+	{
+		behaviour = Ref<Behavior>(new T(std::forward<Args>(args)...));
+		behaviour->entity = entity;
 	}
 
-	const bool Has(const std::string &type) const
+	void Detach() {
+		behaviour->entity = nullptr;
+		behaviour = nullptr;
+	}
+
+	void Attach(Behavior* bh) {
+		behaviour = Ref<Behavior>(bh);
+		behaviour->entity = entity;
+	}
+
+	ScriptComponent() 
 	{
-		return m_behaviourMap.find(type) != m_behaviourMap.end();
+		behaviour = nullptr;
+	};
+
+	void OnInit()
+	{
+		if (behaviour) behaviour->OnInit();
 	}
 
 	void OnEvent(Event &e)
 	{
-		/*for (auto& b : behaviours) {
-				b->OnEvent(e);
-			}*/
-
-		for (auto &p : m_behaviourMap)
-		{
-			auto &b = p.second;
-			b->OnEvent(e);
-		}
+		if (behaviour) behaviour->OnEvent(e);
 	}
-
-	void Add(Behaviour &bh)
-	{
-		//m_behaviourMap
-		//behaviours.push_back(Ref<Behavior>(&bh));
-
-		// Add behaviour
-		m_behaviourMap[bh.GetType()] = Ref<Behavior>(&bh);
-	};
 
 	void OnUpdate(double ts)
 	{
-		/*for (auto& b : behaviours) {
-				b->OnUpdate(ts);
-			}*/
-
-		for (auto &p : m_behaviourMap)
-		{
-			auto &b = p.second;
-			b->OnUpdate(ts);
-		}
+		if(behaviour) behaviour->OnUpdate(ts);
 	}
 
 	~ScriptComponent()
 	{
-		//behaviours.clear();
-		m_behaviourMap.clear();
-		//K_CORE_ERROR("Deleting Script Component");
 	}
 
 	CC(Script);
 	CLASS_TYPE(ScriptComponent);
 
 public:
-	//std::vector<Ref<Behaviour>> behaviours;
-	std::unordered_map<std::string, Ref<Behaviour>> m_behaviourMap;
+	Ref<Behaviour> behaviour;
 };
+
+
+struct TagComponent : public Component
+{
+	std::string tag;
+
+	//TagComponent() = default;
+	//TagComponent(const TagComponent&) = default;
+	TagComponent(const std::string& tag = "")
+		: tag(tag) {}
+
+	CC(Tag);
+	CLASS_TYPE(TagComponent);
+};
+
 
 struct TransformComponent : public Component
 {
-	TransformComponent(Vec2 _pos = {0, 0}, Vec2 _scale = {1, 1}, float _angle = 0)
+
+	TransformComponent(Vec3 _pos = Vec3::Zero(), Vec3 _scale = Vec3::Unit(), Vec3 _angle = Vec3::Zero())
 		: pos(_pos), scale(_scale), rotation(_angle) {}
 
-	Vec2 pos;
-	Vec2 scale;
-	float rotation;
+	/*TransformComponent(const TransformComponent& other)
+	 : pos(other.pos), scale(other.scale), rotation(other.rotation) {}*/
 
-	CC(Transform);
+
+
+	operator glm::mat4() 
+	{ 
+		auto angle = glm::rotate(glm::mat4(1.0f), rotation.x, { 1, 0, 0 })
+			* glm::rotate(glm::mat4(1.0f), rotation.y, { 0, 1, 0 })
+			* glm::rotate(glm::mat4(1.0f), rotation.z, { 0, 0, 1 });
+		return glm::translate(glm::mat4(1), (glm::vec3)pos)
+				* angle
+				* glm::scale(glm::mat4(1.0), (glm::vec3) scale);
+	}
+
+	operator const glm::mat4& () const 
+	{ 
+		auto angle = glm::rotate(glm::mat4(1.0f), rotation.x, { 1, 0, 0 })
+			* glm::rotate(glm::mat4(1.0f), rotation.y, { 0, 1, 0 })
+			* glm::rotate(glm::mat4(1.0f), rotation.z, { 0, 0, 1 });
+		return glm::translate(glm::mat4(1), (glm::vec3)pos)
+			* angle
+			* glm::scale(glm::mat4(1.0), (glm::vec3) scale);
+	}
 
 	~TransformComponent()
 	{
 		//K_CORE_ERROR("Deleting Transform Component");
 	}
 
+
+	Vec3 pos;
+	Vec3 scale;
+	Vec3 rotation;
+	CC(Transform);
 	CLASS_TYPE(TransformComponent);
 };
 } // namespace KGE

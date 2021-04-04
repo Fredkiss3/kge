@@ -14,6 +14,9 @@ namespace KGE
 		Transform = 1,
 		Behaviour = 2,
 		Script = 3,
+		Camera = 4,
+		Sprite = 5,
+		Tag = 6,
 	};
 		class Behaviour;
 
@@ -31,20 +34,15 @@ namespace KGE
 		};
 
 		/*
-			* Get the category of the component
-			*/
+		* Get the category of the component
+		*/
 		const virtual ComponentCategory GetCategory() const = 0;
+		static const ComponentCategory GetStaticCategory() 
+		{
+			return ComponentCategory::None;
+		}
 
 		Entity* entity = nullptr;
-
-		/*
-		* Return a pointer to the Component if found, otherwise it returns a nullptr
-		*/
-		Behaviour* GetBehaviour(const std::string& type);
-		Component* GetComponent(ComponentCategory category);
-
-		const bool HasBehaviour(const std::string& type) const;
-		const bool HasComponent(ComponentCategory category) const;
 
 		/*
 		* For Usage in C++ only

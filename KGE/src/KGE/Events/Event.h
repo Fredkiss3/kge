@@ -178,8 +178,7 @@ namespace KGE
 		* */
 		virtual std::string GetTypeName() const
 		{
-			std::string fullName(type(*this));
-			return fullName;
+			return type(*this);
 		}
 
 #ifdef K_DEBUG

@@ -10,6 +10,7 @@
 #include <typeinfo>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <array>
 #include <vector>
 #include <deque>
@@ -19,3 +20,4 @@
 #include <unordered_set>
 #include <chrono>
 #include <bitset>
+#include <cmath>

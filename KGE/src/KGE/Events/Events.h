@@ -63,6 +63,22 @@ namespace KGE
 		CLASS_TYPE(PauseScene);
 	};
 
+	struct DilateTime : public Event
+	{
+		DilateTime(float dilation): dilation(dilation) {
+
+		}
+
+		const std::string GetData() const override
+		{
+			auto str = std::string("dilation=") + std::to_string(dilation);
+			return str;
+		};
+
+		float dilation;
+		CLASS_TYPE(DilateTime);
+	};
+
 	struct ContinueScene : public Event
 	{
 		CLASS_TYPE(ContinueScene);

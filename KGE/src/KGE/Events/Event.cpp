@@ -40,7 +40,7 @@ namespace KGE
 
 		if (entity != nullptr) {
 			str += ", entity=";
-			str += entity->GetName();
+			str += entity->tag();
 		}
 
 		str += ", ";

@@ -8,67 +8,43 @@ namespace KGE
 	void Entity::SetActive(bool active)
 	{
 		m_Active = active;
-		if (scene != nullptr)
+		if (m_Scene != nullptr)
 		{
 			if (active)
 			{
-				scene->Enable(*this);
+				m_Scene->Enable(*this);
 			}
 			else
 			{
-				scene->Disable(*this);
+				m_Scene->Disable(*this);
 			}
 		}
 	}
 
 	void Entity::destroy()
 	{
-		if (scene != nullptr)
+		if (m_Scene != nullptr)
 		{
-			scene->Destroy(*this);
+			m_Scene->Destroy(*this);
 		}
 	}
 
-	Behaviour* Entity::GetBehaviour(const std::string& type)
+	const std::string& Entity::tag() const { 
+		return m_Scene->Reg().get<TagComponent>(m_ID).tag;
+	}
+
+	TransformComponent& Entity::xf() const {
+		return m_Scene->Reg().get<TransformComponent>(m_ID); 
+	}
+
+	bool Entity::operator==(Entity const& other) const
 	{
-		if (!scene) return nullptr;
-		if (!scene->Reg().has<ScriptComponent>(m_ID)) return nullptr;
-
-		auto& b = scene->Reg().get<ScriptComponent>(m_ID).Get(type);
-		return &(*b);
+		return m_Scene == other.m_Scene && m_ID == other.m_ID;
 	}
 
-	Component* Entity::GetComponent(ComponentCategory category)
+	bool Entity::operator==(Entity& other) const
 	{
-		if (!scene) return nullptr;
-
-		//auto cp = scene->GetComponent(category, *this);
-		return scene->GetComponent(category, *this);
-	}
-
-	const bool Entity::IsAlive() const
-	{
-		if (scene == nullptr)
-			return false;
-
-		return scene->Reg().valid(m_ID);
-	}
-
-	const bool Entity::hasComponent(const ComponentCategory& category) {
-		if (!scene) return false;
-
-		return scene->hasComponent(category, *this);
-	}
-
-	const bool Entity::hasBehaviour(const std::string& type) const {
-		if (!scene) return false;
-
-		return scene->Reg().has<ScriptComponent>(m_ID) ?
-			scene->Reg().get<ScriptComponent>(m_ID).Has(type) : false;
-	}
-
-	TransformComponent& Entity::GetXF() {
-		return scene->Reg().get<TransformComponent>(m_ID);
+		return m_Scene == other.m_Scene && m_ID == other.m_ID;
 	}
 
 } // namespace KGE

@@ -3,6 +3,8 @@
 #include "KGE/Base.h"
 #include "Component.h"
 #include "Components.h"
+//#include "KGE/Core/Scene.h"
+
 #include <entt/entt.hpp>
 
 namespace KGE
@@ -16,34 +18,30 @@ namespace KGE
 	public:
 		Entity(entt::entity& ID)
 			: m_ID(ID),
-			m_Name("Entity"),
 			m_Active(true),
-			scene(nullptr),
+			m_Alive(true),
+			m_Scene(nullptr),
 			m_Layer(0)
 		{
 		}
 
 		Entity(entt::entity&& ID)
 			: m_ID(ID),
-			m_Name("Entity"),
 			m_Active(true),
-			scene(nullptr),
+			m_Alive(true),
+			m_Scene(nullptr),
 			m_Layer(0)
 		{
 		}
 
-		Entity(const std::string& name = "entity", int layer = 0)
-			: m_Name(name),
-			m_Active(true),
+		Entity(int layer = 0)
+			: m_Active(true),
 			m_ID(entt::null),
-			scene(nullptr),
+			m_Alive(true),
+			m_Scene(nullptr),
 			m_Layer(layer)
 		{
-		}
-
-		operator const entt::entity& ()
-		{
-			return m_ID;
+			K_CORE_ASSERT(layer >= 0, "Layer should be positive !");
 		}
 
 		~Entity()
@@ -51,23 +49,71 @@ namespace KGE
 			//K_CORE_ERROR("Deleting {}", GetName());
 		}
 
+	public:
+		const bool IsAlive() const { return m_Alive; };
+		
+	public:
+		// CRUD Components & Behaviours
+		template<typename T>
+		T& GetComponent() const
+		{
+			K_CORE_ASSERT(hasComponent<T>(), "Entity does not have component!");
+			return m_Scene->Reg().get<T>(m_ID);
+		}
 
-		// template <ComponentCategory c1, ComponentCategory... Args>
-		//const bool hasComponent() const;
+		template<typename T>
+		T& GetBehaviour() const
+		{
+			K_CORE_ASSERT(hasComponent<ScriptComponent>(), "Entity does not have a native script attached!");
+			return dynamic_cast<T&>(*(m_Scene->Reg().get<ScriptComponent>(m_ID).behaviour));
+		}
 
-		const bool hasComponent(const ComponentCategory &category);
-		const bool hasBehaviour(const std::string &type) const;
 
-		Behaviour* GetBehaviour(const std::string& type);
+		template<typename T>
+		bool hasBehaviour() const
+		{
+			return hasComponent<ScriptComponent>() && typeid(T) == typeid(*(m_Scene->Reg().get<ScriptComponent>(m_ID).behaviour));
+		}
 
-		Component* GetComponent(ComponentCategory category);
+		template<typename T>
+		bool hasComponent() const
+		{
+			return m_Scene->Reg().has<T>(m_ID); 
+		}
 
-		//template <ComponentCategory category>
-		//Ref<Component> GetComponent()
-		//{
-		//	return GetComponent(category);
-		//}
+		template<typename T, typename... Args>
+		T& AddComponent(Args&&... args)
+		{
+			K_CORE_ASSERT(!hasComponent<T>(), "Entity already has component!");
+			T& cp = m_Scene->Reg().emplace<T>(m_ID, std::forward<Args>(args)...);
+			cp.entity = this;
+			return cp;
+		}
 
+		template<typename T, typename... Args>
+		void AddBehavior(Args&&... args)
+		{
+			K_CORE_ASSERT(!hasBehaviour<T>(), "Entity already has this script!");
+			auto & cp = m_Scene->Reg().emplace<ScriptComponent>(m_ID);
+			cp.entity = this;
+			cp.Attach<T>(std::forward<Args>(args)...);
+		}
+		
+		template<typename T, typename... Args>
+		void AddBehaviour(Args&&... args)
+		{
+			AddBehavior<T>(std::forward<Args>(args)...);
+		}
+
+
+		template<typename T>
+		void RemoveComponent()
+		{
+			K_CORE_ASSERT(hasComponent<T>(), "Entity does not have component!");
+			m_Scene->Reg().remove<T>(m_ID);
+		}
+
+	public:
 		void SetLayer(int layer) 
 		{
 			K_CORE_ASSERT(layer >= 0, "Layer should be positive !");
@@ -78,45 +124,34 @@ namespace KGE
 
 		const bool IsActive() const { return m_Active; }
 
-		const bool IsAlive() const;
-
-		const std::string& GetName() const { return m_Name; }
-
-		const std::string& GetTag() const { return m_Tag; }
+		
+		const std::string& tag() const;
+		Scene* GetScene() const { return m_Scene; }
 
 		entt::entity GetID() { return m_ID; }
 		
-		TransformComponent& GetXF();
+		TransformComponent& xf() const;
 
-		bool operator==(Entity const& other) const
+		bool operator==(Entity const& other) const;
+
+		bool operator==(Entity& other) const;
+
+		operator const entt::entity& ()
 		{
-			return scene == other.scene && m_ID == other.m_ID;
+			return m_ID;
 		}
 
-		bool operator==(Entity& other) const
-		{
-			return scene == other.scene && m_ID == other.m_ID;
-		}
 
 	public:
 		void destroy();
 		void SetActive(bool active);
 
-		TransformComponent transform;
-	private:
-		const bool hasComponent() const
-		{
-			return true;
-		}
-
 	private:
 		int m_Layer;
 		entt::entity m_ID;
-		Scene* scene = nullptr;
-
-		std::string m_Name;
-		std::string m_Tag;
+		Scene* m_Scene = nullptr;
 
 		bool m_Active;
+		bool m_Alive;
 	};
 } // namespace KGE

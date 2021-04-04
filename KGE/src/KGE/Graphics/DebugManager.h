@@ -20,8 +20,8 @@ namespace KGE {
 		void OnMouseScrolled(MouseScrolled& e);
 
 		void OnDestroy() override;
-		void OnDrawGizMos(DrawGizMos& e);
-		void OnImguiDraw(ImGuiDraw& e);
+		//void DrawGizMos();
+		void Draw();
 
 	private:
 		void BeginFrame();

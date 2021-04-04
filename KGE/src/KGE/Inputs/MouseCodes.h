@@ -27,15 +27,15 @@ namespace KGE
 	}
 }
 
-#define HZ_MOUSE_BUTTON_0      ::KGE::Mouse::Button0
-#define HZ_MOUSE_BUTTON_1      ::KGE::Mouse::Button1
-#define HZ_MOUSE_BUTTON_2      ::KGE::Mouse::Button2
-#define HZ_MOUSE_BUTTON_3      ::KGE::Mouse::Button3
-#define HZ_MOUSE_BUTTON_4      ::KGE::Mouse::Button4
-#define HZ_MOUSE_BUTTON_5      ::KGE::Mouse::Button5
-#define HZ_MOUSE_BUTTON_6      ::KGE::Mouse::Button6
-#define HZ_MOUSE_BUTTON_7      ::KGE::Mouse::Button7
-#define HZ_MOUSE_BUTTON_LAST   ::KGE::Mouse::ButtonLast
-#define HZ_MOUSE_BUTTON_LEFT   ::KGE::Mouse::ButtonLeft
-#define HZ_MOUSE_BUTTON_RIGHT  ::KGE::Mouse::ButtonRight
-#define HZ_MOUSE_BUTTON_MIDDLE ::KGE::Mouse::ButtonMiddle
+#define K_MOUSE_BUTTON_0      ::KGE::Mouse::Button0
+#define K_MOUSE_BUTTON_1      ::KGE::Mouse::Button1
+#define K_MOUSE_BUTTON_2      ::KGE::Mouse::Button2
+#define K_MOUSE_BUTTON_3      ::KGE::Mouse::Button3
+#define K_MOUSE_BUTTON_4      ::KGE::Mouse::Button4
+#define K_MOUSE_BUTTON_5      ::KGE::Mouse::Button5
+#define K_MOUSE_BUTTON_6      ::KGE::Mouse::Button6
+#define K_MOUSE_BUTTON_7      ::KGE::Mouse::Button7
+#define K_MOUSE_BUTTON_LAST   ::KGE::Mouse::ButtonLast
+#define K_MOUSE_BUTTON_LEFT   ::KGE::Mouse::ButtonLeft
+#define K_MOUSE_BUTTON_RIGHT  ::KGE::Mouse::ButtonRight
+#define K_MOUSE_BUTTON_MIDDLE ::KGE::Mouse::ButtonMiddle

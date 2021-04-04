@@ -1,6 +1,8 @@
 #include "headers.h"
 #include "DebugManager.h"
 #include "KGE/Engine.h"
+#include "KGE/Core/Scene.h"
+#include "LowLevel/RenderAPI.h"
 #include "Renderer.h"
 
 #include <imgui.h>
@@ -9,11 +11,12 @@
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 
+
 namespace KGE {
 	DebugManager::DebugManager(): ComponentManager(false)
 	{
-		Bind<DrawGizMos>(K_BIND_EVENT_FN(DebugManager::OnDrawGizMos));
-		Bind<ImGuiDraw>(K_BIND_EVENT_FN(DebugManager::OnImguiDraw));
+		//Bind<DrawGizMos>(K_BIND_EVENT_FN(DebugManager::DrawGizMos));
+		//Bind<ImGuiDraw>(K_BIND_EVENT_FN(DebugManager::Draw));
 		Bind<KeyPressed>(K_BIND_EVENT_FN(DebugManager::OnKeyPressed));
 		Bind<KeyReleased>(K_BIND_EVENT_FN(DebugManager::OnKeyReleased));
 		Bind<MouseReleased>(K_BIND_EVENT_FN(DebugManager::OnMouseReleased));
@@ -45,10 +48,10 @@ namespace KGE {
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
 			style.WindowRounding = 0.0f;
-			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+			style.Colors[ImGuiCol_WindowBg].w = 0.95f;
 		}
 
-		GLFWwindow* window = Renderer::GetWindow()->GetNativeWindow();
+		auto window = Renderer::GetWindow()->GetNativeWindow();
 
 		// Setup Platform/Renderer bindings
 		ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -92,28 +95,31 @@ namespace KGE {
 		ImGui::DestroyContext();
 	}
 
-	void DebugManager::OnDrawGizMos(DrawGizMos& e)
+	//void DebugManager::DrawGizMos()
+	//{
+	//	// TODO : After Renderer Has been finished
+	//	auto& scene = Engine::GetInstance()->GetCurrentScene();
+	//	KGE::DrawGizMos e;
+	//	e.scene = scene;
+	//	if (scene) {
+	//		scene->Reg().view<ScriptComponent>().each([&](auto entity, ScriptComponent& script)
+	//			{
+	//				if (e.handled) return;
+	//				script.OnEvent(e);
+	//			}
+	//		);
+	//	}
+	//	e.handled = true;
+	//}
+
+	void DebugManager::Draw()
 	{
-		// TODO : After Renderer Has been finished
 		auto& scene = Engine::GetInstance()->GetCurrentScene();
 
-		if (scene) {
-			scene->Reg().view<ScriptComponent>().each([&](auto entity, ScriptComponent& script)
-				{
-					if (e.handled) return;
-					script.OnEvent(e);
-				}
-			);
-		}
+		ImGuiDraw e;
+		e.scene = scene;
 
-		e.handled = true;
-	}
-
-	void DebugManager::OnImguiDraw(ImGuiDraw& e)
-	{
-		auto& scene = Engine::GetInstance()->GetCurrentScene();
-
-		// Begin ImGui::
+		// Begin ImGui
 		BeginFrame();
 
 		if (scene) {
@@ -125,11 +131,10 @@ namespace KGE {
 			);
 		}
 
-		// End ImGui::
+		// End ImGui
 		EndFrame();
-
-		e.handled = true;
 	}
+
 	void DebugManager::BeginFrame()
 	{
 		ImGui_ImplOpenGL3_NewFrame();
@@ -139,29 +144,36 @@ namespace KGE {
 		// Display Hardware Infos
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 5.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-		ImGui::SetNextWindowSize(ImVec2{ 330.0f, 70.0f });
+		ImGui::SetNextWindowSize(ImVec2{ 330.0f, 120.0f });
+		ImGui::SetNextWindowBgAlpha(.7f);
 
 		auto flags = ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoCollapse |
 			ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoFocusOnAppearing;
 
+		auto &str = std::to_string(ImGui::GetIO().Framerate);
+
 		ImGui::Begin("HARDWARE Infos", false, flags);
 		ImGui::Text("OpenGL Vendor: %s", glGetString(GL_VENDOR));
 		ImGui::Text("OpenGL Version %s", glGetString(GL_VERSION));
 		ImGui::Text("OpenGL Renderer: %s", glGetString(GL_RENDERER));
+		ImGui::Text("Total Quads: %s", std::to_string(RenderAPI::GetStats().QuadCount).c_str());
+		ImGui::Text("Draw Calls: %s", std::to_string(RenderAPI::GetStats().DrawCalls).c_str());
+		ImGui::Text("FPS: %s", str.c_str());
 		ImGui::PopStyleVar();
 		ImGui::PopStyleVar();
 		ImGui::End();
 
 		// Show the Demo Window
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 	}
 
 	void DebugManager::EndFrame()
 	{
 		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize = ImVec2((float)Renderer::GetWindow()->GetWidth(), (float)Renderer::GetWindow()->GetHeight());
+		auto& win = Renderer::GetWindow();
+		io.DisplaySize = ImVec2((float)win->GetWidth(), (float)win->GetHeight());
 
 		// Rendering
 		ImGui::Render();
@@ -175,11 +187,11 @@ namespace KGE {
 			glfwMakeContextCurrent(backup_current_context);
 		}
 	}
+
 	void DebugManager::BlockEvents(Event& e)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		e.handled |= io.WantCaptureMouse;
 		e.handled |= io.WantCaptureKeyboard;
-		e.handled = true;
 	}
 }

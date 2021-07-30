@@ -47,7 +47,7 @@ namespace KGE {
 	}
 
 	Texture::Texture(uint32_t width, uint32_t height) 
-		: m_Width(width), m_Height(height)
+		: m_Width(width), m_Height(height), m_LocalBuffer(nullptr), m_BPP(0)
 	{
 		// Generate texture
 		glGenTextures(1, &m_RendererID);
@@ -72,7 +72,7 @@ namespace KGE {
 			GL_RGBA, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
 			(void*) 0xffffffff);*/
 
-		glTexSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, GL_RGBA, GL_UNSIGNED_BYTE, (void *)0xffffffff);
+		//glTexSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, GL_RGBA, GL_UNSIGNED_BYTE, (void *)0xffffffff);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 

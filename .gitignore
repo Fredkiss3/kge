@@ -1,7 +1,13 @@
 # Binaries
 !vendor/bin/premake/
-bin-int/
-bin/
+**/bin-int/
+**/bin/
+**.idb
+**.pdb
+**.ilk
+**.obj
+**/Debug/
+**/out/
 /bin
 /build
 /cmake-build-debug
@@ -27,7 +33,8 @@ Scene.old.*
 
 # Other
 ECS/
-*.ini
-*.lib
-*.exe
-*.pdb
+!/KGE/vendor/v8/src/**/debug/
+**.ini
+**.lib
+**.exe
+**.pdb

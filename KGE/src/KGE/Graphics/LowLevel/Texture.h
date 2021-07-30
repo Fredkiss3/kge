@@ -4,7 +4,7 @@
 #include "GLObject.h"
 
 namespace KGE {
-	class Texture
+	class Texture : public GLObject
 	{
 	public:
 		~Texture();
@@ -12,9 +12,9 @@ namespace KGE {
 		Texture(uint32_t width, uint32_t height);
 
 		const void Bind(int slot) const;
-		const void UnBind() const;
+		const void UnBind() const override;
 
-		const void Bind() const { Bind(0); };
+		const void Bind() const override { Bind(0); };
 
 		uint32_t GetWidth() { return m_Width; };
 		uint32_t GetHeight() { return m_Height; };

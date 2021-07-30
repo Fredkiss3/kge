@@ -24,6 +24,7 @@ IncludeDir["GLFW"] = "KGE/vendor/GLFW/include"
 IncludeDir["Glad"] = "KGE/vendor/Glad/include"
 IncludeDir["box2d"] = "KGE/vendor/box2d/include"
 IncludeDir["ImGui"] = "KGE/vendor/imgui"
+IncludeDir["V8"] = "KGE/vendor/v8"
 IncludeDir["glm"] = "KGE/vendor/glm"
 IncludeDir["stb_image"] = "KGE/vendor/stb_image"
 
@@ -31,7 +32,60 @@ group "Dependencies"
 	include "KGE/vendor/GLFW"
 	include "KGE/vendor/Glad"
 	include "KGE/vendor/imgui"
+	include "KGE/vendor/v8"
 group ""
+
+project "V8SandBox"
+	location "V8SandBox"
+	kind "ConsoleApp"
+	language "C++"
+	cppdialect "C++17"
+	staticruntime "on"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"%{prj.name}/**.h",
+		"%{prj.name}/**.cpp"
+	}
+
+	includedirs
+	{
+		"%{IncludeDir.V8}/include",
+		"%{IncludeDir.V8}",
+	}
+
+	libdirs 
+	{
+		"%{IncludeDir.V8}/lib",
+        "%{IncludeDir.V8}/lib/src/inspector",
+        "%{IncludeDir.V8}/lib/third_party/icu",
+	}
+
+	-- links 
+	-- {
+	-- 	"V8"
+	-- }
+	filter "system:windows"
+		systemversion "latest"
+		defines "K_PLATFORM_WINDOWS"
+	
+	filter "configurations:Debug"
+		defines "K_DEBUG"
+		runtime "Debug"
+		symbols "on"
+
+	filter "configurations:Release"
+		defines "K_RELEASE"
+		runtime "Release"
+		optimize "on"
+
+	filter "configurations:Dist"
+		defines "K_DIST"
+		runtime "Release"
+		optimize "on"
 
 project "KGE"
 	location "KGE"
@@ -72,6 +126,7 @@ project "KGE"
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.V8}/include",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.box2d}",
 		"%{IncludeDir.stb_image}",
@@ -82,6 +137,7 @@ project "KGE"
 		"GLFW",
 		"Glad",
 		"ImGui",
+		"V8",
 		"opengl32.lib"
 	}
 
@@ -132,6 +188,7 @@ project "Sandbox"
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.V8}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.box2d}",
 		"%{IncludeDir.stb_image}",

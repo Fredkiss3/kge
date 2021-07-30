@@ -1,0 +1,8 @@
+defines = -DUSE_AURA=1 "-DCR_CLANG_REVISION=\"llvmorg-13-init-15561-gf98ed74f-1\"" -D_HAS_NODISCARD -D_LIBCPP_ABI_UNSTABLE -D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS -D_LIBCPP_ENABLE_NODISCARD -D_LIBCPP_NO_AUTO_LINK -D__STD_C -D_CRT_RAND_S -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_DEPRECATE -D_ATL_NO_OPENGL -D_WINDOWS -DCERT_CHAIN_PARA_HAS_EXTRA_FIELDS -DPSAPI_VERSION=2 -DWIN32 -D_SECURE_ATL -DWINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP -DWIN32_LEAN_AND_MEAN -DNOMINMAX -D_UNICODE -DUNICODE -DNTDDI_VERSION=NTDDI_WIN10_VB -D_WIN32_WINNT=0x0A00 -DWINVER=0x0A00 -DNDEBUG -DNVALGRIND -DDYNAMIC_ANNOTATIONS_ENABLED=0 -DGTEST_API_= -DGTEST_HAS_POSIX_RE=0 -DGTEST_LANG_CXX11=1 -DGTEST_HAS_TR1_TUPLE=0
+include_dirs = -I../.. -Igen -I../../buildtools/third_party/libc++ -I../../third_party/googletest/custom -I../../third_party/googletest/src/googletest/include
+label_name = gtest_main
+target_out_dir = obj/testing/gtest
+target_output_name = gtest_main
+
+
+build obj/testing/gtest/gtest_main.stamp: stamp || obj/third_party/googletest/gtest_main.stamp obj/third_party/googletest/gtest.stamp

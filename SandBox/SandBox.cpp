@@ -149,6 +149,26 @@ public:
 
 };
 
+/*
+* 
+* import Vector, Scene from KGE;
+import Update from KGE::Events;
+
+
+class Player extends Sprite {
+   constructor() {
+     this.sprite = 'player.png';
+   }
+
+   onUpdate(event: Update) {
+      this.position += Vector.Right() * event.ts;
+   }
+}
+
+* 
+* 
+*/
+
 class Prefab2 : public EntityData
 {
 public:
@@ -174,15 +194,8 @@ struct Moveable : public Behavior
 		KeyCode left = KeyCode::Left,
 		KeyCode right = KeyCode::Right) : UpKey(up), DownKey(down), LeftKey(left), RightKey(right) {
 		Bind<ImGuiDraw>(K_BIND_EVENT_FN(Moveable::OnDebug));
-		//Bind<Init>(K_BIND_EVENT_FN(Moveable::OnInit));
 	}
 
-	/*void OnInit(Init& ev)
-	{
-		if (entity->hasComponent<CameraComponent>()) {
-			auto& cc = entity->GetComponent<CameraComponent>();
-		}
-	}*/
 
 	void OnDebug(ImGuiDraw& ev)
 	{
@@ -198,6 +211,11 @@ struct Moveable : public Behavior
 
 		if (entity->hasComponent<CameraComponent>()) {
 			ImGui::Checkbox("Perspective ?", &IsPerspective);
+		}
+
+		if (entity->hasComponent<SpriteComponent>()) {
+			auto& color = entity->GetComponent<SpriteComponent>().color;
+			ImGui::ColorEdit4("Color", &color.r);
 		}
 
 		ImGui::End();
@@ -253,39 +271,21 @@ struct Moveable : public Behavior
 
 		transform.pos = transform.pos + (direction * Speed * ts);
 		
-		//K_CORE_TRACE("Movin by {} to {}, new = {}", direction, direction * (Speed * ts), transform.pos);
 	}
 };
 
 void setup(Scene* scene)
 {
-	//int n(5);
-	//EntityData p1 = { "Second Entity" };
-	//EntityData p2 = { "Third Entity", {0.0} };
-
-	//auto &e1 = scene->Create();
-	//auto& e2 = scene->Create(p1);
-	//auto& e3 = scene->Create(p2);
-	//auto &e4 = scene->CreatePrefab<Prefab>();
-	//auto &e5 = scene->CreatePrefab<Prefab>();
 	auto& e6 = scene->Create({ "Dynamic", Vec2{1 , -1} });
 	auto& e8 = scene->CreatePrefab<Prefab2>("Static", Vec2{ 0.0, 1 });
 
-	//e8.AddBehaviour<StopWatch>(10);
-	e6.AddComponent<SpriteComponent>("", Color::Red());
+	e6.AddComponent<SpriteComponent>(Color::Blue());
 	e6.AddBehavior<Moveable>();
 
 	e8.AddComponent<SpriteComponent>("assets/textures/ChernoLogo.png");
 
 	auto& cam = scene->GetMainCamera();
-	cam.AddBehavior<Moveable>(KeyCode::Z,KeyCode::S, KeyCode::Q,KeyCode::D);
-
-	//for (int i(0); i < n; ++i)
-	//{
-	//	auto e = Prefab2("player-" + std::to_string(i), { (double)i, (double)i });
-	//	scene->Create(e);
-	//}
-	//K_TRACE("Added 5000 entities to {}", scene->GetName());
+	cam.AddBehavior<Moveable>(KeyCode::W,KeyCode::S, KeyCode::Q,KeyCode::D);
 
 
 	for (auto it : scene->all()) {
@@ -301,23 +301,6 @@ void setup(Scene* scene)
 
 		K_TRACE("Entity {} has a transform ! ({}, {})", e.tag(), e.xf().pos.x, e.xf().pos.y);
 	}
-
-	/*scene->Reg().view<TagComponent, TransformComponent>().each([&](auto e, TagComponent& tag, TransformComponent& t )
-		{
-			K_TRACE("Entity {} has a transform ! ({}, {})", tag.tag, t.pos.x, t.pos.y);
-		}
-	);*/
-
-	//if (scene->Reg().has<TransformComponent>(e.GetID()))
-	//{
-	//	auto &t = scene->Reg().get<TransformComponent>(e.GetID());
-	//	K_TRACE("Entity {} has a transform ! ({}, {})", e.GetName(), t.pos.x, t.pos.y);
-	//}
-	//else
-	//{
-	//	K_TRACE("Entity {} has a transform !", e.GetName());
-	//}
-	//EventQueue::Dispatch(new Quit);
 }
 
 int main()

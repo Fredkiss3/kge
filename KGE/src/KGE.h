@@ -18,3 +18,5 @@
 #include <KGE/Core/Scene.h>
 #include <KGE/Engine.h>
 #include <imgui.h>
+#include <include/libplatform/libplatform.h>
+#include <include/v8.h>

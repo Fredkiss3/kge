@@ -254,7 +254,7 @@ class Renderer(ComponentSystem):
         self.output = io.StringIO()
 
         # Debug Console
-        self._console = DebugPanel()
+        self._console = None  # DebugPanel()
 
         # To Draw
         self.to_draw = []
@@ -404,8 +404,8 @@ RENDER TIME : {self.engine.render_dt * 1000:.4f} ms -> {self.engine.render_dt * 
 
         # create imgui context
         imgui.create_context()
-        imgui.get_io().config_flags |= imgui.CONFIG_DOCKING_ENABLE
-        self.imgui_impl = PygletRenderer(self.window)
+        # imgui.get_io().config_flags |= imgui.CONFIG_
+        # self.imgui_impl = PygletRenderer(self.window)
 
         # Loading FeedBack
         self._load_feedback = LoadingFeedBack()
@@ -418,7 +418,7 @@ RENDER TIME : {self.engine.render_dt * 1000:.4f} ms -> {self.engine.render_dt * 
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.engine.event_loop.has_exit = True
-        self.imgui_impl.shutdown()
+        # self.imgui_impl.shutdown()
 
     def on_quit(self, ev: events.Quit, dispatch):
         if self.engine is not None:
@@ -557,7 +557,7 @@ RENDER TIME : {self.engine.render_dt * 1000:.4f} ms -> {self.engine.render_dt * 
         if self._load_feedback is not None:
             self._load_feedback.draw(self.window)
 
-        self.imgui_impl.render(imgui.get_draw_data())
+        # self.imgui_impl.render(imgui.get_draw_data())
 
         # Calculate draw time
         self.draw_time += time.monotonic() - now

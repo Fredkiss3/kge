@@ -1,4 +1,9 @@
 dataclasses==0.6
-Pillow==7.0.0
-pyglet==1.5.0
+future==0.18.3
+imgui==2.0.0
+numpy==1.25.0
+Pillow==9.5.0
+pyglet==2.0.7
 pyglet-ffmpeg2==0.1.17
+PyOpenGL==3.1.7
+swig==4.1.1

@@ -18,6 +18,9 @@ if sys.platform == "win32":
         import kge.extra.win64.Box2D as b2
     elif platform.architecture()[0] == "32bit":
         import kge.extra.win32.Box2D as b2
+elif sys.platform == 'darwin':
+    if platform.architecture()[0] == "64bit":
+        import kge.extra.darwin_arm64.Box2D as b2
 else:
     import kge.extra.linux64.Box2D as b2
 

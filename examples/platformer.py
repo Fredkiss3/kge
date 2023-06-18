@@ -691,7 +691,7 @@ if __name__ == '__main__':
             pixel_ratio=32,
             resolution=Vector(1366, 720),
             #show_output=True,
-            show_fps=True,
+            # show_fps=True,
             # resizable=False,
             vsync=False,
             #log_level=logging.DEBUG

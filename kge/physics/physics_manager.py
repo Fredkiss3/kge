@@ -1,5 +1,4 @@
 import math
-import math
 import platform
 import sys
 from itertools import chain
@@ -13,12 +12,16 @@ from kge.core import events
 from kge.core.component_system import ComponentSystem
 from kge.core.constants import *
 from kge.core.entity import BaseEntity
-from kge.core.events import CollisionEnter, CollisionExit, CreateBody, BodyCreated, BodyDestroyed, DestroyBody, \
-    PhysicsUpdate, CollisionBegin, CollisionEnd
+from kge.core.events import (
+    CollisionEnter, CollisionExit, CreateBody, BodyCreated,
+    BodyDestroyed, DestroyBody, CollisionBegin, CollisionEnd
+)
 from kge.core.events import Event
 from kge.core.service import Service
-from kge.physics.colliders import Collider, CameraCollider, CircleCollider, TriangleCollider, PolygonCollider, \
-    BoxCollider, EdgeCollider, SegmentCollider
+from kge.physics.colliders import (
+    Collider, CameraCollider, CircleCollider, TriangleCollider,
+    PolygonCollider, BoxCollider, EdgeCollider, SegmentCollider
+)
 from kge.physics.joints import Joint
 from kge.physics.rigid_body import RigidBody, RigidBodyType
 from kge.utils.vector import Vector
@@ -28,6 +31,9 @@ if sys.platform == "win32":
         import kge.extra.win64.Box2D as b2
     elif platform.architecture()[0] == "32bit":
         import kge.extra.win32.Box2D as b2
+elif sys.platform == 'darwin':
+    if platform.architecture()[0] == "64bit":
+        import kge.extra.darwin_arm64.Box2D as b2
 else:
     import kge.extra.linux64.Box2D as b2
 
@@ -1020,7 +1026,6 @@ class PhysicsManager(ComponentSystem):
 
         # Unschedule physics update
         pyglet.clock.unschedule(self.update_physics)
-
 
     def create_body(self, rb: RigidBody, e: BaseEntity):
         """
